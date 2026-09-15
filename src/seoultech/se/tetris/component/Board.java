@@ -1,6 +1,5 @@
 package seoultech.se.tetris.component;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,7 +8,7 @@ import java.awt.event.KeyListener;
 import java.util.Random;
 
 import javax.swing.BorderFactory;
-import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.Timer;
 import javax.swing.border.CompoundBorder;
@@ -26,7 +25,7 @@ import seoultech.se.tetris.blocks.SBlock;
 import seoultech.se.tetris.blocks.TBlock;
 import seoultech.se.tetris.blocks.ZBlock;
 
-public class Board extends JFrame {
+public class Board extends JPanel {
 
 	private static final long serialVersionUID = 2434035659171694595L;
 	
@@ -46,9 +45,6 @@ public class Board extends JFrame {
 	private static final int initInterval = 1000;
 	
 	public Board() {
-		super("SeoulTech SE Tetris");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
 		//Board display setting.
 		pane = new JTextPane();
 		pane.setEditable(false);
@@ -57,7 +53,6 @@ public class Board extends JFrame {
 				BorderFactory.createLineBorder(Color.GRAY, 10),
 				BorderFactory.createLineBorder(Color.DARK_GRAY, 5));
 		pane.setBorder(border);
-		this.getContentPane().add(pane, BorderLayout.CENTER);
 		
 		//Document default style.
 		styleSet = new SimpleAttributeSet();
