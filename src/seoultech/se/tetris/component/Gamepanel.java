@@ -1,6 +1,6 @@
 package seoultech.se.tetris.component;
 
-import java.awt.*;
+// import java.awt.*;
 import javax.swing.JPanel;
 
 public class Gamepanel extends JPanel{
