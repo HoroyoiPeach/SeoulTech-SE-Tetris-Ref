@@ -5,8 +5,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class Menupanel extends JPanel{
-    public Menupanel(Maincontainer maincontainer) {
+public class Settingpanel extends JPanel{
+    public Settingpanel(Maincontainer maincontainer) {
         setLayout(new GridBagLayout());
         setBackground(Color.CYAN);
         setBorder(BorderFactory.createEmptyBorder(20,20,20,20)); 
@@ -23,7 +23,7 @@ public class Menupanel extends JPanel{
         exitbutton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                maincontainer.exitMenuEnterStart();
+                maincontainer.exitSettingEnterStart();
             }
         });
     }

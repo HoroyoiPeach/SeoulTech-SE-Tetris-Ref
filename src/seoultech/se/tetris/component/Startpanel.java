@@ -25,10 +25,12 @@ public class Startpanel extends JPanel{
         titlelabel.setForeground(Color.WHITE);
 
         // Title 컴포넌트 위치를 위한 제약사항
-        GridBagConstraints titlegbc = new GridBagConstraints();
-        titlegbc.gridx = 0; titlegbc.gridy = 0; // grid[0][0]에 위치
-        titlegbc.fill = GridBagConstraints.NONE;
-        titlegbc.weightx = 0.0; titlegbc.weighty = 0.3; // 수직 화면의 30% 차지하게 조정
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.gridy = 0; // grid[0][0]에 위치
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0.0; gbc.weighty = 0.3; // 수직 화면의 30% 차지하게 조정
+
+        add(titlelabel, gbc);  // 타이틀은 위쪽에
 
         // Button 컴포넌트 만들기
         JPanel buttonpanel = new JPanel();
@@ -61,14 +63,11 @@ public class Startpanel extends JPanel{
         selectlist = new ArrayList<>(List.of(startbutton, menubutton, scoreboardbutton, exitbutton));
 
         // Button 컴포넌트 위치를 위한 제약사항
-        GridBagConstraints buttongbc = new GridBagConstraints();
-        buttongbc.gridx = 0; buttongbc.gridy = 1; // grid[0][1]에 위치
-        buttongbc.fill = GridBagConstraints.NONE;
-        buttongbc.weightx = 0.0; buttongbc.weighty = 0.7; // 수직 화면의 70% 차지하게 조정
+        gbc.gridx = 0; gbc.gridy = 1; // grid[0][1]에 위치
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0.0; gbc.weighty = 0.7; // 수직 화면의 70% 차지하게 조정
 
-        // 메인 패널에 컴포넌트 배치
-        add(titlelabel, titlegbc);  // 타이틀은 위쪽에
-        add(buttonpanel, buttongbc); // 버튼들은 중앙에
+        add(buttonpanel, gbc); // 버튼들은 중앙에
 
         playerKeyListener = new PlayerKeyListener();
 		addKeyListener(playerKeyListener);
@@ -129,7 +128,7 @@ public class Startpanel extends JPanel{
                 this.maincontainer.exitStartEnterGame();
                 break;
             case 1:
-                this.maincontainer.exitStartEnterMenu();
+                this.maincontainer.exitStartEnterSetting();
                 break;
             case 2:
                 this.maincontainer.exitStartEnterScoreboard();
