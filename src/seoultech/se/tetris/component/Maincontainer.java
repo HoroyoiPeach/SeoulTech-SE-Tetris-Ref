@@ -2,8 +2,7 @@ package seoultech.se.tetris.component;
 
 import javax.swing.*;
 import java.awt.*;
-// import java.awt.event.ActionEvent;
-// import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 // 창을 구성하는 클래스입니다.
 public class Maincontainer extends JFrame{
@@ -13,6 +12,10 @@ public class Maincontainer extends JFrame{
     private CardLayout cardlayout; // 추후 mainpanel에 추가될 panel끼리 전환하기 위한 기반입니다. 현재는 코드에 큰 영향이 없습니다.
     private Startpanel startpanel; // 시작 시 보여질 화면 panel입니다.
     private Gamepanel gamepanel; // 게임 화면 panel입니다.
+    private Menupanel menupanel;
+    private Scoreboardpanel scoreboardpanel;
+
+    public ArrayList<Integer> scoreboard;
 
     public Maincontainer() {
         setTitle("SeoulTech SE Tetris"); // 프로그램 이름 설정
@@ -41,5 +44,58 @@ public class Maincontainer extends JFrame{
         mainpanel.revalidate(); // 변경사항을 재계산
         mainpanel.repaint(); // 변경사항 화면에 다시 그리기
         cardlayout.show(mainpanel, "GameScreen");
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override 
+            public void run() {
+                gamepanel.requestFocusInWindow();
+                System.out.println(gamepanel.requestFocusInWindow());
+            }
+        });
+    }
+    // Menu 버튼 상호작용 함수
+    public void exitStartEnterMenu() {
+        menupanel = new Menupanel(this);
+        mainpanel.add(menupanel, "MenuScreen");
+        mainpanel.remove(startpanel);
+        mainpanel.revalidate();
+        mainpanel.repaint();
+        cardlayout.show(mainpanel, "MenuScreen");
+    }
+    public void exitMenuEnterStart() {
+        startpanel = new Startpanel(this);
+        mainpanel.add(startpanel, "StartScreen");
+        mainpanel.remove(menupanel);
+        mainpanel.revalidate();
+        mainpanel.repaint();
+        cardlayout.show(mainpanel, "StartScreen");
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override 
+            public void run() {
+                startpanel.requestFocusInWindow();
+            }
+        });
+    }
+    // Scoreboard 버튼 상호작용 함수
+    public void exitStartEnterScoreboard() {
+        scoreboardpanel = new Scoreboardpanel(this);
+        mainpanel.add(scoreboardpanel, "ScoreboardScreen");
+        mainpanel.remove(startpanel);
+        mainpanel.revalidate();
+        mainpanel.repaint();
+        cardlayout.show(mainpanel, "ScoreboardScreen");
+    }
+    public void  exitScoreboardEnterStart() {
+        startpanel = new Startpanel(this);
+        mainpanel.add(startpanel, "StartScreen");
+        mainpanel.remove(scoreboardpanel);
+        mainpanel.revalidate();
+        mainpanel.repaint();
+        cardlayout.show(mainpanel, "StartScreen");
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override 
+            public void run() {
+                startpanel.requestFocusInWindow();
+            }
+        });
     }
 }
