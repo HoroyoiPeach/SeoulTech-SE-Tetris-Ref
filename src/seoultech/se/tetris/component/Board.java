@@ -8,7 +8,6 @@ import java.awt.event.KeyListener;
 import java.util.Random;
 
 import javax.swing.BorderFactory;
-import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.Timer;
 import javax.swing.border.CompoundBorder;
@@ -25,7 +24,7 @@ import seoultech.se.tetris.blocks.SBlock;
 import seoultech.se.tetris.blocks.TBlock;
 import seoultech.se.tetris.blocks.ZBlock;
 
-public class Board extends JPanel {
+public class Board extends JTextPane {
 
 	private static final long serialVersionUID = 2434035659171694595L;
 	
@@ -33,7 +32,6 @@ public class Board extends JPanel {
 	public static final int WIDTH = 10;
 	public static final char BORDER_CHAR = 'X';
 	
-	private JTextPane pane;
 	private int[][] board;
 	private KeyListener playerKeyListener;
 	private SimpleAttributeSet styleSet;
@@ -46,13 +44,12 @@ public class Board extends JPanel {
 	
 	public Board() {
 		//Board display setting.
-		pane = new JTextPane();
-		pane.setEditable(false);
-		pane.setBackground(Color.BLACK);
+		setEditable(false);
+		setBackground(Color.BLACK);
 		CompoundBorder border = BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(Color.GRAY, 10),
 				BorderFactory.createLineBorder(Color.DARK_GRAY, 5));
-		pane.setBorder(border);
+		setBorder(border);
 		
 		//Document default style.
 		styleSet = new SimpleAttributeSet();
@@ -108,7 +105,7 @@ public class Board extends JPanel {
 	}
 	
 	private void placeBlock() {
-		StyledDocument doc = pane.getStyledDocument();
+		StyledDocument doc = this.getStyledDocument();
 		SimpleAttributeSet styles = new SimpleAttributeSet();
 		StyleConstants.setForeground(styles, curr.getColor());
 		for(int j=0; j<curr.height(); j++) {
@@ -172,10 +169,10 @@ public class Board extends JPanel {
 			sb.append("\n");
 		}
 		for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR);
-		pane.setText(sb.toString());
-		StyledDocument doc = pane.getStyledDocument();
+		this.setText(sb.toString());
+		StyledDocument doc = this.getStyledDocument();
 		doc.setParagraphAttributes(0, doc.getLength(), styleSet, false);
-		pane.setStyledDocument(doc);
+		this.setStyledDocument(doc);
 	}
 	
 	public void reset() {
