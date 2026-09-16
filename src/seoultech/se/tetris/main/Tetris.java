@@ -1,13 +1,12 @@
 package seoultech.se.tetris.main;
 
-import seoultech.se.tetris.component.*;;
-// import seoultech.se.tetris.component.Board;
+import seoultech.se.tetris.component.Board;
 
 public class Tetris {
 
 	public static void main(String[] args) {
-		Maincontainer maincontainer = new Maincontainer();
-		maincontainer.setVisible(true);
-		maincontainer.enterStart();
+		Board main = new Board();
+		main.setSize(400, 500);
+		main.setVisible(true);
 	}
 }
