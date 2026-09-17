@@ -62,12 +62,7 @@ public class Maincontainer extends JFrame{
         mainpanel.revalidate();
         mainpanel.repaint();
         cardlayout.show(mainpanel, "StartScreen");
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override 
-            public void run() {
-                startpanel.requestFocusInWindow();
-            }
-        });
+        startpanel.requestFocusInWindow();
     }
     // Scoreboard 버튼 상호작용 함수
     public void exitStartEnterScoreboard() {
@@ -85,11 +80,6 @@ public class Maincontainer extends JFrame{
         mainpanel.revalidate();
         mainpanel.repaint();
         cardlayout.show(mainpanel, "StartScreen");
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override 
-            public void run() {
-                startpanel.requestFocusInWindow();
-            }
-        });
+        startpanel.requestFocusInWindow();
     }
 }

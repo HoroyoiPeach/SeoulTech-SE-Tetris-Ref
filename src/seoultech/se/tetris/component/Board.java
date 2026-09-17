@@ -9,6 +9,7 @@ import java.util.Random;
 
 import javax.swing.BorderFactory;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.CompoundBorder;
 import javax.swing.text.SimpleAttributeSet;
@@ -32,17 +33,21 @@ public class Board extends JTextPane {
 	public static final int WIDTH = 10;
 	public static final char BORDER_CHAR = 'X';
 	
+	private Gamepanel gamepanel;
 	private int[][] board;
+	private Color[][] colors;
 	private KeyListener playerKeyListener;
 	private SimpleAttributeSet styleSet;
 	private Timer timer;
 	private Block curr;
+	private StyledDocument doc;
+	protected Block next;
 	int x = 3; //Default Position.
 	int y = 0;
 	
 	private static final int initInterval = 1000;
 	
-	public Board() {
+	public Board(Gamepanel gamepanel) {
 		//Board display setting.
 		setEditable(false);
 		setBackground(Color.BLACK);
@@ -58,7 +63,8 @@ public class Board extends JTextPane {
 		StyleConstants.setBold(styleSet, true);
 		StyleConstants.setForeground(styleSet, Color.WHITE);
 		StyleConstants.setAlignment(styleSet, StyleConstants.ALIGN_CENTER);
-		
+
+		this.gamepanel = gamepanel;
 		//Set timer for block drops.
 		timer = new Timer(initInterval, new ActionListener() {			
 			@Override
@@ -70,13 +76,22 @@ public class Board extends JTextPane {
 		
 		//Initialize board for the game.
 		board = new int[HEIGHT][WIDTH];
+		colors = new Color[HEIGHT+2][WIDTH+3];
 		playerKeyListener = new PlayerKeyListener();
 		addKeyListener(playerKeyListener);
 		setFocusable(true);
 		requestFocus();
-		
+		for(int t=0; t < HEIGHT+2; t++) {
+			for(int i=0; i < WIDTH+2; i++) {
+				colors[t][i] = Color.WHITE;
+			}
+		}
 		//Create the first block and draw.
+	}
+	public void boardStart() {
 		curr = getRandomBlock();
+		next = getRandomBlock();
+		this.gamepanel.refreshNextBlock();
 		placeBlock();
 		drawBoard();
 		timer.start();
@@ -105,74 +120,159 @@ public class Board extends JTextPane {
 	}
 	
 	private void placeBlock() {
-		StyledDocument doc = this.getStyledDocument();
 		SimpleAttributeSet styles = new SimpleAttributeSet();
 		StyleConstants.setForeground(styles, curr.getColor());
 		for(int j=0; j<curr.height(); j++) {
-			int rows = y+j == 0 ? 0 : y+j-1;
-			int offset = rows * (WIDTH+3) + x + 1;
-			doc.setCharacterAttributes(offset, curr.width(), styles, true);
 			for(int i=0; i<curr.width(); i++) {
-				board[y+j][x+i] = curr.getShape(i, j);
+				if (curr.getShape(i, j) > 0) {
+					board[y+j][x+i] += curr.getShape(i, j);
+					colors[y+j+1][x+i+1] = curr.getColor();
+				}
 			}
 		}
 	}
 	
 	private void eraseCurr() {
-		for(int i=x; i<x+curr.width(); i++) {
-			for(int j=y; j<y+curr.height(); j++) {
-				board[j][i] = 0;
+		SimpleAttributeSet styles = new SimpleAttributeSet();
+		StyleConstants.setForeground(styles, Color.WHITE);
+		for(int j=0; j<curr.height(); j++) {
+			for(int i=0; i<curr.width(); i++) {
+				if (curr.getShape(i, j) > 0) {
+					board[j+y][i+x] = 0;
+					colors[j+y+1][i+x+1] = Color.WHITE; // TODO
+				}
 			}
 		}
 	}
 
+	protected boolean canDown() {
+		if(y < HEIGHT - curr.height()) {
+			for(int j=0; j<curr.height(); j++) {
+				for(int i=0; i<curr.width(); i++) {
+					if ((curr.getShape(i, j) + board[y+j+1][x+i]) > 1) return false;
+				}
+			}
+			return true;
+		} else return false;
+	}
+
+	protected boolean canRight() {
+		if(x < WIDTH - curr.width()) {
+			for(int j=0; j<curr.height(); j++) {
+				for(int i=0; i<curr.width(); i++) {
+					if ((curr.getShape(i, j) + board[y+j][x+i+1]) > 1) return false;
+				}
+			}
+			return true;
+		} else return false;
+	}
+
+	protected boolean canLeft() {
+		if(x > 0) {
+			for(int j=0; j<curr.height(); j++) {
+				for(int i=0; i<curr.width(); i++) {
+					if ((curr.getShape(i, j) + board[y+j][x+i-1]) > 1) return false;
+				}
+			}
+			return true;
+		} else return false;
+	}
+
+	protected boolean canRotate() {
+		boolean returned = false;
+		int dx = ((x + curr.height()) > WIDTH) ? WIDTH - curr.height() : x;
+		int dy = ((y + curr.width()) > HEIGHT) ? HEIGHT - curr.width() : y;
+		for (int i = 0; i< curr.width(); i++) {
+			for (int j = 0; j < curr.height(); j++) {
+				int boardx = dx+curr.height()-j-1;
+				int boardy = dy+i;
+				if (((board[boardy][boardx] + curr.getShape(i, j)) > 1) && returned) return false;
+				else if (((board[boardy][boardx] + curr.getShape(i, j)) > 1) && !returned) {
+					dy -= (curr.width()-i);
+					i = 0; j = 0;
+					returned = true;
+				}
+			}
+		}
+		// ISSUE: 재활용 측면에서 고칠 필요가 존재
+		x = dx;
+		y = dy;
+		return true;
+	}
+
 	protected void moveDown() {
 		eraseCurr();
-		if(y < HEIGHT - curr.height()) y++;
+		if (canDown()) y++;
 		else {
 			placeBlock();
-			curr = getRandomBlock();
+			curr = next;
+			next = getRandomBlock();
+			this.gamepanel.refreshNextBlock();
 			x = 3;
 			y = 0;
 		}
 		placeBlock();
 	}
-	
 	protected void moveRight() {
 		eraseCurr();
-		if(x < WIDTH - curr.width()) x++;
+		if (canRight()) x++;
 		placeBlock();
 	}
 
 	protected void moveLeft() {
 		eraseCurr();
-		if(x > 0) {
-			x--;
+		if (canLeft()) x--;
+		placeBlock();
+	}
+
+	protected void rotate() {
+		eraseCurr();
+		if (canRotate()) {
+			curr.rotate();
 		}
 		placeBlock();
 	}
 
 	public void drawBoard() {
-		StringBuffer sb = new StringBuffer();
-		for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR);
-		sb.append("\n");
-		for(int i=0; i < board.length; i++) {
-			sb.append(BORDER_CHAR);
-			for(int j=0; j < board[i].length; j++) {
-				if(board[i][j] == 1) {
-					sb.append("O");
-				} else {
-					sb.append(" ");
+		//SwingUtilities.invokeLater((java.lang.Runnable) () -> {
+		//	try {
+				StringBuffer sb = new StringBuffer();
+				for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR); // 윗쪽 보더
+				sb.append("\n");
+				for(int i=0; i < board.length; i++) {
+					sb.append(BORDER_CHAR); // 왼쪽 보더
+					for(int j=0; j < board[i].length; j++) {
+						if(board[i][j] == 1) {
+							sb.append("O");
+						} else {
+							sb.append(" ");
+						}
+					}
+					sb.append(BORDER_CHAR); // 오른쪽 보더
+					sb.append("\n");
 				}
-			}
-			sb.append(BORDER_CHAR);
-			sb.append("\n");
-		}
-		for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR);
-		this.setText(sb.toString());
-		StyledDocument doc = this.getStyledDocument();
-		doc.setParagraphAttributes(0, doc.getLength(), styleSet, false);
-		this.setStyledDocument(doc);
+				for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR); // 아래쪽 보더
+				this.setText(sb.toString());
+				doc = this.getStyledDocument();
+				doc.setParagraphAttributes(0, doc.getLength(), styleSet, false);
+				int currentpoint = 0;
+				for(int i=0; i < HEIGHT+2; i++) {
+					for(int j=0; j < WIDTH+3; j++) {
+						if(j == WIDTH+2) {
+							currentpoint++;
+							continue;
+						}
+						SimpleAttributeSet style = new SimpleAttributeSet();
+						StyleConstants.setForeground(style, colors[i][j]);
+						doc.setCharacterAttributes(currentpoint, 1, style, false);
+						currentpoint++;
+					}
+				}
+				this.setStyledDocument(doc);
+	//		} catch (NullPointerException e) {
+	//			e.getStackTrace();
+	//		}
+	//	});
 	}
 	
 	public void reset() {
@@ -201,8 +301,7 @@ public class Board extends JTextPane {
 				drawBoard();
 				break;
 			case KeyEvent.VK_UP:
-				eraseCurr();
-				curr.rotate();
+				rotate();
 				drawBoard();
 				break;
 			}
