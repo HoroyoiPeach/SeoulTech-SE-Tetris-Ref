@@ -103,7 +103,7 @@ public class Board extends JTextPane {
 
 	private Block getRandomBlock() {
 		Random rnd = new Random(System.currentTimeMillis());
-		int block = rnd.nextInt(6);
+		int block = rnd.nextInt(7);
 		switch(block) {
 		case 0:
 			return new IBlock();
@@ -302,11 +302,13 @@ public class Board extends JTextPane {
 	}
 
 	protected void isgameover() {
+		OUTER:
 		for (int i = 0; i < next.height(); i++) {
 			for (int j = 0; j < next.width(); j++) {
 				if ((board[i][j+3] + next.getShape(j, i) > 1) && (timer != null)) {
 					timer.stop();
 					gamepanel.gameOver();
+					break OUTER;
 				}
 			}
 		}

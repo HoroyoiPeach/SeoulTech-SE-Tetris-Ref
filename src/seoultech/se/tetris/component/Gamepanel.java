@@ -1,6 +1,12 @@
 package seoultech.se.tetris.component;
 
 import java.awt.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -11,7 +17,6 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 public class Gamepanel extends JPanel{
-    private int score;
     private Board board;
     private JTextPane nextblockpanel;
     private JTextPane scorepanel;
@@ -19,6 +24,9 @@ public class Gamepanel extends JPanel{
     private SimpleAttributeSet styleSetScore1;
     private SimpleAttributeSet styleSetScore2;
     private Maincontainer maincontainer;
+    private int score;
+    private String usrname = "Player";
+    private Path path;
 
     public Gamepanel(Maincontainer maincontainer) {
         setLayout(new GridBagLayout());
@@ -120,6 +128,18 @@ public class Gamepanel extends JPanel{
     }
 
     protected void gameOver() {
+        saveScore();
         maincontainer.exitGameEnterStart();
-    } 
+    }
+
+    protected void saveScore() {
+        path = Paths.get("tetris_score.txt");
+        String str = "\n" + this.usrname + ":" + this.score;
+        try {
+            Files.write(path, Arrays.asList(str), 
+                StandardOpenOption.CREATE, StandardOpenOption.APPEND); // 파일이 없으면 새로 만들고(CREATE), 있으면 맨 뒤에 이어 붙임(APPEND)
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

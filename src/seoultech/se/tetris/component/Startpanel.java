@@ -74,6 +74,7 @@ public class Startpanel extends JPanel{
 		setFocusable(true);
 		requestFocus();
     }
+    
     public class PlayerKeyListener implements KeyListener {
 		@Override
 		public void keyTyped(KeyEvent e) {

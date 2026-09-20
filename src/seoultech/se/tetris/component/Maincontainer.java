@@ -2,7 +2,6 @@ package seoultech.se.tetris.component;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 
 // 창을 구성하는 클래스입니다.
 public class Maincontainer extends JFrame{
@@ -15,8 +14,6 @@ public class Maincontainer extends JFrame{
     private Settingpanel settingpanel;
     private Scoreboardpanel scoreboardpanel;
 
-    public ArrayList<Integer> scoreboard;
-
     public Maincontainer() {
         setTitle("SeoulTech SE Tetris"); // 프로그램 이름 설정
         setSize(WIDTH, HEIGHT); // 띄워질 터미널 창 크기 지정
@@ -25,8 +22,11 @@ public class Maincontainer extends JFrame{
         
         cardlayout = new CardLayout();
         mainpanel = new JPanel(cardlayout); // container에 띄우기 위한 빈 panel
+        mainpanel.setPreferredSize(new Dimension(WIDTH, HEIGHT));
         mainpanel.setBackground(Color.BLACK);
         add(mainpanel, BorderLayout.CENTER); // container에 mainpanel 추가
+        pack();
+        setVisible(true);
     }
 
     public void enterStart() { // 게임이 시작됨을 알리는 메소드
@@ -35,6 +35,7 @@ public class Maincontainer extends JFrame{
         mainpanel.revalidate(); // 변경사항을 재계산
         mainpanel.repaint(); // 변경사항 화면에 다시 그리기
         cardlayout.show(mainpanel, "StartScreen");
+        startpanel.requestFocusInWindow();
     }
     // Start 버튼 상호작용 함수
     public void exitStartEnterGame() { // 시작화면에서 시작 버튼을 눌러 게임화면으로 들어감을 알리는 메소드
@@ -49,12 +50,11 @@ public class Maincontainer extends JFrame{
     public void exitGameEnterStart() {
         startpanel = new Startpanel(this);
         mainpanel.add(startpanel, "StartScreen");
-        mainpanel.remove(gamepanel);
+        if (gamepanel != null && gamepanel.getParent() != null) mainpanel.remove(gamepanel);
         mainpanel.revalidate();
         mainpanel.repaint();
         cardlayout.show(mainpanel, "StartScreen");
         startpanel.requestFocusInWindow();
-        if (gamepanel != null) gamepanel = null; // 강제로 GC 유발시키기
     }
     // Setting 버튼 상호작용 함수
     public void exitStartEnterSetting() {
@@ -82,6 +82,7 @@ public class Maincontainer extends JFrame{
         mainpanel.revalidate();
         mainpanel.repaint();
         cardlayout.show(mainpanel, "ScoreboardScreen");
+        scoreboardpanel.requestFocusInWindow();
     }
     public void  exitScoreboardEnterStart() {
         startpanel = new Startpanel(this);
