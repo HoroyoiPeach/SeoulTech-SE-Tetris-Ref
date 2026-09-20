@@ -61,9 +61,10 @@ public class Board extends JTextPane {
 		//Document default style.
 		styleSet = new SimpleAttributeSet();
 		StyleConstants.setFontSize(styleSet, 18);
-		StyleConstants.setFontFamily(styleSet, "Courier");
+		StyleConstants.setFontFamily(styleSet, "Monospaced");
 		StyleConstants.setBold(styleSet, true);
 		StyleConstants.setForeground(styleSet, Color.WHITE);
+		StyleConstants.setLineSpacing(styleSet, -0.1f);
 		StyleConstants.setAlignment(styleSet, StyleConstants.ALIGN_CENTER);
 
 		this.gamepanel = gamepanel;

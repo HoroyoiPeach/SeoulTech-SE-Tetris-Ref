@@ -55,7 +55,7 @@ public class Gamepanel extends JPanel{
         gbc.weightx = 1.0; gbc.weighty = 0.25;
         gbc.insets = new Insets(0, 0, 10, 0);
         nonboard.add(nextblockpanel, gbc);
-        
+
         scorepanel = new JTextPane();
 		scorepanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         scorepanel.setOpaque(false);
@@ -102,8 +102,9 @@ public class Gamepanel extends JPanel{
 		StyledDocument doc = this.nextblockpanel.getStyledDocument();
         SimpleAttributeSet styleSet = new SimpleAttributeSet();
         StyleConstants.setFontSize(styleSet, 18);
-		StyleConstants.setFontFamily(styleSet, "Courier");
+		StyleConstants.setFontFamily(styleSet, "Monospaced");
 		StyleConstants.setBold(styleSet, true);
+        StyleConstants.setLineSpacing(styleSet, -0.1f);
 		StyleConstants.setForeground(styleSet, this.board.next.getColor());
 		StyleConstants.setAlignment(styleSet, StyleConstants.ALIGN_CENTER);
 		doc.setParagraphAttributes(0, doc.getLength(), styleSet, false);
