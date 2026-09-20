@@ -36,7 +36,7 @@ public class Maincontainer extends JFrame{
         mainpanel.repaint(); // 변경사항 화면에 다시 그리기
         cardlayout.show(mainpanel, "StartScreen");
     }
-
+    // Start 버튼 상호작용 함수
     public void exitStartEnterGame() { // 시작화면에서 시작 버튼을 눌러 게임화면으로 들어감을 알리는 메소드
         gamepanel = new Gamepanel(this); // Gamepanel 객체 생성 및 container 객체 넘겨주기
         mainpanel.add(gamepanel, "GameScreen"); // mainpanel에 gamepanel 추가
@@ -45,6 +45,16 @@ public class Maincontainer extends JFrame{
         mainpanel.repaint(); // 변경사항 화면에 다시 그리기
         cardlayout.show(mainpanel, "GameScreen");
         gamepanel.requestFocusInWindow();
+    }
+    public void exitGameEnterStart() {
+        startpanel = new Startpanel(this);
+        mainpanel.add(startpanel, "StartScreen");
+        mainpanel.remove(gamepanel);
+        mainpanel.revalidate();
+        mainpanel.repaint();
+        cardlayout.show(mainpanel, "StartScreen");
+        startpanel.requestFocusInWindow();
+        if (gamepanel != null) gamepanel = null; // 강제로 GC 유발시키기
     }
     // Setting 버튼 상호작용 함수
     public void exitStartEnterSetting() {

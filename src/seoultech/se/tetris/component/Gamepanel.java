@@ -11,14 +11,21 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 public class Gamepanel extends JPanel{
+    private int score;
     private Board board;
     private JTextPane nextblockpanel;
+    private JTextPane scorepanel;
+    private StyledDocument docScore;
+    private SimpleAttributeSet styleSetScore1;
+    private SimpleAttributeSet styleSetScore2;
+    private Maincontainer maincontainer;
 
     public Gamepanel(Maincontainer maincontainer) {
         setLayout(new GridBagLayout());
         setBackground(Color.LIGHT_GRAY);
         setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
 
+        this.maincontainer = maincontainer;
         board = new Board(this);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0; gbc.gridy = 0;
@@ -41,15 +48,31 @@ public class Gamepanel extends JPanel{
         nextblockpanel.setBackground(Color.BLACK);
         nextblockpanel.setAlignmentY(Component.CENTER_ALIGNMENT);
 		CompoundBorder border = BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(Color.GRAY, 10),
-				BorderFactory.createLineBorder(Color.DARK_GRAY, 5));
+			BorderFactory.createLineBorder(Color.GRAY, 10),
+			BorderFactory.createLineBorder(Color.DARK_GRAY, 5));
 		nextblockpanel.setBorder(border);
         gbc.gridx = 0; gbc.gridy = 0;
         gbc.weightx = 1.0; gbc.weighty = 0.25;
         gbc.insets = new Insets(0, 0, 10, 0);
         nonboard.add(nextblockpanel, gbc);
-        // TODO: score 내용 채우기
-        JTextPane scorepanel = new JTextPane();
+        
+        scorepanel = new JTextPane();
+		scorepanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        scorepanel.setOpaque(false);
+        scorepanel.setText("Scores\n" + this.score);
+        docScore = scorepanel.getStyledDocument();
+        styleSetScore1 = new SimpleAttributeSet();
+        styleSetScore2 = new SimpleAttributeSet();
+		StyleConstants.setFontSize(styleSetScore1, 18);
+		StyleConstants.setFontFamily(styleSetScore1, "Courier");
+		StyleConstants.setForeground(styleSetScore1, Color.GRAY);
+		StyleConstants.setAlignment(styleSetScore1, StyleConstants.ALIGN_CENTER);
+		docScore.setParagraphAttributes(0, 1, styleSetScore1, false);
+        StyleConstants.setFontSize(styleSetScore2, 18);
+		StyleConstants.setFontFamily(styleSetScore2, "Courier");
+		StyleConstants.setForeground(styleSetScore2, Color.RED);
+		StyleConstants.setAlignment(styleSetScore2, StyleConstants.ALIGN_RIGHT);
+        docScore.setParagraphAttributes(7, 1, styleSetScore2, false);
         gbc.gridy = 1; gbc.weighty = 0.15;
         gbc.insets = new Insets(10, 0, 10, 0);
         nonboard.add(scorepanel, gbc);
@@ -65,11 +88,8 @@ public class Gamepanel extends JPanel{
     public boolean requestFocusInWindow() {
         return this.board.requestFocusInWindow();
     }
-    public void refreshNextBlock() {
-        drawNextBoard();
-    }
     
-    public void drawNextBoard() {
+    protected void drawNextBoard() {
 		StringBuffer sb = new StringBuffer();
 		for(int i=0; i < this.board.next.height(); i++) {
             for(int j=0; j < this.board.next.width(); j++) {
@@ -89,4 +109,16 @@ public class Gamepanel extends JPanel{
 		doc.setParagraphAttributes(0, doc.getLength(), styleSet, false);
 		this.nextblockpanel.setStyledDocument(doc);
 	}
+
+    protected void drawScore() {
+        this.score = board.score;
+        this.scorepanel.setText("Scores\n" + this.score);
+        docScore = scorepanel.getStyledDocument();
+		docScore.setParagraphAttributes(0, 1, styleSetScore1, false);
+        docScore.setParagraphAttributes(7, 1, styleSetScore2, false);
+    }
+
+    protected void gameOver() {
+        maincontainer.exitGameEnterStart();
+    } 
 }

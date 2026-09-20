@@ -5,11 +5,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Arrays;
 import java.util.Random;
 
 import javax.swing.BorderFactory;
 import javax.swing.JTextPane;
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.border.CompoundBorder;
 import javax.swing.text.SimpleAttributeSet;
@@ -32,6 +32,7 @@ public class Board extends JTextPane {
 	public static final int HEIGHT = 20;
 	public static final int WIDTH = 10;
 	public static final char BORDER_CHAR = 'X';
+	public static final int PLUSPOINT = 100;
 	
 	private Gamepanel gamepanel;
 	private int[][] board;
@@ -41,6 +42,7 @@ public class Board extends JTextPane {
 	private Timer timer;
 	private Block curr;
 	private StyledDocument doc;
+	protected int score;
 	protected Block next;
 	int x = 3; //Default Position.
 	int y = 0;
@@ -88,10 +90,11 @@ public class Board extends JTextPane {
 		}
 		//Create the first block and draw.
 	}
+
 	public void boardStart() {
 		curr = getRandomBlock();
 		next = getRandomBlock();
-		this.gamepanel.refreshNextBlock();
+		this.gamepanel.drawNextBoard();
 		placeBlock();
 		drawBoard();
 		timer.start();
@@ -205,14 +208,17 @@ public class Board extends JTextPane {
 		if (canDown()) y++;
 		else {
 			placeBlock();
+			eraseLine();
+			isgameover();
 			curr = next;
 			next = getRandomBlock();
-			this.gamepanel.refreshNextBlock();
+			this.gamepanel.drawNextBoard();
 			x = 3;
 			y = 0;
 		}
 		placeBlock();
 	}
+
 	protected void moveRight() {
 		eraseCurr();
 		if (canRight()) x++;
@@ -233,50 +239,76 @@ public class Board extends JTextPane {
 		placeBlock();
 	}
 
-	public void drawBoard() {
-		//SwingUtilities.invokeLater((java.lang.Runnable) () -> {
-		//	try {
-				StringBuffer sb = new StringBuffer();
-				for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR); // 윗쪽 보더
-				sb.append("\n");
-				for(int i=0; i < board.length; i++) {
-					sb.append(BORDER_CHAR); // 왼쪽 보더
-					for(int j=0; j < board[i].length; j++) {
-						if(board[i][j] == 1) {
-							sb.append("O");
-						} else {
-							sb.append(" ");
-						}
-					}
-					sb.append(BORDER_CHAR); // 오른쪽 보더
-					sb.append("\n");
+	protected void drawBoard() {
+		StringBuffer sb = new StringBuffer();
+		for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR); // 윗쪽 보더
+		sb.append("\n");
+		for(int i=0; i < board.length; i++) {
+			sb.append(BORDER_CHAR); // 왼쪽 보더
+			for(int j=0; j < board[i].length; j++) {
+				if(board[i][j] == 1) {
+					sb.append("O");
+				} else {
+					sb.append(" ");
 				}
-				for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR); // 아래쪽 보더
-				this.setText(sb.toString());
-				doc = this.getStyledDocument();
-				doc.setParagraphAttributes(0, doc.getLength(), styleSet, false);
-				int currentpoint = 0;
-				for(int i=0; i < HEIGHT+2; i++) {
-					for(int j=0; j < WIDTH+3; j++) {
-						if(j == WIDTH+2) {
-							currentpoint++;
-							continue;
-						}
-						SimpleAttributeSet style = new SimpleAttributeSet();
-						StyleConstants.setForeground(style, colors[i][j]);
-						doc.setCharacterAttributes(currentpoint, 1, style, false);
-						currentpoint++;
-					}
+			}
+			sb.append(BORDER_CHAR); // 오른쪽 보더
+			sb.append("\n");
+		}
+		for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR); // 아래쪽 보더
+		this.setText(sb.toString());
+		doc = this.getStyledDocument();
+		doc.setParagraphAttributes(0, doc.getLength(), styleSet, false);
+		int currentpoint = 0;
+		for(int i=0; i < HEIGHT+2; i++) {
+			for(int j=0; j < WIDTH+3; j++) {
+				if(j == WIDTH+2) {
+					currentpoint++;
+					continue;
 				}
-				this.setStyledDocument(doc);
-	//		} catch (NullPointerException e) {
-	//			e.getStackTrace();
-	//		}
-	//	});
+				SimpleAttributeSet style = new SimpleAttributeSet();
+				StyleConstants.setForeground(style, colors[i][j]);
+				doc.setCharacterAttributes(currentpoint, 1, style, false);
+				currentpoint++;
+			}
+		}
+		this.setStyledDocument(doc);
 	}
 	
-	public void reset() {
-		this.board = new int[20][10];
+	protected void reset() {
+		this.board = new int[HEIGHT][WIDTH];
+	}
+
+	protected void eraseLine() {
+		int[] tmp;
+		Color[] tmp_c;
+		for (int i = 0; i < HEIGHT; i++) {
+			int[] line = board[i];
+			if (!Arrays.stream(line).anyMatch(t -> t == 0)) {
+				for (int j = i - 1; j >= 0; j--) {
+					tmp = board[j];
+					tmp_c = colors[j];
+					board[j+1] = tmp;
+					colors[j+1] = tmp_c;
+				}
+				board[0] = new int[WIDTH];
+				colors[0] = new Color[WIDTH+3];
+				Arrays.fill(colors[0], Color.WHITE);
+				this.score += PLUSPOINT;
+				this.gamepanel.drawScore();
+			}
+		}
+	}
+
+	protected void isgameover() {
+		for (int i = 0; i < next.height(); i++) {
+			for (int j = 0; j < next.width(); j++) {
+				if ((board[i][j+3] + next.getShape(j, i) > 1) && (timer != null)) {
+					timer.stop();
+					gamepanel.gameOver();
+				}
+			}
+		}
 	}
 
 	public class PlayerKeyListener implements KeyListener {
