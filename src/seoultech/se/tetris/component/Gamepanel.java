@@ -9,16 +9,17 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
 import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
-import javax.swing.border.CompoundBorder;
+import javax.swing.SwingConstants;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 public class Gamepanel extends JPanel{
-    private Board board;
-    private JTextPane nextblockpanel;
+    protected Board board;
+    private Nextblockpanel nextblockpanel;
     private JTextPane scorepanel;
     private StyledDocument docScore;
     private SimpleAttributeSet styleSetScore1;
@@ -27,44 +28,24 @@ public class Gamepanel extends JPanel{
     private int score;
     private String usrname = "Player";
     private Path path;
+    private JPanel pausepanel;
 
     public Gamepanel(Maincontainer maincontainer) {
-        setLayout(new GridBagLayout());
+        setLayout(null);
         setBackground(Color.LIGHT_GRAY);
-        setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
 
         this.maincontainer = maincontainer;
         board = new Board(this);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0; gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 0.55; gbc.weighty = 0.0;
-        add(board, gbc);
+        board.setBounds(10, 10, 330, 580);
+        add(board);
 
-        JPanel emptypanel = new JPanel();
-        emptypanel.setOpaque(false);
-        gbc.gridx = 1; gbc.weightx = 0.05;
-        add(emptypanel, gbc);
-
-        JPanel nonboard = new JPanel();
-        nonboard.setLayout(new GridBagLayout());
-        nonboard.setOpaque(false);
-        gbc.gridx = 2; gbc.weightx = 0.4;
-        add(nonboard, gbc);
-
-        nextblockpanel = new JTextPane();
-        nextblockpanel.setBackground(Color.BLACK);
-        nextblockpanel.setAlignmentY(Component.CENTER_ALIGNMENT);
-		CompoundBorder border = BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(Color.GRAY, 10),
-			BorderFactory.createLineBorder(Color.DARK_GRAY, 5));
-		nextblockpanel.setBorder(border);
-        gbc.gridx = 0; gbc.gridy = 0;
-        gbc.weightx = 1.0; gbc.weighty = 0.25;
-        gbc.insets = new Insets(0, 0, 10, 0);
-        nonboard.add(nextblockpanel, gbc);
+        nextblockpanel = new Nextblockpanel(this);
+        nextblockpanel.setBounds(350, 10, 140, 140);
+        add(nextblockpanel);
 
         scorepanel = new JTextPane();
+        scorepanel.setEditable(false);
+        scorepanel.setBounds(350, 160, 140, 70);
 		scorepanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
         scorepanel.setOpaque(false);
         scorepanel.setText("Scores\n" + this.score);
@@ -81,42 +62,18 @@ public class Gamepanel extends JPanel{
 		StyleConstants.setForeground(styleSetScore2, Color.RED);
 		StyleConstants.setAlignment(styleSetScore2, StyleConstants.ALIGN_RIGHT);
         docScore.setParagraphAttributes(7, 1, styleSetScore2, false);
-        gbc.gridy = 1; gbc.weighty = 0.15;
-        gbc.insets = new Insets(10, 0, 10, 0);
-        nonboard.add(scorepanel, gbc);
-
-        JPanel emptypanel2 = new JPanel();
-        emptypanel2.setOpaque(false);
-        gbc.gridy = 2; gbc.weighty = 0.6;
-        nonboard.add(emptypanel2, gbc);
+        add(scorepanel);
 
         board.boardStart();
     }
+
     @Override
     public boolean requestFocusInWindow() {
         return this.board.requestFocusInWindow();
     }
     
     protected void drawNextBoard() {
-		StringBuffer sb = new StringBuffer();
-		for(int i=0; i < this.board.next.height(); i++) {
-            for(int j=0; j < this.board.next.width(); j++) {
-                if(this.board.next.getShape(j, i) == 0) sb.append(" ");
-                else sb.append("O");
-            }
-            if(i != this.board.next.width()-1) sb.append("\n");
-        }
-        this.nextblockpanel.setText(sb.toString());
-		StyledDocument doc = this.nextblockpanel.getStyledDocument();
-        SimpleAttributeSet styleSet = new SimpleAttributeSet();
-        StyleConstants.setFontSize(styleSet, 18);
-		StyleConstants.setFontFamily(styleSet, "Monospaced");
-		StyleConstants.setBold(styleSet, true);
-        StyleConstants.setLineSpacing(styleSet, -0.1f);
-		StyleConstants.setForeground(styleSet, this.board.next.getColor());
-		StyleConstants.setAlignment(styleSet, StyleConstants.ALIGN_CENTER);
-		doc.setParagraphAttributes(0, doc.getLength(), styleSet, false);
-		this.nextblockpanel.setStyledDocument(doc);
+		nextblockpanel.drawNextBoard();
 	}
 
     protected void drawScore() {
@@ -141,5 +98,48 @@ public class Gamepanel extends JPanel{
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    protected void gamePause() {
+        pausepanel = new JPanel() {
+		    @Override 
+		    protected  void paintComponent(Graphics g) {
+			    super.paintComponent(g);
+			    Graphics2D g2d = (Graphics2D) g;
+			    g2d.setColor(new Color(255, 255, 255, 50));
+			    g2d.fillRect(0, 0, board.getWidth(), board.getHeight());
+		    }
+	    };
+        pausepanel.setOpaque(false);
+        pausepanel.setBounds(10, 10, 330, 580);
+        pausepanel.setLayout(new GridBagLayout());
+        JPanel textpanel = new JPanel(new GridLayout(3, 1, 0, 10));
+        textpanel.setPreferredSize(new Dimension(330, 150));
+        textpanel.setOpaque(false);
+        JLabel pause = new JLabel("- PAUSED -", SwingConstants.CENTER);
+        pause.setFont(new Font("Courier", Font.BOLD, 20));
+        pause.setForeground(Color.WHITE);
+        JLabel explane = new JLabel("press p to resume", SwingConstants.CENTER);
+        explane.setFont(new Font("Courier", Font.BOLD, 13));
+        explane.setForeground(Color.WHITE);
+        JLabel exit = new JLabel("press enter to exit", SwingConstants.CENTER);
+        exit.setFont(new Font("Courier", Font.BOLD, 13));
+        exit.setForeground(Color.WHITE);
+
+        textpanel.add(pause);
+        textpanel.add(explane);
+        textpanel.add(exit);
+        pausepanel.add(textpanel);
+
+        this.add(pausepanel);
+        this.setComponentZOrder(pausepanel, 0);
+        this.revalidate();
+        this.repaint();
+    }
+
+    protected void gameRestart() {
+        this.remove(pausepanel);
+        revalidate();
+        repaint();
     }
 }
