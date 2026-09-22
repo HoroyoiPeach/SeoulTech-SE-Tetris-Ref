@@ -1,21 +1,27 @@
 package seoultech.se.tetris.component;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Insets;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.geom.AffineTransform;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import javax.swing.BorderFactory;
-import javax.swing.JFrame;
-import javax.swing.JTextPane;
+import javax.swing.JComponent;
 import javax.swing.Timer;
 import javax.swing.border.CompoundBorder;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 
 import seoultech.se.tetris.blocks.Block;
 import seoultech.se.tetris.blocks.IBlock;
@@ -26,47 +32,38 @@ import seoultech.se.tetris.blocks.SBlock;
 import seoultech.se.tetris.blocks.TBlock;
 import seoultech.se.tetris.blocks.ZBlock;
 
-public class Board extends JFrame {
-
+public class Board extends JComponent {
 	private static final long serialVersionUID = 2434035659171694595L;
 	
 	public static final int HEIGHT = 20;
 	public static final int WIDTH = 10;
 	public static final char BORDER_CHAR = 'X';
+	public static final int PLUSPOINT = 100;
 	
-	private JTextPane pane;
+	private Gamepanel gamepanel;
 	private int[][] board;
+	private ArrayList<TextChunk> textChunks;
 	private KeyListener playerKeyListener;
-	private SimpleAttributeSet styleSet;
 	private Timer timer;
 	private Block curr;
+	private boolean isPaused = false;
+	protected int score;
+	protected Block next;
 	int x = 3; //Default Position.
 	int y = 0;
 	
 	private static final int initInterval = 1000;
 	
-	public Board() {
-		super("SeoulTech SE Tetris");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
+	public Board(Gamepanel gamepanel) {
 		//Board display setting.
-		pane = new JTextPane();
-		pane.setEditable(false);
-		pane.setBackground(Color.BLACK);
+		setBackground(Color.BLACK);
 		CompoundBorder border = BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(Color.GRAY, 10),
 				BorderFactory.createLineBorder(Color.DARK_GRAY, 5));
-		pane.setBorder(border);
-		this.getContentPane().add(pane, BorderLayout.CENTER);
+		setBorder(border);
 		
 		//Document default style.
-		styleSet = new SimpleAttributeSet();
-		StyleConstants.setFontSize(styleSet, 18);
-		StyleConstants.setFontFamily(styleSet, "Courier");
-		StyleConstants.setBold(styleSet, true);
-		StyleConstants.setForeground(styleSet, Color.WHITE);
-		StyleConstants.setAlignment(styleSet, StyleConstants.ALIGN_CENTER);
-		
+		this.gamepanel = gamepanel;
 		//Set timer for block drops.
 		timer = new Timer(initInterval, new ActionListener() {			
 			@Override
@@ -78,21 +75,51 @@ public class Board extends JFrame {
 		
 		//Initialize board for the game.
 		board = new int[HEIGHT][WIDTH];
+		textChunks = new ArrayList<>();
+
 		playerKeyListener = new PlayerKeyListener();
 		addKeyListener(playerKeyListener);
 		setFocusable(true);
 		requestFocus();
-		
-		//Create the first block and draw.
+	}
+
+	public void boardStart() {
 		curr = getRandomBlock();
+		next = getRandomBlock();
+		this.gamepanel.drawNextBoard();
+		StringBuffer sb = new StringBuffer();
+		for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR); // 윗쪽 보더
+		sb.append("\n");
+		for(int i=0; i < board.length; i++) {
+			sb.append(BORDER_CHAR); // 왼쪽 보더
+			for(int j=0; j < board[i].length; j++) sb.append(" ");
+			sb.append(BORDER_CHAR); // 오른쪽 보더
+			sb.append("\n");
+		}
+		for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR); // 아래쪽 보더
+		this.setText(sb.toString());
 		placeBlock();
 		drawBoard();
 		timer.start();
 	}
 
+	protected void togglePause() {
+		if (isPaused) {
+			this.timer.start();
+			gamepanel.gameRestart();
+			this.requestFocusInWindow();
+			isPaused = false;
+		} else {
+			this.timer.stop();
+			gamepanel.gamePause();
+			this.requestFocusInWindow();
+			isPaused = true;
+		}
+	}
+
 	private Block getRandomBlock() {
 		Random rnd = new Random(System.currentTimeMillis());
-		int block = rnd.nextInt(6);
+		int block = rnd.nextInt(7);
 		switch(block) {
 		case 0:
 			return new IBlock();
@@ -113,78 +140,163 @@ public class Board extends JFrame {
 	}
 	
 	private void placeBlock() {
-		StyledDocument doc = pane.getStyledDocument();
 		SimpleAttributeSet styles = new SimpleAttributeSet();
 		StyleConstants.setForeground(styles, curr.getColor());
 		for(int j=0; j<curr.height(); j++) {
-			int rows = y+j == 0 ? 0 : y+j-1;
-			int offset = rows * (WIDTH+3) + x + 1;
-			doc.setCharacterAttributes(offset, curr.width(), styles, true);
 			for(int i=0; i<curr.width(); i++) {
-				board[y+j][x+i] = curr.getShape(i, j);
+				if (curr.getShape(i, j) > 0) {
+					board[y+j][x+i] += curr.getShape(i, j);
+					textChunks.set((y+j+1)*(WIDTH+3)+x+i+1, new TextChunk("O", curr.getColor()));
+				}
 			}
 		}
 	}
 	
 	private void eraseCurr() {
-		for(int i=x; i<x+curr.width(); i++) {
-			for(int j=y; j<y+curr.height(); j++) {
-				board[j][i] = 0;
+		SimpleAttributeSet styles = new SimpleAttributeSet();
+		StyleConstants.setForeground(styles, Color.WHITE);
+		for(int j=0; j<curr.height(); j++) {
+			for(int i=0; i<curr.width(); i++) {
+				if (curr.getShape(i, j) > 0) {
+					board[j+y][i+x] = 0;
+					textChunks.set((y+j+1)*(WIDTH+3)+x+i+1, new TextChunk(" ", Color.WHITE)); // TODO
+				}
 			}
 		}
 	}
 
+	protected boolean canDown() {
+		if(y < HEIGHT - curr.height()) {
+			for(int j=0; j<curr.height(); j++) {
+				for(int i=0; i<curr.width(); i++) {
+					if ((curr.getShape(i, j) + board[y+j+1][x+i]) > 1) return false;
+				}
+			}
+			return true;
+		} else return false;
+	}
+
+	protected boolean canRight() {
+		if(x < WIDTH - curr.width()) {
+			for(int j=0; j<curr.height(); j++) {
+				for(int i=0; i<curr.width(); i++) {
+					if ((curr.getShape(i, j) + board[y+j][x+i+1]) > 1) return false;
+				}
+			}
+			return true;
+		} else return false;
+	}
+
+	protected boolean canLeft() {
+		if(x > 0) {
+			for(int j=0; j<curr.height(); j++) {
+				for(int i=0; i<curr.width(); i++) {
+					if ((curr.getShape(i, j) + board[y+j][x+i-1]) > 1) return false;
+				}
+			}
+			return true;
+		} else return false;
+	}
+
+	protected boolean canRotate() {
+		boolean returned = false;
+		int dx = ((x + curr.height()) > WIDTH) ? WIDTH - curr.height() : x;
+		int dy = ((y + curr.width()) > HEIGHT) ? HEIGHT - curr.width() : y;
+		for (int i = 0; i< curr.width(); i++) {
+			for (int j = 0; j < curr.height(); j++) {
+				int boardx = dx+curr.height()-j-1;
+				int boardy = dy+i;
+				if (((board[boardy][boardx] + curr.getShape(i, j)) > 1) && returned) return false;
+				else if (((board[boardy][boardx] + curr.getShape(i, j)) > 1) && !returned) {
+					dy -= (curr.width()-i);
+					i = 0; j = 0;
+					returned = true;
+				}
+			}
+		}
+		// ISSUE: 재활용 측면에서 고칠 필요가 존재
+		x = dx;
+		y = dy;
+		return true;
+	}
+
 	protected void moveDown() {
 		eraseCurr();
-		if(y < HEIGHT - curr.height()) y++;
+		if (canDown()) y++;
 		else {
 			placeBlock();
-			curr = getRandomBlock();
+			eraseLine();
+			isgameover();
+			curr = next;
+			next = getRandomBlock();
+			this.gamepanel.drawNextBoard();
 			x = 3;
 			y = 0;
 		}
 		placeBlock();
 	}
-	
+
 	protected void moveRight() {
 		eraseCurr();
-		if(x < WIDTH - curr.width()) x++;
+		if (canRight()) x++;
 		placeBlock();
 	}
 
 	protected void moveLeft() {
 		eraseCurr();
-		if(x > 0) {
-			x--;
+		if (canLeft()) x--;
+		placeBlock();
+	}
+
+	protected void rotate() {
+		eraseCurr();
+		if (canRotate()) {
+			curr.rotate();
 		}
 		placeBlock();
 	}
 
-	public void drawBoard() {
-		StringBuffer sb = new StringBuffer();
-		for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR);
-		sb.append("\n");
-		for(int i=0; i < board.length; i++) {
-			sb.append(BORDER_CHAR);
-			for(int j=0; j < board[i].length; j++) {
-				if(board[i][j] == 1) {
-					sb.append("O");
-				} else {
-					sb.append(" ");
-				}
-			}
-			sb.append(BORDER_CHAR);
-			sb.append("\n");
-		}
-		for(int t=0; t<WIDTH+2; t++) sb.append(BORDER_CHAR);
-		pane.setText(sb.toString());
-		StyledDocument doc = pane.getStyledDocument();
-		doc.setParagraphAttributes(0, doc.getLength(), styleSet, false);
-		pane.setStyledDocument(doc);
+	protected void drawBoard() {
+		this.repaint();
 	}
 	
-	public void reset() {
-		this.board = new int[20][10];
+	protected void reset() {
+		this.board = new int[HEIGHT][WIDTH];
+	}
+
+	protected void eraseLine() {
+		int[] tmp;
+		ArrayList<TextChunk> tmp_t = new ArrayList<>();
+		for (int i = 0; i < HEIGHT; i++) {
+			int[] line = board[i];
+			if (!Arrays.stream(line).anyMatch(t -> t == 0)) {
+				for (int j = i - 1; j >= 0; j--) {
+					tmp = board[j];
+					tmp_t = new ArrayList<>(textChunks.subList((j+1)*(WIDTH+3), (j+2)*(WIDTH+3)));
+					board[j+1] = tmp;
+					textChunks.subList((j+2)*(WIDTH+3), (j+3)*(WIDTH+3)).clear();
+					textChunks.addAll((j+1)*(WIDTH+3), tmp_t);
+				}
+				board[0] = new int[WIDTH];
+				for (int k = WIDTH+3+1; k < 2*(WIDTH+2); k++) textChunks.set(k, new TextChunk(" ", Color.WHITE));
+				this.score += PLUSPOINT;
+				this.gamepanel.drawScore();
+			}
+		}
+	}
+
+	protected void isgameover() {
+		OUTER:
+		for (int i = 0; i < next.height(); i++) {
+			for (int j = 0; j < next.width(); j++) {
+				if ((board[i][j+3] + next.getShape(j, i) > 1) && (timer != null)) {
+					timer.stop();
+					if (timer != null) timer = null;
+					gamepanel.gameOver();
+					break OUTER;
+				}
+			}
+		}
 	}
 
 	public class PlayerKeyListener implements KeyListener {
@@ -195,24 +307,37 @@ public class Board extends JFrame {
 
 		@Override
 		public void keyPressed(KeyEvent e) {
+			if (isPaused) {
+				if (e.getKeyCode() == KeyEvent.VK_P) {
+					togglePause();
+					return;
+				} else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					timer.stop();
+					if (timer != null) timer = null;
+					gamepanel.gameOver();
+					return;
+				} else return;
+			}
 			switch(e.getKeyCode()) {
-			case KeyEvent.VK_DOWN:
-				moveDown();
-				drawBoard();
-				break;
-			case KeyEvent.VK_RIGHT:
-				moveRight();
-				drawBoard();
-				break;
-			case KeyEvent.VK_LEFT:
-				moveLeft();
-				drawBoard();
-				break;
-			case KeyEvent.VK_UP:
-				eraseCurr();
-				curr.rotate();
-				drawBoard();
-				break;
+				case KeyEvent.VK_DOWN:
+					moveDown();
+					drawBoard();
+					break;
+				case KeyEvent.VK_RIGHT:
+					moveRight();
+					drawBoard();
+					break;
+				case KeyEvent.VK_LEFT:
+					moveLeft();
+					drawBoard();
+					break;
+				case KeyEvent.VK_UP:
+					rotate();
+					drawBoard();
+					break;
+				case KeyEvent.VK_P:
+					togglePause();
+					break;
 			}
 		}
 
@@ -221,5 +346,77 @@ public class Board extends JFrame {
 			
 		}
 	}
-	
+
+	@Override 
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		if (textChunks.isEmpty()) return;
+
+		Graphics2D g2d = (Graphics2D) g;
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+		// 1. 현재 설정된 보더의 두께(여백) 정보 가져오기
+		Insets insets = getInsets();
+        int availableWidth = getWidth() - insets.left - insets.right;
+        int availableHeight = getHeight() - insets.top - insets.bottom;
+
+        if (availableWidth <= 0 || availableHeight <= 0) return;
+
+        // 2. 기준이 될 대형 고정 폰트 설정 (100포인트)
+        Font baseFont = new Font("Monospaced", Font.BOLD, 100);
+        FontMetrics fm = g2d.getFontMetrics(baseFont);
+
+        // 3. [개행 호환 핵심] 가상의 100포인트 상태에서 전체 다중 행의 가로/세로 총 크기 계산
+        int maxOriginalWidth = fm.stringWidth(" ".repeat(WIDTH+2));
+        int singleLineHeight = (int) (fm.getHeight() * 0.8);
+        int totalOriginalHeight = singleLineHeight * (HEIGHT+2); // 모든 줄의 높이 합산
+
+        // 4. 컴포넌트 실제 크기 대비 늘려야 할 비율 계산
+        double scaleX = (double) availableWidth / maxOriginalWidth;
+        double scaleY = (double) availableHeight / totalOriginalHeight;
+
+        // 5. 그래픽 변형(Scale) 적용 및 그리기
+        AffineTransform oldTransform = g2d.getTransform();
+        g2d.setFont(baseFont);
+        g2d.setColor(Color.BLACK);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+        g2d.translate(insets.left, insets.top); // 원점 이동
+        g2d.scale(scaleX, scaleY);               // 통째로 확대/축소
+
+        // 6. 반복문을 돌며 한 줄씩 Y 좌표를 내려가며 그리기
+        int currentY = fm.getAscent(); 
+		int currentX = 0;
+        for (TextChunk chunk : textChunks) {
+			if ("\n".equals(chunk.text)) {
+				currentX = 0; // 한 줄 안에서 글자가 이어질 X 좌표 변수
+				currentY += singleLineHeight;
+				continue;
+			}
+			g2d.setColor(chunk.color); // 콕 집은 그 색상으로 변경 🎨
+			g2d.drawString(chunk.text, currentX, currentY); // 그리기
+			currentX += fm.stringWidth(chunk.text); 
+        }
+        g2d.setTransform(oldTransform); // 그래픽 상태 복원
+    }
+
+	public void setText(String text) {
+		if (text == null || text.isEmpty()) {
+			this.textChunks = new ArrayList<>();
+		} else {
+			for (String str : text.split("")) {
+				textChunks.add(new TextChunk(str, Color.WHITE));
+			}
+		}
+		repaint();
+	}
+
+	public class TextChunk {
+		String text = " ";
+		Color color = Color.WHITE;
+
+		public TextChunk(String text, Color color) {
+			this.text = text;
+			this.color = color;
+		}
+	}
 }
