@@ -45,6 +45,7 @@ public class Board extends JComponent {
 	private ArrayList<TextChunk> textChunks;
 	private KeyListener playerKeyListener;
 	private Timer timer;
+	private final Random random = new Random();
 	private Block curr;
 	private boolean isPaused = false;
 	protected int score;
@@ -118,8 +119,7 @@ public class Board extends JComponent {
 	}
 
 	private Block getRandomBlock() {
-		Random rnd = new Random(System.currentTimeMillis());
-		int block = rnd.nextInt(7);
+		int block = random.nextInt(7);
 		switch(block) {
 		case 0:
 			return new IBlock();
@@ -199,25 +199,29 @@ public class Board extends JComponent {
 	}
 
 	protected boolean canRotate() {
-		boolean returned = false;
-		int dx = ((x + curr.height()) > WIDTH) ? WIDTH - curr.height() : x;
-		int dy = ((y + curr.width()) > HEIGHT) ? HEIGHT - curr.width() : y;
-		for (int i = 0; i< curr.width(); i++) {
-			for (int j = 0; j < curr.height(); j++) {
-				int boardx = dx+curr.height()-j-1;
-				int boardy = dy+i;
-				if (((board[boardy][boardx] + curr.getShape(i, j)) > 1) && returned) return false;
-				else if (((board[boardy][boardx] + curr.getShape(i, j)) > 1) && !returned) {
-					dy -= (curr.width()-i);
-					i = 0; j = 0;
-					returned = true;
+		return rotationPosition() != null;
+	}
+
+	private int[] rotationPosition() {
+		int rotatedWidth = curr.height();
+		int rotatedHeight = curr.width();
+		int rotatedX = Math.min(x, WIDTH - rotatedWidth);
+		int startY = Math.min(y, HEIGHT - rotatedHeight);
+
+		for (int rotatedY = startY; rotatedY >= Math.max(0, startY - rotatedHeight); rotatedY--) {
+			boolean clear = true;
+			for (int row = 0; row < curr.height() && clear; row++) {
+				for (int col = 0; col < curr.width(); col++) {
+					if (curr.getShape(col, row) > 0
+							&& board[rotatedY + col][rotatedX + curr.height() - row - 1] != 0) {
+						clear = false;
+						break;
+					}
 				}
 			}
+			if (clear) return new int[] {rotatedX, rotatedY};
 		}
-		// ISSUE: 재활용 측면에서 고칠 필요가 존재
-		x = dx;
-		y = dy;
-		return true;
+		return null;
 	}
 
 	protected void moveDown() {
@@ -226,7 +230,7 @@ public class Board extends JComponent {
 		else {
 			placeBlock();
 			eraseLine();
-			isgameover();
+			if (isgameover()) return;
 			curr = next;
 			next = getRandomBlock();
 			this.gamepanel.drawNextBoard();
@@ -250,7 +254,10 @@ public class Board extends JComponent {
 
 	protected void rotate() {
 		eraseCurr();
-		if (canRotate()) {
+		int[] position = rotationPosition();
+		if (position != null) {
+			x = position[0];
+			y = position[1];
 			curr.rotate();
 		}
 		placeBlock();
@@ -285,18 +292,20 @@ public class Board extends JComponent {
 		}
 	}
 
-	protected void isgameover() {
-		OUTER:
+	protected boolean isgameover() {
 		for (int i = 0; i < next.height(); i++) {
 			for (int j = 0; j < next.width(); j++) {
-				if ((board[i][j+3] + next.getShape(j, i) > 1) && (timer != null)) {
-					timer.stop();
-					if (timer != null) timer = null;
-					gamepanel.gameOver();
-					break OUTER;
+				if (board[i][j+3] + next.getShape(j, i) > 1) {
+					if (timer != null) {
+						timer.stop();
+						timer = null;
+						gamepanel.gameOver();
+					}
+					return true;
 				}
 			}
 		}
+		return false;
 	}
 
 	public class PlayerKeyListener implements KeyListener {

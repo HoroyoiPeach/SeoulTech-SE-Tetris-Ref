@@ -92,20 +92,20 @@ public class Scoreboardpanel extends JPanel{
                     if (line.trim().isEmpty()) continue;
                     String[] tokens = line.split(":");
                     if (tokens.length == 2) {
-                        GameScore gamescore = new GameScore(tokens[0].trim(), Integer.parseInt(tokens[1].trim()));
-                        loadedScores.add(gamescore);
+                        try {
+                            GameScore gamescore = new GameScore(tokens[0].trim(), Integer.parseInt(tokens[1].trim()));
+                            loadedScores.add(gamescore);
+                        } catch (NumberFormatException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-                loadedScores.sort(null);
-                totalusernum = loadedScores.size();
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
             }
-        } else {
-            totalusernum = 0;
         }
+        loadedScores.sort(null);
+        totalusernum = loadedScores.size();
         StringBuffer sb = new StringBuffer();
         for (int j = 0; j < Math.min(totalusernum, 10); j++) {
             sb.append(loadedScores.get(j).username + ": " + loadedScores.get(j).score + "\n");
