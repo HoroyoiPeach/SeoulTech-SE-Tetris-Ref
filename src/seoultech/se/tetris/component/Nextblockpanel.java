@@ -1,5 +1,7 @@
 package seoultech.se.tetris.component;
 
+import static seoultech.se.tetris.component.Maincontainer.changeColor;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -22,10 +24,10 @@ public class Nextblockpanel extends JComponent{
     public Nextblockpanel(Gamepanel gamepanel) {
         this.gamepanel = gamepanel;
         this.textChunks = new ArrayList<>();
-        setBackground(Color.BLACK);
+        setBackground(changeColor(Color.BLACK));
         CompoundBorder border = BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(Color.GRAY, 10),
-			BorderFactory.createLineBorder(Color.DARK_GRAY, 5));
+			BorderFactory.createLineBorder(changeColor(Color.GRAY), 10),
+			BorderFactory.createLineBorder(changeColor(Color.DARK_GRAY), 5));
 		setBorder(border);
     }
 
@@ -60,7 +62,7 @@ public class Nextblockpanel extends JComponent{
         // 5. 그래픽 변형(Scale) 적용 및 그리기
         AffineTransform oldTransform = g2d.getTransform();
         g2d.setFont(baseFont);
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(changeColor(Color.BLACK));
         g2d.fillRect(0, 0, getWidth(), getHeight());
         g2d.translate(insets.left, insets.top); // 원점 이동
         g2d.scale(scaleX, scaleY);               // 통째로 확대/축소
@@ -74,14 +76,14 @@ public class Nextblockpanel extends JComponent{
 				currentY += singleLineHeight;
 				continue;
 			}
-			g2d.setColor(chunk.color); // 콕 집은 그 색상으로 변경 🎨
+			g2d.setColor(changeColor(chunk.color)); // 콕 집은 그 색상으로 변경 🎨
 			g2d.drawString(chunk.text, currentX, currentY); // 그리기
 			currentX += fm.stringWidth(chunk.text); 
         }
         g2d.setTransform(oldTransform); // 그래픽 상태 복원
     }
 
-    public class TextChunk {
+    private class TextChunk {
 		String text = " ";
 		Color color = Color.WHITE;
 
@@ -91,28 +93,28 @@ public class Nextblockpanel extends JComponent{
 		}
 	}
 
-    public void setText(String text) {
+    private void setText(String text) {
 		if (text == null || text.isEmpty()) {
 			this.textChunks = new ArrayList<>();
 		} else {
             textChunks = new ArrayList<>();
 			for (String str : text.split("")) {
-				textChunks.add(new TextChunk(str, gamepanel.board.next.getColor()));
+				textChunks.add(new TextChunk(str, gamepanel.getNextBlock().getColor()));
 			}
 		}
 		repaint();
 	}
 
-    public void drawNextBoard() {
+    protected void drawNextBoard() {
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < 6; i++) sb.append(" ");
         sb.append("\n");
         for (int i = 0; i < 6; i++) sb.append(" ");
         sb.append("\n");
-        for (int i = 0; i < this.gamepanel.board.next.height(); i++) {
+        for (int i = 0; i < gamepanel.getNextBlock().height(); i++) {
             sb.append(" ");
-            for (int j = 0; j < this.gamepanel.board.next.width(); j++) {
-                if (this.gamepanel.board.next.getShape(j, i) == 0) sb.append(" ");
+            for (int j = 0; j < gamepanel.getNextBlock().width(); j++) {
+                if (gamepanel.getNextBlock().getShape(j, i) == 0) sb.append(" ");
                 else sb.append("O");
             }
             sb.append("\n");

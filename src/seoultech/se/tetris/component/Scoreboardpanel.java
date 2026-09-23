@@ -5,6 +5,8 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
+import static seoultech.se.tetris.component.Maincontainer.changeColor;
+
 import java.awt.*;
 import java.awt.Insets;
 import java.awt.event.KeyEvent;
@@ -28,14 +30,14 @@ public class Scoreboardpanel extends JPanel{
 
     public Scoreboardpanel(Maincontainer maincontainer) {
         setLayout(null);
-        setBackground(Color.LIGHT_GRAY);
+        setBackground(changeColor(Color.LIGHT_GRAY));
         setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
         this.maincontainer = maincontainer;
 
         scorepanel = new JTextPane();
         scorepanel.setEditable(false);
         scorepanel.setBounds(10, 10, 480, 480);
-        scorepanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        scorepanel.setBorder(BorderFactory.createLineBorder(changeColor(Color.GRAY), 1));
         scorepanel.setOpaque(false);
         scorepanel.setMargin(new Insets(10, 10, 10, 10));
         drawScore();
@@ -46,13 +48,13 @@ public class Scoreboardpanel extends JPanel{
         buttonpanel.setOpaque(false); // 투명 배경
         JLabel exitbutton = new JLabel("EXIT", SwingConstants.CENTER);
         exitbutton.setFont(new Font("Courier", Font.BOLD, 20));
-        exitbutton.setForeground(Color.BLACK);
-        exitbutton.setBackground(Color.GRAY);
+        exitbutton.setForeground(changeColor(Color.BLACK));
+        exitbutton.setBackground(changeColor(Color.GRAY));
         exitbutton.setOpaque(true);
         JLabel resetbutton = new JLabel("RESET", SwingConstants.CENTER);
         resetbutton.setFont(new Font("Courier", Font.BOLD, 20));
-        resetbutton.setForeground(Color.BLACK);
-        resetbutton.setBackground(Color.GRAY);
+        resetbutton.setForeground(changeColor(Color.BLACK));
+        resetbutton.setBackground(changeColor(Color.GRAY));
         resetbutton.setOpaque(false);
         buttonpanel.add(resetbutton);
         buttonpanel.add(exitbutton);
@@ -119,7 +121,7 @@ public class Scoreboardpanel extends JPanel{
 		StyleConstants.setFontSize(styleSet, 25);
 		StyleConstants.setFontFamily(styleSet, "Monospaced");
         StyleConstants.setBold(styleSet, true);
-		StyleConstants.setForeground(styleSet, Color.BLACK);
+		StyleConstants.setForeground(styleSet, changeColor(Color.BLACK));
 		StyleConstants.setLineSpacing(styleSet, -0.1f);
         doc.setCharacterAttributes(0, doc.getLength(), styleSet, false);
         scorepanel.setStyledDocument(doc);

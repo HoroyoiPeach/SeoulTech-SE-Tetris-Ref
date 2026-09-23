@@ -1,6 +1,9 @@
 package seoultech.se.tetris.component;
 
 import javax.swing.*;
+
+import static seoultech.se.tetris.component.Maincontainer.changeColor;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -16,13 +19,13 @@ public class Startpanel extends JPanel{
     public Startpanel(Maincontainer maincontainer) {
         this.maincontainer = maincontainer;
 		setLayout(new GridBagLayout()); // 컴포넌트 간의 배치를 자유롭게 하기 위해서 GridBagLayout을 사용
-		setBackground(Color.LIGHT_GRAY); // background color로 light gray
+		setBackground(changeColor(Color.LIGHT_GRAY)); // background color로 light gray
 		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // padding 값 조절, 필요 시 제거 가능
 
 		// Title 컴포넌트 만들기
         JLabel titlelabel = new JLabel("TETRIS", SwingConstants.CENTER);
         titlelabel.setFont(new Font("Courier", Font.BOLD, 56));
-        titlelabel.setForeground(Color.WHITE);
+        titlelabel.setForeground(changeColor(Color.WHITE));
 
         // Title 컴포넌트 위치를 위한 제약사항
         GridBagConstraints gbc = new GridBagConstraints();
@@ -41,21 +44,21 @@ public class Startpanel extends JPanel{
         // Button 4개 추가하기
         JLabel startbutton = new JLabel("START", SwingConstants.CENTER);
         startbutton.setFont(new Font("Courier", Font.BOLD, 20));
-        startbutton.setForeground(Color.BLACK);
-        startbutton.setBackground(Color.GRAY);
+        startbutton.setForeground(changeColor(Color.BLACK));
+        startbutton.setBackground(changeColor(Color.GRAY));
         startbutton.setOpaque(true);
         JLabel menubutton = new JLabel("MENU", SwingConstants.CENTER);
         menubutton.setFont(new Font("Courier", Font.BOLD, 20));
-        menubutton.setForeground(Color.BLACK);
-        menubutton.setBackground(Color.GRAY);
+        menubutton.setForeground(changeColor(Color.BLACK));
+        menubutton.setBackground(changeColor(Color.GRAY));
         JLabel scoreboardbutton = new JLabel("SCORE", SwingConstants.CENTER);
         scoreboardbutton.setFont(new Font("Courier", Font.BOLD, 20));
-        scoreboardbutton.setForeground(Color.BLACK);
-        scoreboardbutton.setBackground(Color.GRAY);
+        scoreboardbutton.setForeground(changeColor(Color.BLACK));
+        scoreboardbutton.setBackground(changeColor(Color.GRAY));
         JLabel exitbutton = new JLabel("EXIT", SwingConstants.CENTER);
         exitbutton.setFont(new Font("Courier", Font.BOLD, 20));
-        exitbutton.setForeground(Color.BLACK);
-        exitbutton.setBackground(Color.GRAY);
+        exitbutton.setForeground(changeColor(Color.BLACK));
+        exitbutton.setBackground(changeColor(Color.GRAY));
         buttonpanel.add(startbutton);
         buttonpanel.add(menubutton);
         buttonpanel.add(scoreboardbutton);
@@ -75,7 +78,7 @@ public class Startpanel extends JPanel{
 		requestFocus();
     }
     
-    public class PlayerKeyListener implements KeyListener {
+    private class PlayerKeyListener implements KeyListener {
 		@Override
 		public void keyTyped(KeyEvent e) {
 		}
@@ -99,7 +102,7 @@ public class Startpanel extends JPanel{
 		public void keyReleased(KeyEvent e) {
 		}
 	}
-    protected void selectUp() {
+    private void selectUp() {
         selectlist.get(selected).setOpaque(false);
         if (selected <= 0) {
             selected = 3;
@@ -111,7 +114,7 @@ public class Startpanel extends JPanel{
         this.repaint();
         return;
     }
-    protected void selectDown() {
+    private void selectDown() {
         selectlist.get(selected).setOpaque(false);
         if (selected >= 3) {
             selected = 0;
@@ -123,7 +126,7 @@ public class Startpanel extends JPanel{
         this.repaint();
         return;
     }
-    protected void selectEnter() {
+    private void selectEnter() {
         switch (selected) {
             case 0:
                 this.maincontainer.exitStartEnterGame();

@@ -39,7 +39,7 @@ public class Maincontainer extends JFrame{
         startpanel.requestFocusInWindow();
     }
     // Start 버튼 상호작용 함수
-    public void exitStartEnterGame() { // 시작화면에서 시작 버튼을 눌러 게임화면으로 들어감을 알리는 메소드
+    protected void exitStartEnterGame() { // 시작화면에서 시작 버튼을 눌러 게임화면으로 들어감을 알리는 메소드
         gamepanel = new Gamepanel(this); // Gamepanel 객체 생성 및 container 객체 넘겨주기
         mainpanel.add(gamepanel, "GameScreen"); // mainpanel에 gamepanel 추가
         mainpanel.remove(startpanel); // 게임 시작 시에는 시작 화면이 불필요하므로, startpanel 제거하여 memory leaking 방지하기
@@ -48,7 +48,7 @@ public class Maincontainer extends JFrame{
         cardlayout.show(mainpanel, "GameScreen");
         gamepanel.requestFocusInWindow();
     }
-    public void exitGameEnterStart() {
+    protected void exitGameEnterStart() {
         startpanel = new Startpanel(this);
         mainpanel.add(startpanel, "StartScreen");
         if (gamepanel != null && gamepanel.getParent() != null) mainpanel.remove(gamepanel);
@@ -58,15 +58,16 @@ public class Maincontainer extends JFrame{
         startpanel.requestFocusInWindow();
     }
     // Setting 버튼 상호작용 함수
-    public void exitStartEnterSetting() {
+    protected void exitStartEnterSetting() {
         settingpanel = new Settingpanel(this);
         mainpanel.add(settingpanel, "MenuScreen");
         mainpanel.remove(startpanel);
         mainpanel.revalidate();
         mainpanel.repaint();
         cardlayout.show(mainpanel, "MenuScreen");
+        settingpanel.requestFocusInWindow();
     }
-    public void exitSettingEnterStart() {
+    protected void exitSettingEnterStart() {
         startpanel = new Startpanel(this);
         mainpanel.add(startpanel, "StartScreen");
         mainpanel.remove(settingpanel);
@@ -76,7 +77,7 @@ public class Maincontainer extends JFrame{
         startpanel.requestFocusInWindow();
     }
     // Scoreboard 버튼 상호작용 함수
-    public void exitStartEnterScoreboard() {
+    protected void exitStartEnterScoreboard() {
         scoreboardpanel = new Scoreboardpanel(this);
         mainpanel.add(scoreboardpanel, "ScoreboardScreen");
         mainpanel.remove(startpanel);
@@ -85,7 +86,7 @@ public class Maincontainer extends JFrame{
         cardlayout.show(mainpanel, "ScoreboardScreen");
         scoreboardpanel.requestFocusInWindow();
     }
-    public void exitScoreboardEnterStart() {
+    protected void exitScoreboardEnterStart() {
         startpanel = new Startpanel(this);
         mainpanel.add(startpanel, "StartScreen");
         mainpanel.remove(scoreboardpanel);
@@ -130,5 +131,9 @@ public class Maincontainer extends JFrame{
 
     public static void setColorPalette(int i) {
         colorPalette = i;
+    }
+
+    public static int getColorPalette() {
+        return colorPalette;
     }
 }
