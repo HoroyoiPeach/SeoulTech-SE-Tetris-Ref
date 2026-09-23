@@ -15,6 +15,7 @@ import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+import static seoultech.se.tetris.component.Maincontainer.changeColor;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -57,10 +58,10 @@ public class Board extends JComponent {
 	
 	public Board(Gamepanel gamepanel) {
 		//Board display setting.
-		setBackground(Color.BLACK);
+		setBackground(changeColor(Color.BLACK));
 		CompoundBorder border = BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(Color.GRAY, 10),
-				BorderFactory.createLineBorder(Color.DARK_GRAY, 5));
+				BorderFactory.createLineBorder(changeColor(Color.GRAY), 10),
+				BorderFactory.createLineBorder(changeColor(Color.DARK_GRAY), 5));
 		setBorder(border);
 		
 		//Document default style.
@@ -154,12 +155,12 @@ public class Board extends JComponent {
 	
 	private void eraseCurr() {
 		SimpleAttributeSet styles = new SimpleAttributeSet();
-		StyleConstants.setForeground(styles, Color.WHITE);
+		StyleConstants.setForeground(styles, changeColor(Color.WHITE));
 		for(int j=0; j<curr.height(); j++) {
 			for(int i=0; i<curr.width(); i++) {
 				if (curr.getShape(i, j) > 0) {
 					board[j+y][i+x] = 0;
-					textChunks.set((y+j+1)*(WIDTH+3)+x+i+1, new TextChunk(" ", Color.WHITE)); // TODO
+					textChunks.set((y+j+1)*(WIDTH+3)+x+i+1, new TextChunk(" ", changeColor(Color.WHITE)));
 				}
 			}
 		}

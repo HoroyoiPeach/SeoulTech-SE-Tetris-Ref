@@ -7,6 +7,7 @@ import java.awt.*;
 public class Maincontainer extends JFrame{
     private int HEIGHT = 600; // container height size
     private int WIDTH = 500; // container width size
+    private static int colorPalette = 0; // 0: 일반 색상, 1: 적색약, 2: 녹색약 (청색약은 희귀성으로 인해 미추가)
     private JPanel mainpanel; // container에 띄울 panel로 background color가 black인 아무것도 없는 panel입니다.
     private CardLayout cardlayout; // 추후 mainpanel에 추가될 panel끼리 전환하기 위한 기반입니다. 현재는 코드에 큰 영향이 없습니다.
     private Startpanel startpanel; // 시작 시 보여질 화면 panel입니다.
@@ -84,7 +85,7 @@ public class Maincontainer extends JFrame{
         cardlayout.show(mainpanel, "ScoreboardScreen");
         scoreboardpanel.requestFocusInWindow();
     }
-    public void  exitScoreboardEnterStart() {
+    public void exitScoreboardEnterStart() {
         startpanel = new Startpanel(this);
         mainpanel.add(startpanel, "StartScreen");
         mainpanel.remove(scoreboardpanel);
@@ -92,5 +93,42 @@ public class Maincontainer extends JFrame{
         mainpanel.repaint();
         cardlayout.show(mainpanel, "StartScreen");
         startpanel.requestFocusInWindow();
+    }
+
+    public static Color changeColor(Color exColor) {
+        Color newColor = exColor;
+        int r = exColor.getRed(); int g = exColor.getGreen();
+        int b = exColor.getBlue(); int a = exColor.getAlpha();
+        int newR; int newG; int newB; int newA;
+        switch (colorPalette) {
+            case 0:
+                return newColor;
+            case 1:
+                newR = r;
+                newG = (int) (0.5089 * r + 0.4911 * g);
+                newB = (int) (0.6174 * r - 0.6173 * g + b);
+                newA = a;
+                newR = Math.max(0, Math.min(255, newR));
+                newG = Math.max(0, Math.min(255, newG));
+                newB = Math.max(0, Math.min(255, newB));
+                newColor = new Color(newR, newG, newB, newA);
+                return newColor;  
+            case 2:
+                newR = r;
+                newG = (int) (0.2023 * r + 0.7977 * g);
+                newB = (int) (0.5174 * r - 0.5175 * g + b);
+                newA = a;
+                newR = Math.max(0, Math.min(255, newR));
+                newG = Math.max(0, Math.min(255, newG));
+                newB = Math.max(0, Math.min(255, newB));
+                newColor = new Color(newR, newG, newB, newA);
+                return newColor;
+            default:
+                return newColor;
+        }
+    }
+
+    public static void setColorPalette(int i) {
+        colorPalette = i;
     }
 }
