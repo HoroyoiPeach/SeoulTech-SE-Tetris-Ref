@@ -105,7 +105,7 @@ public class Startpanel extends JPanel{
     private void selectUp() {
         selectlist.get(selected).setOpaque(false);
         if (selected <= 0) {
-            selected = 3;
+            selected = selectlist.size() - 1;
         } else {
             selected--;
         }
@@ -116,7 +116,7 @@ public class Startpanel extends JPanel{
     }
     private void selectDown() {
         selectlist.get(selected).setOpaque(false);
-        if (selected >= 3) {
+        if (selected >= selectlist.size() - 1) {
             selected = 0;
         } else {
             selected++;

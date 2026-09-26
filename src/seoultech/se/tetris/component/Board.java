@@ -317,7 +317,7 @@ public class Board extends JComponent {
 		@Override
 		public void keyPressed(KeyEvent e) {
 			if (isPaused) {
-				if (e.getKeyCode() == KeyEvent.VK_P) {
+				if (e.getKeyCode() == Maincontainer.PAUSE) {
 					togglePause();
 					return;
 				} else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -327,26 +327,26 @@ public class Board extends JComponent {
 					return;
 				} else return;
 			}
-			switch(e.getKeyCode()) {
-				case KeyEvent.VK_DOWN:
-					moveDown();
-					drawBoard();
-					break;
-				case KeyEvent.VK_RIGHT:
-					moveRight();
-					drawBoard();
-					break;
-				case KeyEvent.VK_LEFT:
-					moveLeft();
-					drawBoard();
-					break;
-				case KeyEvent.VK_UP:
-					rotate();
-					drawBoard();
-					break;
-				case KeyEvent.VK_P:
-					togglePause();
-					break;
+			int i = e.getKeyCode();
+			if (i == Maincontainer.DOWN) {
+				moveDown();
+				drawBoard();
+				return;
+			} else if (i == Maincontainer.RIGHT) {
+				moveRight();
+				drawBoard();
+				return;
+			} else if (i == Maincontainer.LEFT) {
+				moveLeft();
+				drawBoard();
+				return;
+			} else if (i == Maincontainer.ROTATE) {
+				rotate();
+				drawBoard();
+				return;
+			} else if (i == Maincontainer.PAUSE) {
+				togglePause();
+				return;
 			}
 		}
 
