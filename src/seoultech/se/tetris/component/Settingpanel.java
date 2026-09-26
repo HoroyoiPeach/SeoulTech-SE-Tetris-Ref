@@ -574,7 +574,7 @@ public class Settingpanel extends JPanel{
                 public void keyPressed(KeyEvent e) {
                     int newKey = e.getKeyCode();
                     String keyName = KeyEvent.getKeyText(newKey);
-                    if (!Arrays.asList(currentKey).contains(newKey)) {
+                    if (!Arrays.asList(currentKey).contains(newKey) || newKey == currentKey[idx]) {
                         currentKey[idx] = newKey;
                         selectOption.get(idx).setText(keyName);
                         removeKeyListener(this);
