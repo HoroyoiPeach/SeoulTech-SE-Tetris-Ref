@@ -15,6 +15,7 @@ import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+import static seoultech.se.tetris.component.Maincontainer.changeColor;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -35,11 +36,10 @@ import seoultech.se.tetris.blocks.ZBlock;
 public class Board extends JComponent {
 	private static final long serialVersionUID = 2434035659171694595L;
 	
-	public static final int HEIGHT = 20;
-	public static final int WIDTH = 10;
-	public static final char BORDER_CHAR = 'X';
-	public static final int PLUSPOINT = 100;
-	
+	private static final int HEIGHT = 20;
+	private static final int WIDTH = 10;
+	private static final char BORDER_CHAR = 'X';
+	private static final int PLUSPOINT = 100;
 	private Gamepanel gamepanel;
 	private int[][] board;
 	private ArrayList<TextChunk> textChunks;
@@ -48,8 +48,8 @@ public class Board extends JComponent {
 	private final Random random = new Random();
 	private Block curr;
 	private boolean isPaused = false;
-	protected int score;
-	protected Block next;
+	private int score;
+	private Block next;
 	int x = 3; //Default Position.
 	int y = 0;
 	
@@ -57,10 +57,10 @@ public class Board extends JComponent {
 	
 	public Board(Gamepanel gamepanel) {
 		//Board display setting.
-		setBackground(Color.BLACK);
+		setBackground(changeColor(Color.BLACK));
 		CompoundBorder border = BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(Color.GRAY, 10),
-				BorderFactory.createLineBorder(Color.DARK_GRAY, 5));
+				BorderFactory.createLineBorder(changeColor(Color.GRAY), 10),
+				BorderFactory.createLineBorder(changeColor(Color.DARK_GRAY), 5));
 		setBorder(border);
 		
 		//Document default style.
@@ -159,7 +159,7 @@ public class Board extends JComponent {
 			for(int i=0; i<curr.width(); i++) {
 				if (curr.getShape(i, j) > 0) {
 					board[j+y][i+x] = 0;
-					textChunks.set((y+j+1)*(WIDTH+3)+x+i+1, new TextChunk(" ", Color.WHITE)); // TODO
+					textChunks.set((y+j+1)*(WIDTH+3)+x+i+1, new TextChunk(" ", Color.WHITE));
 				}
 			}
 		}
@@ -317,7 +317,7 @@ public class Board extends JComponent {
 		@Override
 		public void keyPressed(KeyEvent e) {
 			if (isPaused) {
-				if (e.getKeyCode() == KeyEvent.VK_P) {
+				if (e.getKeyCode() == Maincontainer.PAUSE) {
 					togglePause();
 					return;
 				} else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -327,26 +327,26 @@ public class Board extends JComponent {
 					return;
 				} else return;
 			}
-			switch(e.getKeyCode()) {
-				case KeyEvent.VK_DOWN:
-					moveDown();
-					drawBoard();
-					break;
-				case KeyEvent.VK_RIGHT:
-					moveRight();
-					drawBoard();
-					break;
-				case KeyEvent.VK_LEFT:
-					moveLeft();
-					drawBoard();
-					break;
-				case KeyEvent.VK_UP:
-					rotate();
-					drawBoard();
-					break;
-				case KeyEvent.VK_P:
-					togglePause();
-					break;
+			int i = e.getKeyCode();
+			if (i == Maincontainer.DOWN) {
+				moveDown();
+				drawBoard();
+				return;
+			} else if (i == Maincontainer.RIGHT) {
+				moveRight();
+				drawBoard();
+				return;
+			} else if (i == Maincontainer.LEFT) {
+				moveLeft();
+				drawBoard();
+				return;
+			} else if (i == Maincontainer.ROTATE) {
+				rotate();
+				drawBoard();
+				return;
+			} else if (i == Maincontainer.PAUSE) {
+				togglePause();
+				return;
 			}
 		}
 
@@ -387,7 +387,7 @@ public class Board extends JComponent {
         // 5. 그래픽 변형(Scale) 적용 및 그리기
         AffineTransform oldTransform = g2d.getTransform();
         g2d.setFont(baseFont);
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(changeColor(Color.BLACK));
         g2d.fillRect(0, 0, getWidth(), getHeight());
         g2d.translate(insets.left, insets.top); // 원점 이동
         g2d.scale(scaleX, scaleY);               // 통째로 확대/축소
@@ -401,7 +401,7 @@ public class Board extends JComponent {
 				currentY += singleLineHeight;
 				continue;
 			}
-			g2d.setColor(chunk.color); // 콕 집은 그 색상으로 변경 🎨
+			g2d.setColor(changeColor(chunk.color)); // 콕 집은 그 색상으로 변경 🎨
 			g2d.drawString(chunk.text, currentX, currentY); // 그리기
 			currentX += fm.stringWidth(chunk.text); 
         }
@@ -427,5 +427,13 @@ public class Board extends JComponent {
 			this.text = text;
 			this.color = color;
 		}
+	}
+
+	protected int getScore() {
+		return score;
+	}
+
+	protected Block getNextBlock() {
+		return next;
 	}
 }
