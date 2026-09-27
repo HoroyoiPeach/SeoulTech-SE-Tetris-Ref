@@ -574,6 +574,10 @@ public class Settingpanel extends JPanel{
                 public void keyPressed(KeyEvent e) {
                     int newKey = e.getKeyCode();
                     String keyName = KeyEvent.getKeyText(newKey);
+                    if (idx == 4 && newKey == KeyEvent.VK_ENTER) {
+                        text.setText("Enter Is Reserved for Exit");
+                        return;
+                    }
                     if (!Arrays.asList(currentKey).contains(newKey) || newKey == currentKey[idx]) {
                         currentKey[idx] = newKey;
                         selectOption.get(idx).setText(keyName);
@@ -588,16 +592,6 @@ public class Settingpanel extends JPanel{
                         text.setText("Please Enter an Unused Key");
                         display.revalidate();
                         display.repaint();
-                        javax.swing.Timer delay = new javax.swing.Timer(2000, ie -> {
-                            removeKeyListener(this);
-                            addKeyListener(keylistener2);
-                            Container parent = display.getParent();
-                            parent.remove(display);
-                            parent.revalidate();
-                            parent.repaint();
-                        });
-                        delay.setRepeats(false);
-                        delay.start();
                         return;
                     }
                 }

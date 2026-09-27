@@ -317,13 +317,15 @@ public class Board extends JComponent {
 		@Override
 		public void keyPressed(KeyEvent e) {
 			if (isPaused) {
-				if (e.getKeyCode() == Maincontainer.PAUSE) {
-					togglePause();
-					return;
-				} else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					timer.stop();
-					if (timer != null) timer = null;
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					if (timer != null) {
+						timer.stop();
+						timer = null;
+					}
 					gamepanel.gameOver();
+					return;
+				} else if (e.getKeyCode() == Maincontainer.PAUSE) {
+					togglePause();
 					return;
 				} else return;
 			}

@@ -2,6 +2,7 @@ package seoultech.se.tetris.component;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +16,8 @@ import java.util.List;
 
 // 창을 구성하는 클래스입니다.
 public class Maincontainer extends JFrame{
+    private static final String DEFAULT_WINDOW_SIZE = "600X500";
+    private static final String DEFAULT_KEY_SETTING = "ROTATE=38,DOWN=40,LEFT=37,RIGHT=39,PAUSE=80";
     private static int HEIGHT = 600;
     private static int WIDTH = 500;
     protected static int ROTATE = 38;
@@ -176,15 +179,57 @@ public class Maincontainer extends JFrame{
                     List<String> lines = Files.readAllLines(path);
                     for (String line : lines) {
                         if (line.trim().isEmpty()) continue;
-                        String[] tokens = line.split(":");
-                        if ((tokens.length == 2) && (settingList.contains(tokens[0]))) {
-                            settingMap.put(tokens[0],tokens[1]);
+                        String[] tokens = line.split(":", 2);
+                        if (tokens.length == 2) {
+                            String key = tokens[0].trim();
+                            String value = tokens[1].trim();
+                            if (settingList.contains(key) && isValidSetting(key, value)) {
+                                settingMap.put(key, value);
+                            }
                         }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+        }
+
+        private boolean isValidSetting(String key, String value) {
+            switch (key) {
+                case "windowSize":
+                    return value.equals("600X500") || value.equals("750X625") || value.equals("900X750");
+                case "keySetting":
+                    return isValidKeySetting(value);
+                case "resetScore":
+                    return value.equals("true") || value.equals("false");
+                case "colorBlind":
+                    return value.equals("Normal") || value.equals("Protanopia") || value.equals("Deuteranopia");
+                default:
+                    return false;
+            }
+        }
+
+        private boolean isValidKeySetting(String value) {
+            String[] expectedKeys = {"ROTATE", "DOWN", "LEFT", "RIGHT", "PAUSE"};
+            String[] parts = value.split(",", -1);
+            if (parts.length != expectedKeys.length) return false;
+
+            int[] keyCodes = new int[expectedKeys.length];
+            try {
+                for (int i = 0; i < expectedKeys.length; i++) {
+                    String[] keyValue = parts[i].split("=", -1);
+                    if (keyValue.length != 2 || !keyValue[0].equals(expectedKeys[i])) return false;
+                    keyCodes[i] = Integer.parseInt(keyValue[1]);
+                    if (keyCodes[i] <= 0) return false;
+                    if (i == 4 && keyCodes[i] == KeyEvent.VK_ENTER) return false;
+                    for (int j = 0; j < i; j++) {
+                        if (keyCodes[i] == keyCodes[j]) return false;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                return false;
+            }
+            return true;
         }
 
         protected void setWindowSize(String str) {
@@ -219,8 +264,8 @@ public class Maincontainer extends JFrame{
         }
 
         protected void clearSetting() {
-            settingMap.put("windowSize", "600X500");
-            settingMap.put("keySetting", "ROTATE=38,DOWN=40,LEFT=37,RIGHT=39,PAUSE=80");
+            settingMap.put("windowSize", DEFAULT_WINDOW_SIZE);
+            settingMap.put("keySetting", DEFAULT_KEY_SETTING);
             settingMap.put("resetScore", "false");
             settingMap.put("colorBlind","Normal");
         }
