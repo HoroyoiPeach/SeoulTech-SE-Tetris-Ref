@@ -184,6 +184,9 @@ public class Maincontainer extends JFrame{
                         if (tokens.length == 2) {
                             String key = tokens[0].trim();
                             String value = tokens[1].trim();
+                            if (key.equals("keySetting")) {
+                                value = addDefaultHardDropKey(value);
+                            }
                             if (settingList.contains(key) && isValidSetting(key, value)) {
                                 settingMap.put(key, value);
                             }
@@ -193,6 +196,20 @@ public class Maincontainer extends JFrame{
                     e.printStackTrace();
                 }
             }
+        }
+
+        private String addDefaultHardDropKey(String value) {
+            String[] parts = value.split(",", -1);
+            if (parts.length != 5) return value;
+
+            String candidate = value + ",HARD_DROP=" + KeyEvent.VK_SPACE;
+            if (isValidKeySetting(candidate)) return candidate;
+
+            for (int keyCode = KeyEvent.VK_A; keyCode <= KeyEvent.VK_Z; keyCode++) {
+                candidate = value + ",HARD_DROP=" + keyCode;
+                if (isValidKeySetting(candidate)) return candidate;
+            }
+            return value;
         }
 
         private boolean isValidSetting(String key, String value) {
