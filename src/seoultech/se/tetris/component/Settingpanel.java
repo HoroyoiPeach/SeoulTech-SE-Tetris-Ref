@@ -323,12 +323,14 @@ public class Settingpanel extends JPanel{
         private JPanel leftPanel;
         private JPanel rightPanel;
         private JPanel pausePanel;
+        private JPanel hardDropPanel;
         private JPanel exitPanel;
         private JLabel rotateOption;
         private JLabel downOption;
         private JLabel leftOption;
         private JLabel rightOption;
         private JLabel pauseOption;
+        private JLabel hardDropOption;
         private Integer[] currentKey;
         private PlayerKeyListener2 keylistener2;
          
@@ -452,6 +454,31 @@ public class Settingpanel extends JPanel{
             gbc.gridx = 0; gbc.gridy = 4; gbc.fill = GridBagConstraints.NONE;
             keyList.add(pausePanel, gbc);
 
+            hardDropPanel = new JPanel();
+            hardDropPanel.setLayout(new GridLayout(1, 0));
+            hardDropPanel.setBackground(changeColor(Color.GRAY));
+            hardDropPanel.setOpaque(false);
+
+                JLabel hardDropText = new JLabel("Hard Drop: ", SwingConstants.CENTER);
+                hardDropText.setFont(new Font("Courier", Font.BOLD, 16));
+                hardDropText.setForeground(changeColor(Color.BLACK));
+
+            hardDropOption = new JLabel(
+            KeyEvent.getKeyText(currentKey[5]),
+            SwingConstants.CENTER
+            );
+            hardDropOption.setFont(new Font("Courier", Font.BOLD, 16));
+            hardDropOption.setForeground(changeColor(Color.BLACK));
+
+            labelSize = hardDropText.getPreferredSize();
+            panelWidth = labelSize.width * 2 + 20;
+            panelHeight = labelSize.height + 20;
+            hardDropPanel.setPreferredSize(new Dimension(panelWidth, panelHeight));
+            hardDropPanel.add(hardDropText);
+            hardDropPanel.add(hardDropOption);
+            gbc.gridx = 0; gbc.gridy = 5; gbc.fill = GridBagConstraints.NONE;
+            keyList.add(hardDropPanel, gbc);
+
             exitPanel = new JPanel();
             exitPanel.setLayout(new GridLayout(1, 0));
             exitPanel.setBackground(changeColor(Color.GRAY));
@@ -466,11 +493,11 @@ public class Settingpanel extends JPanel{
             panelHeight = labelSize.height + 20;
             exitPanel.setPreferredSize(new Dimension(panelWidth, panelHeight));
             exitPanel.add(exitText);
-            gbc.gridx = 0; gbc.gridy = 5; gbc.fill = GridBagConstraints.NONE;
+            gbc.gridx = 0; gbc.gridy = 6; gbc.fill = GridBagConstraints.NONE;
             keyList.add(exitPanel, gbc);
 
-            selectList = new ArrayList<>(java.util.List.of(rotatePanel, downPanel, leftPanel, rightPanel, pausePanel, exitPanel));
-            selectOption = new ArrayList<>(java.util.List.of(rotateOption, downOption, leftOption, rightOption, pauseOption));
+            selectList = new ArrayList<>(java.util.List.of(rotatePanel, downPanel, leftPanel, rightPanel, pausePanel, hardDropPanel, exitPanel));
+            selectOption = new ArrayList<>(java.util.List.of(rotateOption, downOption, leftOption, rightOption, pauseOption, hardDropOption));
             keylistener2 = new PlayerKeyListener2();
             this.addKeyListener(keylistener2);
             setFocusable(true);
@@ -541,7 +568,15 @@ public class Settingpanel extends JPanel{
                     changeKey(4);
                     break;
                 case 5:
-                    String str = "ROTATE=" + currentKey[0] + ",DOWN=" + currentKey[1] + ",LEFT=" + currentKey[2] + ",RIGHT=" + currentKey[3] + ",PAUSE=" + currentKey[4];
+                    changeKey(5);
+                    break;
+                case 6:
+                    String str = "ROTATE=" + currentKey[0] 
+                                + ",DOWN=" + currentKey[1] 
+                                + ",LEFT=" + currentKey[2] 
+                                + ",RIGHT=" + currentKey[3] 
+                                + ",PAUSE=" + currentKey[4] 
+                                + ",HARD_DROP=" + currentKey[5];
                     settingpanel.maincontainer.setting.setKeySetting(str);
                     removeKeyListener(keylistener2);
                     settingpanel.addKeyListener(settingpanel.playerKeyListener);

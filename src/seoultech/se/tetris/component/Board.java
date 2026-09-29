@@ -240,6 +240,27 @@ public class Board extends JComponent {
 		placeBlock();
 	}
 
+	protected void hardDrop() {  // 하드 드롭 기능 구현
+		eraseCurr();
+		while (canDown()) {
+			y++;
+		}
+
+		placeBlock();
+		eraseLine();
+
+		if (isgameover()) return;
+		curr = next;
+		next = getRandomBlock();
+		this.gamepanel.drawNextBoard();
+
+		x = 3;
+		y = 0;
+		placeBlock();
+		drawBoard();
+	}
+
+
 	protected void moveRight() {
 		eraseCurr();
 		if (canRight()) x++;
@@ -344,6 +365,10 @@ public class Board extends JComponent {
 				return;
 			} else if (i == Maincontainer.ROTATE) {
 				rotate();
+				drawBoard();
+				return;
+			} else if (i == Maincontainer.HARD_DROP) { // 하드 드롭 키 할당
+				hardDrop();
 				drawBoard();
 				return;
 			} else if (i == Maincontainer.PAUSE) {

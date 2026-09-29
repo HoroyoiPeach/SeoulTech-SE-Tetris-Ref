@@ -17,7 +17,7 @@ import java.util.List;
 // 창을 구성하는 클래스입니다.
 public class Maincontainer extends JFrame{
     private static final String DEFAULT_WINDOW_SIZE = "600X500";
-    private static final String DEFAULT_KEY_SETTING = "ROTATE=38,DOWN=40,LEFT=37,RIGHT=39,PAUSE=80";
+    private static final String DEFAULT_KEY_SETTING = "ROTATE=38,DOWN=40,LEFT=37,RIGHT=39,PAUSE=80,HARD_DROP=32"; 
     private static int HEIGHT = 600;
     private static int WIDTH = 500;
     protected static int ROTATE = 38;
@@ -25,6 +25,7 @@ public class Maincontainer extends JFrame{
     protected static int LEFT = 37;
     protected static int RIGHT = 39;
     protected static int PAUSE = 80;
+    protected static int HARD_DROP = 32;
     protected static String colorPalette = "Normal"; // 0: 일반 색상, 1: 적색약, 2: 녹색약 (청색약은 희귀성으로 인해 미추가)
     protected Setting setting;
     private JPanel mainPanel; // container에 띄울 panel로 background color가 black인 아무것도 없는 panel입니다.
@@ -111,7 +112,7 @@ public class Maincontainer extends JFrame{
         Integer[] h_w = setting.getWindowSize();
         HEIGHT = h_w[0]; WIDTH = h_w[1];
         Integer[] keys = setting.getKeySetting();
-        ROTATE = keys[0]; DOWN = keys[1]; LEFT = keys[2]; RIGHT = keys[3]; PAUSE = keys[4];
+        ROTATE = keys[0]; DOWN = keys[1]; LEFT = keys[2]; RIGHT = keys[3]; PAUSE = keys[4]; HARD_DROP = keys[5];
         colorPalette = setting.getColorBlind();
 
         setTitle("SeoulTech SE Tetris"); // 프로그램 이름 설정
@@ -183,6 +184,9 @@ public class Maincontainer extends JFrame{
                         if (tokens.length == 2) {
                             String key = tokens[0].trim();
                             String value = tokens[1].trim();
+                            if (key.equals("keySetting")) {
+                                value = addDefaultHardDropKey(value);
+                            }
                             if (settingList.contains(key) && isValidSetting(key, value)) {
                                 settingMap.put(key, value);
                             }
@@ -192,6 +196,20 @@ public class Maincontainer extends JFrame{
                     e.printStackTrace();
                 }
             }
+        }
+
+        private String addDefaultHardDropKey(String value) {
+            String[] parts = value.split(",", -1);
+            if (parts.length != 5) return value;
+
+            String candidate = value + ",HARD_DROP=" + KeyEvent.VK_SPACE;
+            if (isValidKeySetting(candidate)) return candidate;
+
+            for (int keyCode = KeyEvent.VK_A; keyCode <= KeyEvent.VK_Z; keyCode++) {
+                candidate = value + ",HARD_DROP=" + keyCode;
+                if (isValidKeySetting(candidate)) return candidate;
+            }
+            return value;
         }
 
         private boolean isValidSetting(String key, String value) {
@@ -210,7 +228,7 @@ public class Maincontainer extends JFrame{
         }
 
         private boolean isValidKeySetting(String value) {
-            String[] expectedKeys = {"ROTATE", "DOWN", "LEFT", "RIGHT", "PAUSE"};
+            String[] expectedKeys = {"ROTATE", "DOWN", "LEFT", "RIGHT", "PAUSE", "HARD_DROP"};
             String[] parts = value.split(",", -1);
             if (parts.length != expectedKeys.length) return false;
 
@@ -221,7 +239,7 @@ public class Maincontainer extends JFrame{
                     if (keyValue.length != 2 || !keyValue[0].equals(expectedKeys[i])) return false;
                     keyCodes[i] = Integer.parseInt(keyValue[1]);
                     if (keyCodes[i] <= 0) return false;
-                    if (i == 4 && keyCodes[i] == KeyEvent.VK_ENTER) return false;
+                    if (i == 4 && keyCodes[i] == KeyEvent.VK_ENTER) return false; //TODO? 엔터키를 하드드롭에도 금지시켜야하나요?
                     for (int j = 0; j < i; j++) {
                         if (keyCodes[i] == keyCodes[j]) return false;
                     }
@@ -250,8 +268,8 @@ public class Maincontainer extends JFrame{
 
         protected Integer[] getKeySetting() {
             String[] parts = settingMap.get("keySetting").split(",");
-            Integer[] keys = new Integer[5];
-            for (int i = 0; i < 5; i++) keys[i] = Integer.parseInt(parts[i].split("=")[1]);
+            Integer[] keys = new Integer[6];
+            for (int i = 0; i < 6; i++) keys[i] = Integer.parseInt(parts[i].split("=")[1]);
             return keys;
         }
 
