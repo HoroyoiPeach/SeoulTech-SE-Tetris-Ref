@@ -2,6 +2,8 @@ package seoultech.se.tetris.component;
 
 import static seoultech.se.tetris.component.Maincontainer.changeColor;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,13 +29,16 @@ public class Gamepanel extends JPanel{
     private SimpleAttributeSet styleSetScore2;
     private Maincontainer maincontainer;
     private int score;
-    private String usrname = "Player";
+    private String usrname = "PLAYER";
+    private StringBuffer userNameBuffer;
+    private JLabel setUserNameText;
     private Path path;
     private JPanel pausepanel;
     private JPanel gameOverPanel;
     private Integer[] h_w;
     private int HEIGHT;
     private int WIDTH;
+    private KeyListener playerKeyListener;
 
     public Gamepanel(Maincontainer maincontainer) {
         setLayout(null);
@@ -72,11 +77,11 @@ public class Gamepanel extends JPanel{
         add(scorepanel);
 
         board.boardStart();
-    }
 
-    @Override
-    public boolean requestFocusInWindow() {
-        return this.board.requestFocusInWindow();
+        playerKeyListener = new PlayerKeyListener();
+		addKeyListener(playerKeyListener);
+		setFocusable(true);
+		requestFocus();
     }
     
     protected void drawNextBoard() {
@@ -93,19 +98,21 @@ public class Gamepanel extends JPanel{
 
     protected void gameOver() {
         gameOverPanel = new JPanel() {
-            @Override 
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setColor(changeColor(new Color(0, 0, 0, 50)));
-                g2d.fillRect(0, 0, WIDTH, HEIGHT);
-            }
+		    @Override 
+		    protected void paintComponent(Graphics g) {
+			    super.paintComponent(g);
+			    Graphics2D g2d = (Graphics2D) g.create();
+			    g2d.setColor(changeColor(new Color(0, 0, 0, 200)));
+			    g2d.fillRect(0, 0, getWidth(), getHeight());
+                g2d.dispose();
+		    }
         };
+        gameOverPanel.setOpaque(false);
         gameOverPanel.setBounds(0, 0, WIDTH, HEIGHT);
-        gameOverPanel.setLayout(new GridLayout());
+        gameOverPanel.setLayout(new GridBagLayout());
         
-        JPanel gridPanel = new JPanel();
-        gridPanel.setLayout(new GridLayout(0, 1));
+        JPanel gridPanel = new JPanel(new GridLayout(0, 1));
+        gridPanel.setOpaque(false);
 
             JLabel gotext = new JLabel("Game Over", SwingConstants.CENTER);
             gotext.setFont(new Font("Courier", Font.BOLD, 30));
@@ -119,14 +126,29 @@ public class Gamepanel extends JPanel{
             entext.setFont(sctext.getFont());
             entext.setForeground(changeColor(Color.WHITE));
 
-        int gridPanelWidth = Math.max(gotext.getPreferredSize().width, sctext.getPreferredSize().width);
-        int gridPanelHeight = gotext.getPreferredSize().height + sctext.getPreferredSize().height + entext.getPreferredSize().height;
-        gridPanel.setPreferredSize(new Dimension(gridPanelWidth, gridPanelHeight));
+            setUserNameText = new JLabel("PLAYER", SwingConstants.CENTER);
+            setUserNameText.setFont(gotext.getFont());
+            setUserNameText.setForeground(changeColor(new Color(255, 255, 255, 90)));
+
+        int gridPanelHeight = gotext.getPreferredSize().height + sctext.getPreferredSize().height + entext.getPreferredSize().height + setUserNameText.getPreferredSize().height + 50;
+        gridPanel.setPreferredSize(new Dimension(WIDTH, gridPanelHeight));
 
         gridPanel.add(gotext);
-        
-        saveScore();
-        maincontainer.exitGameEnterStart();
+        gridPanel.add(sctext);
+        gridPanel.add(entext);
+        gridPanel.add(setUserNameText);
+        gameOverPanel.add(gridPanel);
+
+        add(gameOverPanel);
+        setComponentZOrder(gameOverPanel, 0);
+        revalidate();
+        repaint();
+
+        userNameBuffer = new StringBuffer();
+        removeKeyListener(playerKeyListener);
+        UserNameListener userNameListener = new UserNameListener();
+        addKeyListener(userNameListener);
+        requestFocusInWindow();
     }
 
     private void saveScore() {
@@ -145,9 +167,10 @@ public class Gamepanel extends JPanel{
 		    @Override 
 		    protected void paintComponent(Graphics g) {
 			    super.paintComponent(g);
-			    Graphics2D g2d = (Graphics2D) g;
+			    Graphics2D g2d = (Graphics2D) g.create();
 			    g2d.setColor(changeColor(new Color(255, 255, 255, 80)));
 			    g2d.fillRect(0, 0, board.getWidth(), board.getHeight());
+                g2d.dispose();
 		    }
 	    };
         pausepanel.setOpaque(false);
@@ -176,19 +199,107 @@ public class Gamepanel extends JPanel{
         textpanel.add(exit);
         pausepanel.add(textpanel);
 
-        this.add(pausepanel);
-        this.setComponentZOrder(pausepanel, 0);
-        this.revalidate();
-        this.repaint();
+        add(pausepanel);
+        setComponentZOrder(pausepanel, 0);
+        revalidate();
+        repaint();
+    }
+
+    protected void gameExit() {
+        maincontainer.exitGameEnterStart();
     }
 
     protected void gameRestart() {
-        this.remove(pausepanel);
+        remove(pausepanel);
         revalidate();
         repaint();
     }
 
     protected Block getNextBlock() {
         return board.getNextBlock();
+    }
+
+    public class PlayerKeyListener implements KeyListener {
+		@Override
+		public void keyTyped(KeyEvent e) {
+				
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			if (board.getIsPaused()) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					if (board.timer != null) {
+						board.timer.stop();
+						board.timer = null;
+					}
+					gameOver();
+					return;
+				} else if (e.getKeyCode() == Maincontainer.PAUSE) {
+					board.togglePause();
+					return;
+				} else return;
+			}
+			int i = e.getKeyCode();
+			if (i == Maincontainer.DOWN) {
+				board.moveDown();
+				board.drawBoard();
+				return;
+			} else if (i == Maincontainer.RIGHT) {
+				board.moveRight();
+				board.drawBoard();
+				return;
+			} else if (i == Maincontainer.LEFT) {
+				board.moveLeft();
+				board.drawBoard();
+				return;
+			} else if (i == Maincontainer.ROTATE) {
+				board.rotate();
+				board.drawBoard();
+				return;
+			} else if (i == Maincontainer.HARD_DROP) { // 하드 드롭 키 할당
+				board.hardDrop();
+				board.drawBoard();
+				return;
+			} else if (i == Maincontainer.PAUSE) {
+				board.togglePause();
+				return;
+			}
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			
+		}
+	}
+
+    public class UserNameListener implements KeyListener {
+
+        @Override
+		public void keyTyped(KeyEvent e) {}
+
+        @Override 
+        public void keyPressed(KeyEvent e) {
+            if (((e.getKeyCode() >= 65 && e.getKeyCode() <= 90) || (e.getKeyCode() >= 48 && e.getKeyCode() <= 57)) && userNameBuffer.length() <= 10) { // A~Z = 65~90, 1~9 = 48~57
+                userNameBuffer.append(e.getKeyChar());
+                setUserNameText.setText(userNameBuffer.toString());
+                setUserNameText.setForeground(changeColor(Color.WHITE));
+            } else if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE && !userNameBuffer.isEmpty()) {
+                userNameBuffer.deleteCharAt(userNameBuffer.length()-1);
+                setUserNameText.setText(userNameBuffer.toString());
+                if (userNameBuffer.isEmpty()) {
+                    setUserNameText.setForeground(changeColor(new Color(255, 255, 255, 90)));
+                    setUserNameText.setText("PLAYER");
+                }
+            } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                usrname = userNameBuffer.toString();
+                removeKeyListener(this);
+                saveScore();
+                maincontainer.exitGameEnterStart();
+            }
+        }
+
+        @Override 
+        public void keyReleased(KeyEvent e) {}
     }
 }

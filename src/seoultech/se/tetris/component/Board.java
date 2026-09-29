@@ -43,8 +43,7 @@ public class Board extends JComponent {
 	private Gamepanel gamepanel;
 	private int[][] board;
 	private ArrayList<TextChunk> textChunks;
-	private KeyListener playerKeyListener;
-	private Timer timer;
+	protected Timer timer;
 	private final Random random = new Random();
 	private Block curr;
 	private boolean isPaused = false;
@@ -76,15 +75,10 @@ public class Board extends JComponent {
 		
 		//Initialize board for the game.
 		board = new int[HEIGHT][WIDTH];
-		textChunks = new ArrayList<>();
-
-		playerKeyListener = new PlayerKeyListener();
-		addKeyListener(playerKeyListener);
-		setFocusable(true);
-		requestFocus();
+		textChunks = new ArrayList<>();		
 	}
 
-	public void boardStart() {
+	protected void boardStart() {
 		curr = getRandomBlock();
 		next = getRandomBlock();
 		this.gamepanel.drawNextBoard();
@@ -108,12 +102,10 @@ public class Board extends JComponent {
 		if (isPaused) {
 			this.timer.start();
 			gamepanel.gameRestart();
-			this.requestFocusInWindow();
 			isPaused = false;
 		} else {
 			this.timer.stop();
 			gamepanel.gamePause();
-			this.requestFocusInWindow();
 			isPaused = true;
 		}
 	}
@@ -260,7 +252,6 @@ public class Board extends JComponent {
 		drawBoard();
 	}
 
-
 	protected void moveRight() {
 		eraseCurr();
 		if (canRight()) x++;
@@ -343,7 +334,7 @@ public class Board extends JComponent {
 						timer.stop();
 						timer = null;
 					}
-					gamepanel.gameOver();
+					gamepanel.gameExit();
 					return;
 				} else if (e.getKeyCode() == Maincontainer.PAUSE) {
 					togglePause();
@@ -462,5 +453,9 @@ public class Board extends JComponent {
 
 	protected Block getNextBlock() {
 		return next;
+	}
+
+	protected boolean getIsPaused() {
+		return isPaused;
 	}
 }
