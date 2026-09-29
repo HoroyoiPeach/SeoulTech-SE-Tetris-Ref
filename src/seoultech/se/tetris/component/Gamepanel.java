@@ -280,23 +280,25 @@ public class Gamepanel extends JPanel{
 
         @Override 
         public void keyPressed(KeyEvent e) {
-            if (((e.getKeyCode() >= 65 && e.getKeyCode() <= 90) || (e.getKeyCode() >= 48 && e.getKeyCode() <= 57)) && userNameBuffer.length() <= 10) { // A~Z = 65~90, 1~9 = 48~57
-                userNameBuffer.append(e.getKeyChar());
+            char c = e.getKeyChar();
+            int i = e.getKeyCode();
+            if (((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) && userNameBuffer.length() < 10) { // A~Z = 65~90, 1~9 = 48~57
+                userNameBuffer.append(c);
                 setUserNameText.setText(userNameBuffer.toString());
                 setUserNameText.setForeground(changeColor(Color.WHITE));
-            } else if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE && !userNameBuffer.isEmpty()) {
+            } else if (i == KeyEvent.VK_BACK_SPACE && !userNameBuffer.isEmpty()) {
                 userNameBuffer.deleteCharAt(userNameBuffer.length()-1);
                 setUserNameText.setText(userNameBuffer.toString());
                 if (userNameBuffer.isEmpty()) {
                     setUserNameText.setForeground(changeColor(new Color(255, 255, 255, 90)));
                     setUserNameText.setText("PLAYER");
                 }
-            } else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            } else if (i == KeyEvent.VK_ENTER) {
                 usrname = userNameBuffer.toString();
                 removeKeyListener(this);
                 saveScore();
                 maincontainer.exitGameEnterStart();
-            }
+            } else e.consume();
         }
 
         @Override 
