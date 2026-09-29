@@ -30,6 +30,7 @@ public class Gamepanel extends JPanel{
     private String usrname = "Player";
     private Path path;
     private JPanel pausepanel;
+    private JPanel gameOverPanel;
     private Integer[] h_w;
     private int HEIGHT;
     private int WIDTH;
@@ -91,6 +92,39 @@ public class Gamepanel extends JPanel{
     }
 
     protected void gameOver() {
+        gameOverPanel = new JPanel() {
+            @Override 
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(changeColor(new Color(0, 0, 0, 50)));
+                g2d.fillRect(0, 0, WIDTH, HEIGHT);
+            }
+        };
+        gameOverPanel.setBounds(0, 0, WIDTH, HEIGHT);
+        gameOverPanel.setLayout(new GridLayout());
+        
+        JPanel gridPanel = new JPanel();
+        gridPanel.setLayout(new GridLayout(0, 1));
+
+            JLabel gotext = new JLabel("Game Over", SwingConstants.CENTER);
+            gotext.setFont(new Font("Courier", Font.BOLD, 30));
+            gotext.setForeground(changeColor(Color.WHITE));
+
+            JLabel sctext = new JLabel("Your score is " + board.getScore(), SwingConstants.CENTER);
+            sctext.setFont(new Font("Courier", Font.BOLD, 16));
+            sctext.setForeground(changeColor(Color.WHITE));
+
+            JLabel entext = new JLabel("Enter your name", SwingConstants.CENTER);
+            entext.setFont(sctext.getFont());
+            entext.setForeground(changeColor(Color.WHITE));
+
+        int gridPanelWidth = Math.max(gotext.getPreferredSize().width, sctext.getPreferredSize().width);
+        int gridPanelHeight = gotext.getPreferredSize().height + sctext.getPreferredSize().height + entext.getPreferredSize().height;
+        gridPanel.setPreferredSize(new Dimension(gridPanelWidth, gridPanelHeight));
+
+        gridPanel.add(gotext);
+        
         saveScore();
         maincontainer.exitGameEnterStart();
     }
@@ -109,7 +143,7 @@ public class Gamepanel extends JPanel{
     protected void gamePause() {
         pausepanel = new JPanel() {
 		    @Override 
-		    protected  void paintComponent(Graphics g) {
+		    protected void paintComponent(Graphics g) {
 			    super.paintComponent(g);
 			    Graphics2D g2d = (Graphics2D) g;
 			    g2d.setColor(changeColor(new Color(255, 255, 255, 80)));
