@@ -291,7 +291,7 @@ public class Gamepanel extends JPanel{
                     setUserNameText.setText("PLAYER");
                 }
             } else if (i == KeyEvent.VK_ENTER) {
-                usrname = userNameBuffer.toString();
+                usrname = setUserNameText.getText();
                 removeKeyListener(this);
                 saveScore();
                 maincontainer.exitGameEnterStart();

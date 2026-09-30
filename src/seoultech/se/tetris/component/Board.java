@@ -19,8 +19,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.Timer;
 import javax.swing.border.CompoundBorder;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
 
 import seoultech.se.tetris.blocks.Block;
 import seoultech.se.tetris.blocks.IBlock;
@@ -48,6 +46,8 @@ public class Board extends JComponent {
 	private boolean isPaused = false;
 	private int score = 0;
 	private Block next;
+	private int erasedLineNum = 0;
+	private int level = 1;
 	int x = 3; //Default Position.
 	int y = 0;
 	
@@ -131,8 +131,15 @@ public class Board extends JComponent {
 	}
 	
 	private void placeBlock() {
-		SimpleAttributeSet styles = new SimpleAttributeSet();
-		StyleConstants.setForeground(styles, curr.getColor());
+		int dy = y; int dx = x;
+		while(canDown(dx, dy)) dy++;
+		for(int j=0; j<curr.height(); j++) {
+			for(int i=0; i<curr.width(); i++) {
+				if (curr.getShape(i, j) > 0 && textChunks.get((dy+j+1)*(WIDTH+3)+dx+i+1).text.equals(" ")) {
+					textChunks.set((dy+j+1)*(WIDTH+3)+dx+i+1, new TextChunk("O", Color.DARK_GRAY));
+				}
+			}
+		}
 		for(int j=0; j<curr.height(); j++) {
 			for(int i=0; i<curr.width(); i++) {
 				if (curr.getShape(i, j) > 0) {
@@ -144,8 +151,6 @@ public class Board extends JComponent {
 	}
 	
 	private void eraseCurr() {
-		SimpleAttributeSet styles = new SimpleAttributeSet();
-		StyleConstants.setForeground(styles, Color.WHITE);
 		for(int j=0; j<curr.height(); j++) {
 			for(int i=0; i<curr.width(); i++) {
 				if (curr.getShape(i, j) > 0) {
@@ -154,9 +159,20 @@ public class Board extends JComponent {
 				}
 			}
 		}
+		int dy = y; int dx = x;
+		while(canDown(dx, dy)) {
+			dy++;
+		}
+		for(int j=0; j<curr.height(); j++) {
+			for(int i=0; i<curr.width(); i++) {
+				if (curr.getShape(i, j) > 0) {
+					textChunks.set((dy+j+1)*(WIDTH+3)+dx+i+1, new TextChunk(" ", Color.WHITE));
+				}
+			}
+		}
 	}
 
-	protected boolean canDown() {
+	protected boolean canDown(int x, int y) {
 		if(y < HEIGHT - curr.height()) {
 			for(int j=0; j<curr.height(); j++) {
 				for(int i=0; i<curr.width(); i++) {
@@ -217,7 +233,7 @@ public class Board extends JComponent {
 
 	protected void moveDown() {
 		eraseCurr();
-		if (canDown()) {
+		if (canDown(x, y)) {
 			addScore(DOWNPOINT);
 			y++;
 		}
@@ -236,7 +252,7 @@ public class Board extends JComponent {
 
 	protected void hardDrop() {  // 하드 드롭 기능 구현
 		eraseCurr();
-		while (canDown()) {
+		while (canDown(x, y)) {
 			y++;
 			addScore(DOWNPOINT * 2);
 		}
@@ -303,8 +319,15 @@ public class Board extends JComponent {
 				for (int k = WIDTH+3+1; k < 2*(WIDTH+2); k++) textChunks.set(k, new TextChunk(" ", Color.WHITE));
 				addScore(LINEPOINT * combo);
 				combo++;
+				if ((++erasedLineNum % 10) == 0) levelUp();
 			}
 		}
+	}
+
+	private void levelUp() {
+		if (level < 19) level++;
+		int ms = (int) Math.round((Math.pow((0.8 - (level - 1) * 0.007), (level - 1)) * 1000));
+		timer.setDelay(ms);
 	}
 
 	protected void addScore(int POINT) {
