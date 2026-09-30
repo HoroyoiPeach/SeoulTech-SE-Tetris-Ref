@@ -217,7 +217,10 @@ public class Board extends JComponent {
 
 	protected void moveDown() {
 		eraseCurr();
-		if (canDown()) y++;
+		if (canDown()) {
+			addScore(DOWNPOINT);
+			y++;
+		}
 		else {
 			placeBlock();
 			eraseLine();
