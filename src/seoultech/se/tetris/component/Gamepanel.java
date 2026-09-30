@@ -221,9 +221,7 @@ public class Gamepanel extends JPanel{
 
     public class PlayerKeyListener implements KeyListener {
 		@Override
-		public void keyTyped(KeyEvent e) {
-				
-		}
+		public void keyTyped(KeyEvent e) {}
 
 		@Override
 		public void keyPressed(KeyEvent e) {
@@ -233,7 +231,7 @@ public class Gamepanel extends JPanel{
 						board.timer.stop();
 						board.timer = null;
 					}
-					gameOver();
+					gameExit();
 					return;
 				} else if (e.getKeyCode() == Maincontainer.PAUSE) {
 					board.togglePause();
@@ -243,6 +241,7 @@ public class Gamepanel extends JPanel{
 			int i = e.getKeyCode();
 			if (i == Maincontainer.DOWN) {
 				board.moveDown();
+                board.addScore(Board.DOWNPOINT);
 				board.drawBoard();
 				return;
 			} else if (i == Maincontainer.RIGHT) {
@@ -268,9 +267,7 @@ public class Gamepanel extends JPanel{
 		}
 
 		@Override
-		public void keyReleased(KeyEvent e) {
-			
-		}
+		public void keyReleased(KeyEvent e) {}
 	}
 
     public class UserNameListener implements KeyListener {

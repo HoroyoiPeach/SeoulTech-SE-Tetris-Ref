@@ -9,8 +9,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,10 +34,11 @@ import seoultech.se.tetris.blocks.ZBlock;
 public class Board extends JComponent {
 	private static final long serialVersionUID = 2434035659171694595L;
 	
-	private static final int HEIGHT = 20;
-	private static final int WIDTH = 10;
-	private static final char BORDER_CHAR = 'X';
-	private static final int PLUSPOINT = 100;
+	protected static final int HEIGHT = 20;
+	protected static final int WIDTH = 10;
+	protected static final char BORDER_CHAR = 'X';
+	protected static final int LINEPOINT = 100;
+	protected static final int DOWNPOINT = 1;
 	private Gamepanel gamepanel;
 	private int[][] board;
 	private ArrayList<TextChunk> textChunks;
@@ -47,7 +46,7 @@ public class Board extends JComponent {
 	private final Random random = new Random();
 	private Block curr;
 	private boolean isPaused = false;
-	private int score;
+	private int score = 0;
 	private Block next;
 	int x = 3; //Default Position.
 	int y = 0;
@@ -75,7 +74,7 @@ public class Board extends JComponent {
 		
 		//Initialize board for the game.
 		board = new int[HEIGHT][WIDTH];
-		textChunks = new ArrayList<>();		
+		textChunks = new ArrayList<>();	
 	}
 
 	protected void boardStart() {
@@ -236,8 +235,8 @@ public class Board extends JComponent {
 		eraseCurr();
 		while (canDown()) {
 			y++;
+			addScore(DOWNPOINT * 2);
 		}
-
 		placeBlock();
 		eraseLine();
 
@@ -286,6 +285,7 @@ public class Board extends JComponent {
 	protected void eraseLine() {
 		int[] tmp;
 		ArrayList<TextChunk> tmp_t = new ArrayList<>();
+		int combo = 1;
 		for (int i = 0; i < HEIGHT; i++) {
 			int[] line = board[i];
 			if (!Arrays.stream(line).anyMatch(t -> t == 0)) {
@@ -298,10 +298,15 @@ public class Board extends JComponent {
 				}
 				board[0] = new int[WIDTH];
 				for (int k = WIDTH+3+1; k < 2*(WIDTH+2); k++) textChunks.set(k, new TextChunk(" ", Color.WHITE));
-				this.score += PLUSPOINT;
-				this.gamepanel.drawScore();
+				addScore(LINEPOINT * combo);
+				combo++;
 			}
 		}
+	}
+
+	protected void addScore(int POINT) {
+		this.score += POINT;
+		this.gamepanel.drawScore();
 	}
 
 	protected boolean isgameover() {
@@ -318,60 +323,6 @@ public class Board extends JComponent {
 			}
 		}
 		return false;
-	}
-
-	public class PlayerKeyListener implements KeyListener {
-		@Override
-		public void keyTyped(KeyEvent e) {
-				
-		}
-
-		@Override
-		public void keyPressed(KeyEvent e) {
-			if (isPaused) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					if (timer != null) {
-						timer.stop();
-						timer = null;
-					}
-					gamepanel.gameExit();
-					return;
-				} else if (e.getKeyCode() == Maincontainer.PAUSE) {
-					togglePause();
-					return;
-				} else return;
-			}
-			int i = e.getKeyCode();
-			if (i == Maincontainer.DOWN) {
-				moveDown();
-				drawBoard();
-				return;
-			} else if (i == Maincontainer.RIGHT) {
-				moveRight();
-				drawBoard();
-				return;
-			} else if (i == Maincontainer.LEFT) {
-				moveLeft();
-				drawBoard();
-				return;
-			} else if (i == Maincontainer.ROTATE) {
-				rotate();
-				drawBoard();
-				return;
-			} else if (i == Maincontainer.HARD_DROP) { // 하드 드롭 키 할당
-				hardDrop();
-				drawBoard();
-				return;
-			} else if (i == Maincontainer.PAUSE) {
-				togglePause();
-				return;
-			}
-		}
-
-		@Override
-		public void keyReleased(KeyEvent e) {
-			
-		}
 	}
 
 	@Override 

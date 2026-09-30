@@ -26,7 +26,7 @@ public class Maincontainer extends JFrame{
     protected static int RIGHT = 39;
     protected static int PAUSE = 80;
     protected static int HARD_DROP = 32;
-    protected static String colorPalette = "Normal"; // 0: 일반 색상, 1: 적색약, 2: 녹색약 (청색약은 희귀성으로 인해 미추가)
+    protected static String colorPalette = "Normal"; // 0: 일반 색상, 1: 적색약, 2: 녹색약, 3:청황색약
     protected Setting setting;
     private JPanel mainPanel; // container에 띄울 panel로 background color가 black인 아무것도 없는 panel입니다.
     private CardLayout cardLayout; // 추후 mainPanel에 추가될 panel끼리 전환하기 위한 기반입니다. 현재는 코드에 큰 영향이 없습니다.
@@ -157,6 +157,16 @@ public class Maincontainer extends JFrame{
                 newB = Math.max(0, Math.min(255, newB));
                 newColor = new Color(newR, newG, newB, newA);
                 return newColor;
+            case "Tritanopia":
+                newR = (int) (0.957 * r + 0.043 * g);
+                newG = (int) (0.733 * g + 0.267 * b);
+                newB = (int) (0.475 * g + 0.525 * b);
+                newA = a;
+                newR = Math.max(0, Math.min(255, newR));
+                newG = Math.max(0, Math.min(255, newG));
+                newB = Math.max(0, Math.min(255, newB));
+                newColor = new Color(newR, newG, newB, newA);
+                return newColor;
             default:
                 return newColor;
         }
@@ -221,7 +231,7 @@ public class Maincontainer extends JFrame{
                 case "resetScore":
                     return value.equals("true") || value.equals("false");
                 case "colorBlind":
-                    return value.equals("Normal") || value.equals("Protanopia") || value.equals("Deuteranopia");
+                    return value.equals("Normal") || value.equals("Protanopia") || value.equals("Deuteranopia") || value.equals("Tritanopia");
                 default:
                     return false;
             }
