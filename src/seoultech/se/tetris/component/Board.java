@@ -231,23 +231,26 @@ public class Board extends JComponent {
 		return null;
 	}
 
-	protected void moveDown() {
+	protected boolean moveDown() {
 		eraseCurr();
 		if (canDown(x, y)) {
 			addScore(DOWNPOINT);
 			y++;
+			placeBlock();
+			return true;
 		}
 		else {
 			placeBlock();
 			eraseLine();
-			if (isgameover()) return;
+			if (isgameover()) return false;
 			curr = next;
 			next = getRandomBlock();
 			this.gamepanel.drawNextBoard();
 			x = 3;
 			y = 0;
+			placeBlock();
+			return false;
 		}
-		placeBlock();
 	}
 
 	protected void hardDrop() {  // 하드 드롭 기능 구현

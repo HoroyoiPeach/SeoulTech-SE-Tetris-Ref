@@ -240,8 +240,7 @@ public class Gamepanel extends JPanel{
 			}
 			int i = e.getKeyCode();
 			if (i == Maincontainer.DOWN) {
-				board.moveDown();
-                board.addScore(Board.DOWNPOINT);
+				if (board.moveDown()) board.addScore(Board.DOWNPOINT);
 				board.drawBoard();
 				return;
 			} else if (i == Maincontainer.RIGHT) {
