@@ -144,6 +144,7 @@ public class Gamepanel extends JPanel{
         revalidate();
         repaint();
 
+        setFocusTraversalKeysEnabled(false);
         userNameBuffer = new StringBuffer();
         removeKeyListener(playerKeyListener);
         UserNameListener userNameListener = new UserNameListener();
@@ -278,6 +279,7 @@ public class Gamepanel extends JPanel{
         public void keyPressed(KeyEvent e) {
             char c = e.getKeyChar();
             int i = e.getKeyCode();
+            System.out.println("char is: " + c + ", keycode is : " + i);
             if (((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) && userNameBuffer.length() < 10) { // A~Z = 65~90, 1~9 = 48~57
                 userNameBuffer.append(c);
                 setUserNameText.setText(userNameBuffer.toString());
