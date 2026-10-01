@@ -299,6 +299,10 @@ public class Settingpanel extends JPanel{
                 maincontainer.setting.setColorBlind("Deuteranopia");
                 break;
             case "Deuteranopia":
+                colorBlindOption.setText("Tritanopia");
+                maincontainer.setting.setColorBlind("Tritanopia");
+                break;
+            case "Tritanopia":
                 colorBlindOption.setText("Normal");
                 maincontainer.setting.setColorBlind("Normal");
                 break;
