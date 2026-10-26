@@ -85,6 +85,7 @@ public class Gamepanel extends JPanel{
         docScore.setParagraphAttributes(7, 1, styleSetScore2, false);
         add(scorepanel);
         JButton menuButton = new JButton("MENU");
+        menuButton.setFocusable(false);
         menuButton.setBounds(WIDTH*330/500+20, HEIGHT*200/600+30, WIDTH*140/500, 35);
         menuButton.addActionListener(event -> {
             if (board.timer != null) { board.timer.stop(); board.timer = null; }

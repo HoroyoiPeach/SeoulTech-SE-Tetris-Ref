@@ -147,3 +147,22 @@ CI 보관 기간은 7일이다. 만료 시 동일 소스에서 개발 안내의 
 - 같은 제품 수정의 `desktopSmoke` 실제 JFrame 합성 입력 검사도 통과했다. 별도 코드 검토에서 추가 수정 지적은 없었다. 이 결과는 OS 물리 입력 인수나 Windows 검증 완료를 뜻하지 않는다.
 - macOS aarch64 런타임 포함 ZIP 생성 및 앱의 `codesign --verify --deep --strict` 통과. ZIP SHA-256: `f90a1832b7eef57c30d0f7db5ec911ee5de26a1001f9bfbd067c61f22e3c112a`.
 - 기존 GitHub 릴리즈는 변경하지 않았다. 중간평가용 배포본에는 이 수정이 포함된 소스로 다시 만든 패키지를 사용해야 한다.
+
+## 전체 화면 클릭·포커스 점검 (2026-10-26)
+
+`fix/midterm-final`에서 시작, 설정, 키 변경/입력 대기, 일반·아이템 게임, 일시정지, 게임오버 이름 입력, 랭킹 화면의 입력 소유자와 자식 클릭 경로를 검토했다.
+
+| 화면·경로 | 결과 |
+|---|---|
+| 시작 메뉴 제목·메뉴 글자·배경 | macOS Aqua의 AWT Robot 클릭 후 방향키/Enter로 Item 진입과 복귀 통과 |
+| 설정 옵션·키 변경·새 키 입력 안내 | AWT Robot 클릭 후 키 변경·저장·시작 화면 복귀 통과 |
+| 일반·아이템 게임판·미리보기·점수창·일시정지 | Metal 실제 창에서 합성 Swing 클릭과 실제 포커스 소유자를 통한 키 전달 검사 통과 |
+| 게임 MENU를 누른 채 바깥으로 끌어 놓아 취소 | 수정 전 실제 포커스가 JButton에 남아 LEFT 이동 실패를 재현. 버튼의 포커스를 차단한 뒤 일반·아이템 모드에서 통과 |
+| 게임오버 이름 입력 | 합성 Swing 클릭 후 입력·Backspace·Enter 저장과 랭킹 이동 통과 |
+| 랭킹 텍스트·모드 버튼·세로/가로 스크롤바 | 텍스트/버튼은 기존 차단 유지. Basic/Metal 스크롤바의 마우스 포커스 요청 경로를 확인해 두 스크롤바도 차단. 실제 스크롤 값 변경 후 좌우 모드 전환과 Enter 복귀 통과 |
+
+- 제품 변경은 `Gamepanel`의 MENU 버튼, `Scoreboardpanel`의 세로·가로 스크롤바에 대한 `setFocusable(false)` 세 줄이다. 메뉴 클릭 동작과 마우스 스크롤은 유지한다. 일반 JPanel/JLabel도 `isFocusable()` 기본값은 true이지만, 메뉴의 표시용 패널에는 버튼/텍스트 UI처럼 마우스 클릭 시 포커스를 요청하는 처리가 없다. 키 변경 중에는 `ChangeKeyPanel`이 계속 입력을 소유해야 하므로 전체 자식에 일괄적인 차단이나 포커스 복구를 추가하지 않았다.
+- `DesktopFocusSmoke`는 전역 AWT 이벤트 관찰로 클릭 도착을 확인하고, 취소된 버튼 클릭·실제 스크롤 효과·입력 결과를 검증한다. `swing` 모드는 실제 JFrame과 포커스 소유자를 사용하며 KeyListener를 직접 호출하지 않는다. 점수판의 긴 기존 기록과 작은 viewport는 스크롤 경로를 노출하는 검사 장치다.
+- **검증 범위:** Start/Settings/Change Keys 그룹은 native Robot 방식으로 통과했다. 나머지 표의 통과 결과는 macOS Metal의 합성 Swing 입력과 실제 포커스 전달 검사다. 그룹별 통과를 확인했으며 전체 네이티브 실행은 이벤트 미도달/`focus owner=none` 등으로 불안정해 완료로 처리하지 않았다. Metal 검사가 실제 Windows 물리 입력 검증을 대신하지 않는다.
+- Java 21.0.13에서 `./gradlew build desktopSmoke packageRelease` 성공(1분 25초). JUnit **95개, 실패·오류·건너뜀 0**, 포함된 독립 회귀 **55/55**, 전체 제품 line coverage **1503/1672 = 89.89%**. 기존 실제 JFrame 합성 KeyListener 검사도 통과했다. 별도 읽기 전용 코드 검토에서 차단할 지적은 없었다.
+- 생성한 macOS aarch64 ZIP SHA-256: `1150a8a9abad0660a767d06ee3e4016b7da132643e747bc1f678479880c3b631`. 기존 GitHub 릴리즈는 변경하지 않았다.

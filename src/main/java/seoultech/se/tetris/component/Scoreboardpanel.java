@@ -62,6 +62,8 @@ public class Scoreboardpanel extends JPanel{
         }
         drawScore();
         JScrollPane rankings = new JScrollPane(scorepanel);
+        rankings.getVerticalScrollBar().setFocusable(false);
+        rankings.getHorizontalScrollBar().setFocusable(false);
         rankings.setBounds(10, 50, WIDTH - 20, 3 * (HEIGHT - 20) / 4 - 40);
         rankings.setOpaque(false);
         rankings.getViewport().setOpaque(false);

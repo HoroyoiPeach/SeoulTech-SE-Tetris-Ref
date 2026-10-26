@@ -97,7 +97,7 @@ tasks.register('desktopSmoke', JavaExec) {
 
 tasks.register('desktopFocusSmoke', JavaExec) {
     group = 'verification'
-    description = 'Checks game input after native mouse clicks with AWT Robot in an active desktop session.'
+    description = 'Checks input focus across screens in an active desktop session with Robot or synthetic Swing events.'
     dependsOn tasks.named('testClasses')
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'seoultech.se.tetris.component.DesktopFocusSmoke'
