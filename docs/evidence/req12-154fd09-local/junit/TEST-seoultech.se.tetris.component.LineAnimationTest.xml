@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.LineAnimationTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:43:01.524Z" hostname="gilmingyuui-MacBookPro.local" time="0.26">
+  <properties/>
+  <testcase name="애니메이션 중단은 강조 상태만 즉시 정리" classname="seoultech.se.tetris.component.LineAnimationTest" time="0.006"/>
+  <testcase name="완성 행은 즉시 삭제되고 강조 표시는 210ms 뒤 종료" classname="seoultech.se.tetris.component.LineAnimationTest" time="0.254"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

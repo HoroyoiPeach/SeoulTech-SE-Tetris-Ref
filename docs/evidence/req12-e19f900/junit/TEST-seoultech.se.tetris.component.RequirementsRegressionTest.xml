@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.RequirementsRegressionTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-26T11:34:24.484Z" hostname="sjc22-bm210-b48edad2-4b10-4356-ad42-2afb5e626599-46D94E7403FB.local" time="0.126">
+  <properties/>
+  <testcase name="R13: 초기 자동 낙하 간격은 1초" classname="seoultech.se.tetris.component.RequirementsRegressionTest" time="0.072"/>
+  <testcase name="R14: 낙하 속도는 레벨 19까지 증가" classname="seoultech.se.tetris.component.RequirementsRegressionTest" time="0.003"/>
+  <testcase name="R24·R25: 자동·수동·하드드롭은 레벨별 칸당 점수가 같음" classname="seoultech.se.tetris.component.RequirementsRegressionTest" time="0.038"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

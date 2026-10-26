@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.blocks.BlockDistributionTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:42:10.809Z" hostname="gilmingyuui-MacBookPro.local" time="0.192">
+  <properties/>
+  <testcase name="R2-09: 실제 생성기의 난이도별 10만 회 분포는 기대 확률의 상대오차 5% 이내" classname="seoultech.se.tetris.blocks.BlockDistributionTest" time="0.192"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.blocks.CrossBlockTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:42:11.009Z" hostname="gilmingyuui-MacBookPro.local" time="0.001">
+  <properties/>
+  <testcase name="createNewReturnsAnIndependentBlock()" classname="seoultech.se.tetris.blocks.CrossBlockTest" time="0.0"/>
+  <testcase name="everyCellIsOccupiedAndMarkedAcrossAllRotations()" classname="seoultech.se.tetris.blocks.CrossBlockTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

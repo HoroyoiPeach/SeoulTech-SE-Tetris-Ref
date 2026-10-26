@@ -1,0 +1,72 @@
+{
+  "12646193448-test-reports-windows-2025.zip": {
+    "tests": {
+      "tests": 95,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage": {
+      "type": "LINE",
+      "missed": "169",
+      "covered": "1519"
+    },
+    "desktop": null,
+    "distribution": {
+      "reports/req2/block-distribution.csv": {
+        "rows": 21,
+        "all_pass": true
+      },
+      "reports/req2/item-distribution.csv": {
+        "rows": 5,
+        "all_pass": true
+      }
+    },
+    "core_performance": {
+      "operations": 400000,
+      "elapsed_ms": 41,
+      "team_budget_ms": 5000,
+      "scope": "core decisions only, not physical input or whole GUI play"
+    }
+  },
+  "12646857996-test-reports-macos-26.zip": {
+    "tests": {
+      "tests": 95,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "coverage": {
+      "type": "LINE",
+      "missed": "169",
+      "covered": "1519"
+    },
+    "desktop": "PASS real JFrame, menu loop, repeated input, pause/resume, active exit, P item/preview/300-point lock/ten-row supply, settings save/reload, ranking/reset, game-over to scoreboard, mode filters and mode-specific qualification/save/reload; saved B hard-drop applied after frame recreation; Hard Item P lock/game-over/metadata/menu return; all 3 configured sizes and all 4 palettes rendered across representative Classic/Item games with synthetic movement\nOS=Mac OS X 26.6.2 arch=aarch64 Java=21.0.13\nInput=synthetic KeyListener events; physical keyboard and clean target installation remain separate\n",
+    "distribution": {
+      "reports/req2/block-distribution.csv": {
+        "rows": 21,
+        "all_pass": true
+      },
+      "reports/req2/item-distribution.csv": {
+        "rows": 5,
+        "all_pass": true
+      }
+    },
+    "core_performance": {
+      "operations": 400000,
+      "elapsed_ms": 21,
+      "team_budget_ms": 5000,
+      "scope": "core decisions only, not physical input or whole GUI play"
+    }
+  },
+  "current_macos_package": {
+    "file": "seoultech-tetris-0.1.0-macos-aarch64.zip",
+    "sha256": "e1e32ab9106d8eef76653f5bea20ac8331f3bc17d9c0b97219217c9993dfb29d",
+    "checksum_matches": true,
+    "class_count": 67,
+    "classes_different_from_fresh_local_head": [],
+    "launcher": true,
+    "icon": true,
+    "jvm": true
+  }
+}

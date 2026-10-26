@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.Pr15BoardRegressionTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-10-26T11:34:14.050Z" hostname="sjc22-bm210-b48edad2-4b10-4356-ad42-2afb5e626599-46D94E7403FB.local" time="10.433">
+  <properties/>
+  <testcase name="ROW pause and resume" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.57"/>
+  <testcase name="CROSS pause and resume" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.972"/>
+  <testcase name="EASY level-up interval" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.005"/>
+  <testcase name="NORMAL level-up interval" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.004"/>
+  <testcase name="HARD level-up interval" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.003"/>
+  <testcase name="ROW pause retained" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.499"/>
+  <testcase name="CROSS pause retained" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="1.044"/>
+  <testcase name="BUG03-6: 앵커 확정 후 다음 블록은 접촉 잠금 없이 이동" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.007"/>
+  <testcase name="ROW input guard" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.737"/>
+  <testcase name="CROSS input guard" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="1.3"/>
+  <testcase name="BUG03-6: 바닥에 접촉한 앵커는 좌우 이동과 회전 불가" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.003"/>
+  <testcase name="BUG03-6: 접촉 전 앵커는 좌우 이동 가능" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.004"/>
+  <testcase name="BUG03-6: 앵커 접촉 잠금은 장애물이 사라져도 유지되고 다음 블록에서 해제" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.003"/>
+  <testcase name="BUG03-6: 블록에 접촉한 공중 앵커는 반복 입력에도 위치 고정" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.002"/>
+  <testcase name="BUG03-4: 완성 행과 겹친 L행은 한 번만 세고 10행 경계에서 다음 아이템 생성" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.79"/>
+  <testcase name="BUG03-1: 이전 일반 삭제 강조는 다음 행 아이템 애니메이션을 취소하지 않음" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.944"/>
+  <testcase name="ROW animation cancelled by menu" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.284"/>
+  <testcase name="COLUMN animation cancelled by menu" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.291"/>
+  <testcase name="CROSS animation cancelled by menu" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="0.318"/>
+  <testcase name="BUG03-1: 열 아이템 애니메이션 도중 재개하면 완료 후 게임 타이머 실행" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="1.619"/>
+  <testcase name="BUG03-4: L행과 별도 완성 행의 합집합을 한 번에 점수·개수 반영" classname="seoultech.se.tetris.component.Pr15BoardRegressionTest" time="1.016"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

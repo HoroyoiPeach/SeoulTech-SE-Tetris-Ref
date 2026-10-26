@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.ModeScoreUiTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-26T11:34:13.774Z" hostname="sjc22-bm210-b48edad2-4b10-4356-ad42-2afb5e626599-46D94E7403FB.local" time="0.246">
+  <properties/>
+  <testcase name="userNameListenerSavesFrozenModeAndDifficultyAndUsesFourArgumentCallback()" classname="seoultech.se.tetris.component.ModeScoreUiTest" time="0.011"/>
+  <testcase name="scoreboardFiltersMixedRecordsThroughButtonsAndKeyboard()" classname="seoultech.se.tetris.component.ModeScoreUiTest" time="0.209"/>
+  <testcase name="gameOverQualificationUsesOnlyCurrentModeTopTenAndRejectsTenthPlaceTie()" classname="seoultech.se.tetris.component.ModeScoreUiTest" time="0.014"/>
+  <testcase name="highlightUsesFullModeDifficultyIdentityAndLatestDuplicate()" classname="seoultech.se.tetris.component.ModeScoreUiTest" time="0.005"/>
+  <testcase name="settingsResetClearsEveryModeAndScoreboardRedrawsPlaceholders()" classname="seoultech.se.tetris.component.ModeScoreUiTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

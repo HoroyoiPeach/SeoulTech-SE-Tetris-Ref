@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.blocks.ColumnBlockTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:42:11.005Z" hostname="gilmingyuui-MacBookPro.local" time="0.003">
+  <properties/>
+  <testcase name="itemMarkerRemainsUniqueAndTracksItsOccupiedCellAcrossAllShapesAndRotations()" classname="seoultech.se.tetris.blocks.ColumnBlockTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.PerformanceRegressionTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-26T11:34:14.021Z" hostname="sjc22-bm210-b48edad2-4b10-4356-ad42-2afb5e626599-46D94E7403FB.local" time="0.028">
+  <properties/>
+  <testcase name="핵심 이동·회전 판정 40만 회 성능 예산" classname="seoultech.se.tetris.component.PerformanceRegressionTest" time="0.028"/>
+  <system-out><![CDATA[PERFORMANCE core-decisions operations=400000 elapsedMs=21 budgetMs=5000
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

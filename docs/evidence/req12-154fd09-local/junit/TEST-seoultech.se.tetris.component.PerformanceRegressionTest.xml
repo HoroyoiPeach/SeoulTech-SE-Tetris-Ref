@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.PerformanceRegressionTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:43:03.070Z" hostname="gilmingyuui-MacBookPro.local" time="0.034">
+  <properties/>
+  <testcase name="핵심 이동·회전 판정 40만 회 성능 예산" classname="seoultech.se.tetris.component.PerformanceRegressionTest" time="0.033"/>
+  <system-out><![CDATA[PERFORMANCE core-decisions operations=400000 elapsedMs=26 budgetMs=5000
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,69 @@
+{
+  "checked_on": "2026-10-26",
+  "main": "62a035fba8897bc00d735cb2efb078e504654971",
+  "open_document_pr": false,
+  "issues": [
+    {
+      "number": 29,
+      "state": "open",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/issues/29"
+    },
+    {
+      "number": 28,
+      "state": "closed",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/issues/28"
+    },
+    {
+      "number": 27,
+      "state": "closed",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/issues/27"
+    },
+    {
+      "number": 26,
+      "state": "closed",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/issues/26"
+    },
+    {
+      "number": 25,
+      "state": "closed",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/issues/25"
+    },
+    {
+      "number": 24,
+      "state": "closed",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/issues/24"
+    },
+    {
+      "number": 23,
+      "state": "closed",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/issues/23"
+    }
+  ],
+  "releases": [
+    {
+      "tag": "v0.1.0-req2.2",
+      "prerelease": true,
+      "target": "62a035fba8897bc00d735cb2efb078e504654971",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.2"
+    },
+    {
+      "tag": "v0.1.0-req2.1",
+      "prerelease": true,
+      "target": "7c9212fd71dcd8331cb241e8876064cd9f7bafb3",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.1"
+    },
+    {
+      "tag": "v0.1.0",
+      "prerelease": true,
+      "target": "dbb89684cb87f231fb411c513018e64c04e990b6",
+      "url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0"
+    }
+  ],
+  "current_release_zip": {
+    "release": "v0.1.0-req2.2",
+    "file": "seoultech-tetris-0.1.0-macos-aarch64.zip",
+    "sha256": "520970449586b8693325d1fedfb3b9d723601189cdd28233f8c7b82a3e8ce23a",
+    "checksum_source": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/download/v0.1.0-req2.2/seoultech-tetris-0.1.0-macos-aarch64.zip.sha256",
+    "verification_scope": "Published checksum file read; current release ZIP bytes not redownloaded in this documentation update."
+  }
+}

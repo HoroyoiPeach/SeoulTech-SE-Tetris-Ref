@@ -1,0 +1,91 @@
+{
+  "source": {
+    "workflow_run": 40315760987,
+    "job": 121547834723,
+    "tested_commit": "e19f9009d0639c3d6458f6e42f8ac30ad43094da",
+    "main_commit": "62a035fba8897bc00d735cb2efb078e504654971",
+    "identical_git_tree": "c98db56d2628e83076571266715425d2ffd59a26",
+    "artifact": "test-reports-macos-26",
+    "artifact_sha256": "a610e5d20d26402a7cbc1719aef839d5bfdc3a786a54efe5e52fed38bef4ce38",
+    "extracted_files_byte_identical": 30
+  },
+  "environment": {
+    "os": "macOS 26.6.2",
+    "architecture": "aarch64",
+    "java": "21.0.13"
+  },
+  "junit": {
+    "tests": 95,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "coverage": {
+    "type": "LINE",
+    "covered": 1519,
+    "missed": 169,
+    "percent": 89.99
+  },
+  "distribution": {
+    "blocks": {
+      "samples_per_difficulty": 100000,
+      "rows": 21,
+      "all_pass": true,
+      "seed": 20261024
+    },
+    "items": {
+      "samples": 100000,
+      "rows": 5,
+      "all_pass": true,
+      "seed": 20261025
+    },
+    "maximum_relative_error_percent": 1.9736
+  },
+  "core_performance": {
+    "operations": 400000,
+    "elapsed_ms": 21,
+    "budget_ms": 5000
+  },
+  "desktop_smoke": "PASS",
+  "preserved_files": {
+    "block-distribution.png": "c4ac86ccd2f870d1a4c0648863976d89f1bbef428cd3f1919082f339a483f11f",
+    "coverage/jacocoTestReport.xml": "d7008a24702c72952224d5bc0ee7af198483abde0c7aacce64cdedca4b748b6f",
+    "desktop/cross-item-and-preview.png": "b1d52cb00004ea43e5503cb69ac8a06bdd8ca10289425b8c77bf24ab628addd9",
+    "desktop/final-600x500-normal-classic.png": "8d48ae295a848f4a21bcb319a3b076369fcd5904e88afcf4686632926b189e60",
+    "desktop/final-750x625-protanopia-item.png": "dc13e07a3aeb28ac96a84da0aeddc965b3660811461d2a0802d44a58ecb93a2b",
+    "desktop/final-hard-item-score.png": "afd50ece68e3c066740b9bffde56c313c8e770f713bc55f4bf70e818d085ff27",
+    "desktop/result.txt": "5b9a556c983d027cc6995b3b7ab232bbf400f0bad82a29d218d73c442971d904",
+    "distribution/block-distribution.csv": "c4bd2f77fbcdd6a7db989bf081e16f17eef5072c8f37212535bf7de6e016502d",
+    "distribution/item-distribution.csv": "8f56968998d8526a523a615c95701aa1ae05c88e25d6fe29431bbad133fa5fc7",
+    "item-distribution.png": "fb685c78038c0cc5585fd5822a330a57433e9ba32b99bb4898c9738b94f99434",
+    "junit/TEST-seoultech.se.tetris.DifficultyAcceptanceTest.xml": "fc5bcff22a88ebbedda2370229823df893169aa9a52727933243e633b62bfb11",
+    "junit/TEST-seoultech.se.tetris.blocks.BlockDistributionTest.xml": "705806b18d39256ddb7b3a81e641dcd21d6d291994837113e7c0250924dd7d8c",
+    "junit/TEST-seoultech.se.tetris.blocks.BlockGeneratorDifficultyTest.xml": "9b66578e37b35141cfb82e8c96f678b7ebdc05c585b1ccc17d1277d2b3028bbc",
+    "junit/TEST-seoultech.se.tetris.blocks.ColumnBlockTest.xml": "9aca045ec796b33496a64ddd15e4e3c365e1a58b7b3c73e1e521f86fd32b0ec3",
+    "junit/TEST-seoultech.se.tetris.blocks.CrossBlockTest.xml": "bc949ba41cbc35db5d7dd38f0a621bcdda35b45974e40d2729e42a8ce6f9088c",
+    "junit/TEST-seoultech.se.tetris.blocks.ItemDistributionTest.xml": "6a973b35c470fe7014ec833ae85dc8fae6c673a030618a446524489c417ca876",
+    "junit/TEST-seoultech.se.tetris.blocks.RowBlockTest.xml": "543e7ca35d9f45dceae5880a6f0dbe3cabe48a4093e81858d73df35c1c096c7b",
+    "junit/TEST-seoultech.se.tetris.component.AnchorAcceptanceTest.xml": "acd4dbf4fd7ebe085a4e70756bc222ebf2d9c9b2182d7a137a61706d2d4caff6",
+    "junit/TEST-seoultech.se.tetris.component.ColumnBombAcceptanceTest.xml": "1d3ce79e0790778af5aaff8095b45b0fe1f254aa6902cc7b6ece4e1cdebffd6a",
+    "junit/TEST-seoultech.se.tetris.component.CrossItemAcceptanceTest.xml": "ccf9dcfae8fc3d4f341b88f81b39cd0c9fe2f56248a8556525337b66b5db416b",
+    "junit/TEST-seoultech.se.tetris.component.DifficultyUiTest.xml": "42d0855471c1216a83b6fd05501e4d291c967d8ffde299fdd55a6ec21f40b194",
+    "junit/TEST-seoultech.se.tetris.component.ItemSupplyAcceptanceTest.xml": "4d124e496584e7c8b446126054f5ff1842d96c7bf927b3f3157fb58e5070fb98",
+    "junit/TEST-seoultech.se.tetris.component.LegacyRegressionTest.xml": "611e0d99d9450407b0ca9d15c2810133901d182710733520cae55995ec2b4e95",
+    "junit/TEST-seoultech.se.tetris.component.LineAnimationTest.xml": "d6c35d97b3539978b8727cdb718a233b3e35eba4e1c6be4ba13f5c4c65aa8014",
+    "junit/TEST-seoultech.se.tetris.component.LineItemAcceptanceTest.xml": "45673ec5c4aab9b01a268be5c3960516d4a2efe69f3b1df38e26a64cd0360c0f",
+    "junit/TEST-seoultech.se.tetris.component.ModeScoreUiTest.xml": "1ebb7fefc435ffea07b2485478c4eb8c8540995411fdfe11547bcfa4150c569d",
+    "junit/TEST-seoultech.se.tetris.component.PerformanceRegressionTest.xml": "251f0160985ace1a2fc78a20d365fc446a0516036811cdce452d42282cd4cb60",
+    "junit/TEST-seoultech.se.tetris.component.Pr15BoardRegressionTest.xml": "d75f8b08d05011279e47c44efbf63d918f9c495ce20e87847c94c09900d01797",
+    "junit/TEST-seoultech.se.tetris.component.RequirementsRegressionTest.xml": "5eac84c27c7e5fd79edca8a6725deabd7caa612517aeabbc2760b6cb483e465a",
+    "junit/TEST-seoultech.se.tetris.score.ScoreStoreDifficultyTest.xml": "07ed587489d5b74cc59958074b69501a0c836ab7911bf1a9588035052886c438",
+    "junit/TEST-seoultech.se.tetris.score.ScoreStoreModeTest.xml": "cca08b45a252c03008b2be878c33d13806948317a5c310194b33765ac5e1954c",
+    "junit/TEST-seoultech.se.tetris.storage.DataPathsTest.xml": "273fec19bb3d8c0b95e0c01ce20f6fa8a5813a81b813d158fe4d3589d267cc26",
+    "manual-acceptance.csv": "b0082dbaf04776f0507d57bb2105c2d0acb04648bf79260e44d3be3e8af5f490",
+    "plot.py": "a6ab2e8fdf63f62cc21441db7f573645978327f460bbcd881cf982a6fd257ac3",
+    "source/artifact-verification.json": "ea0ae5e4a1c0a1f6b42870b7ff7ade55ccfb2dd1ee314e9e140e1887c3cf4beb",
+    "source/download-manifest.json": "e412e27189190fed3fcf3b7370a50c3655b4a6508497f9da67eb57f21418feb4",
+    "source/github-jobs-final.json": "ef2481f06ef249f0974536e8bd3c7ab5e5122a9a8e12839d1e7ef4eca18bdd30",
+    "source/test-reports-macos-26.zip": "a610e5d20d26402a7cbc1719aef839d5bfdc3a786a54efe5e52fed38bef4ce38",
+    "verify.py": "a130b179b7f1115eff35850ab34241746f1de38ea3a19e9e644f57caed0df823"
+  }
+}

@@ -1,158 +1,392 @@
-# 개발·빌드·테스트 실행
+# SeoulTech SE Tetris 개발 안내서
 
-## 환경과 고정 버전
+이 문서는 커밋 `154fd097deff2675e7030f607b0ceeb35b9e69c5`의 코드·빌드 정의를 기준으로 한다.
 
-| 항목 | 설정 |
+이 기준은 B·C 삭제 후 열별 정착 동작과 O 무게추의 밝은 회색 표시를 포함한다.
+
+최종 제출 대상은 macOS 26 이상이다.
+
+코드와 문서를 단일 PR로 병합한 뒤 최종 tag와 ZIP을 새 릴리스에서 제공한다.
+
+## 1. 개발 환경
+
+| 항목 | 기준 |
 |---|---|
-| 프로젝트 JDK | JDK 21. `JAVA_HOME`을 해당 JDK 경로로 설정 |
-| Java 컴파일 | Java toolchain 21, `--release 21`, UTF-8, `-Xlint:all` |
-| Gradle | Wrapper 9.8.2, 공식 배포 ZIP SHA-256 검증 |
-| JUnit | JUnit 5 BOM 5.14.1, Jupiter와 Platform Launcher |
-| 의존성 저장소 | Maven Central |
+| Java | JDK 21 toolchain, `--release 21` |
+| Gradle | Wrapper 9.8.2 |
+| 문자 인코딩 | Java 컴파일 UTF-8, 패키지 JVM UTF-8 |
+| 테스트 | JUnit Jupiter 5.14.1 |
+| 커버리지 | JaCoCo 0.8.15, 전체 main 코드 Line Coverage 70% gate |
+| UI | Java Swing/AWT |
+| 네이티브 패키지 | JDK 21의 `jpackage`, Windows 또는 macOS 호스트 |
 
-JDK의 패치 버전·제조사와 OS는 팀원 환경에 따라 다를 수 있다. 실행 기록에는
-`java -version`과 `./gradlew --version` 결과를 남긴다. JDK 21이 없으면 먼저 설치한다.
-다른 Java 버전만 설치한 상태에서 toolchain을 자동 다운로드하도록 구성하지 않았다.
-별도 Gradle 설치는 필요 없다. 첫 실행에는 Gradle·JUnit 다운로드를 위한 인터넷 연결이 필요하다.
-
-macOS에서 JDK 21을 설치한 뒤 설정하는 예:
+시스템에 Gradle을 따로 설치하지 않고 저장소의 Wrapper를 사용한다.<br>
+Wrapper가 Java를 찾지 못하면 JDK 21 경로를 `JAVA_HOME`에 지정한다.
 
 ```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+export JAVA_HOME=/absolute/path/to/jdk-21
 ./gradlew --version
 ```
 
-Windows PowerShell 예(경로는 실제 설치 위치로 변경):
+PowerShell에서는 다음처럼 지정한다.
 
 ```powershell
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
+$env:JAVA_HOME = 'C:\absolute\path\to\jdk-21'
 .\gradlew.bat --version
 ```
 
-## 명령
+프로젝트가 별도로 요구하는 환경 변수는 없다.<br>
+실행 데이터 경로를 격리할 때는 JVM 시스템 속성 `tetris.dataDir`을 사용한다.
 
-저장소 루트에서 실행한다. Windows에서는 `./gradlew` 대신 `.\gradlew.bat`을 사용한다.
+## 2. 기본 명령
 
-| 명령 | 동작 |
-|---|---|
-| `./gradlew build` | 컴파일·테스트와 application 플러그인의 개발용 배포 아카이브 생성 |
-| `./gradlew test` | JUnit 검사와 기존 독립 실행 회귀 검사 실행 |
-| `./gradlew clean build` | 빌드 결과를 지우고 다시 빌드·검증 |
-| `./gradlew test --rerun-tasks` | 이전 성공 결과를 재사용하지 않고 검사 재실행 |
-| `./gradlew run` | Swing 게임 실행. 화면을 사용할 수 있는 데스크톱 환경 필요 |
-
-소스/의존성이 바뀌지 않았다면 `test`가 `UP-TO-DATE`로 표시될 수 있다. 매번 실제
-재실행이 필요하면 `--rerun-tasks`를 사용한다. `run`은 루트의 `setting.txt`와
-`tetris_score.txt`를 사용하는 기존 동작을 유지하므로, 직접 플레이하면 이 파일이 바뀔 수 있다.
-자동 테스트는 별도 임시 폴더에서 실행해 두 파일을 변경하지 않는다.
-
-`build`가 만드는 ZIP/TAR와 실행 스크립트는 개발용 산출물이다. 아이콘·런타임을 포함한
-더블클릭 배포 패키지는 `packageRelease`로 만든다. 깨끗한 Windows/macOS 사용자 환경의
-물리 키·저장 후 재실행은 TEST-06/RELEASE-04의 수동 인수 조건이다.
-
-## 디렉터리
-
-```text
-build.gradle                      빌드·의존성·실행·검사 설정
-settings.gradle                   프로젝트 이름
-gradlew / gradlew.bat              OS별 Wrapper 진입점
-gradle/wrapper/                    Wrapper JAR·배포 버전·체크섬
-src/main/java/seoultech/se/tetris/ 게임 소스 (기존 패키지 유지)
-src/test/java/seoultech/se/tetris/ 테스트 소스
-build/                            생성된 클래스·보고서·개발용 아카이브 (Git 제외)
-```
-
-기존 `src/seoultech/...`는 `src/main/java/seoultech/...`로 옮겼다.
-`tests/RefactoringRegressionTest.java`는 패키지에 맞게
-`src/test/java/seoultech/se/tetris/component/RefactoringRegressionTest.java`로 옮겼다.
-기존 문서의 옛 경로는 당시 commit 기준이다. IDE에서는 Gradle 프로젝트로 다시 가져오고,
-진행 중인 다른 브랜치를 합칠 때에는 변경된 경로에서 양쪽 기능을 확인한다.
-
-## 55개 회귀 검사와 JUnit
-
-`LegacyRegressionTest`는 JUnit 검사 1개로 기존 독립 실행 검사 전체를 실행하는 어댑터다.
-보고서의 JUnit 검사 수 1은 내부 회귀 검사가 1개라는 뜻이 아니다. 현재 내부 검사 수는 기존 52개와 경계 검사 3개를 합한 55개이며,
-기존 실행기가 각 검사를 별도 JVM/임시 폴더에서 수행한다. 점수·신규 난이도 기록 형식의 요구 결함 수정에 따른 기대값 변경은 `test-requirements.md`에 명시했다.
-
-어댑터는 Gradle이 전달한 전체 test runtime classpath와 Java 21로 별도 JVM을 시작한다.
-기존 실행기의 `System.exit`이 JUnit 프로세스를 종료하지 않으며, 실패 종료 코드는 JUnit 실패와
-Gradle 명령 실패로 전달된다. 전체 실행이 비계측 5분(커버리지 계측 시 10분)을 넘으면 자식 프로세스를 종료하고 실패 처리한다.
-JUnit 검사가 발견되지 않는 경우에도 빌드를 실패시킨다.
-기존 실행기는 진입 시 표준 출력과 오류 출력을 UTF-8로 명시해 부모/내부 검사 JVM의 로그를
-같은 인코딩으로 읽는다. Windows 기본 콘솔 인코딩이 달라도 한글 결과와 실패 원인을 보존한다.
-
-- HTML 보고서: `build/reports/tests/test/index.html`
-- XML 결과와 내부 55개 실행 로그: `build/test-results/test/TEST-seoultech.se.tetris.component.LegacyRegressionTest.xml`의 `system-out`
-- 새 JUnit 검사는 `src/test/java` 아래의 적절한 패키지에 추가
-
-기존 실행기를 JUnit 없이 직접 실행하는 방법(macOS/Linux, JDK 21):
+macOS·Linux 계열 셸:
 
 ```bash
-test_classes=$(mktemp -d)
-"$JAVA_HOME/bin/javac" --release 21 -encoding UTF-8 -d "$test_classes" \
-  $(find src/main/java -name '*.java') \
-  src/test/java/seoultech/se/tetris/component/RefactoringRegressionTest.java
-"$JAVA_HOME/bin/java" -cp "$test_classes" seoultech.se.tetris.component.RefactoringRegressionTest
+./gradlew --no-daemon --console=plain clean build
+./gradlew --no-daemon --console=plain run
 ```
 
-임시 클래스 폴더는 검증 후 삭제할 수 있다. Gradle과 JUnit을 통한 실행이 팀의 기본 경로다.
+Windows PowerShell:
 
-## 검증 범위와 후속 작업
+```powershell
+.\gradlew.bat --no-daemon --console=plain clean build
+.\gradlew.bat --no-daemon --console=plain run
+```
 
-이 구성은 빌드와 기존 동작 검사를 반복 실행하는 기반이다. 회귀 통과가 요구사항 전체 충족을
-뜻하지 않는다. 실제 창·포커스·키 반복·Windows 실행·성능·커버리지 비율은 별도 검증한다.
-기존 reflection/Unsafe 등 컴파일 경고도 이번 기반 구성에서 수정하지 않는다.
+`build`는 컴파일·JUnit·JaCoCo 보고서·70% Line Coverage gate를 실행한다.<br>
+네이티브 UI 검사와 `jpackage` 패키징은 별도 task다.<br>
+의존성이 로컬 캐시에 모두 있으면 `--offline`을 추가할 수 있다.
 
-JaCoCo는 Gradle JUnit worker와 기존 회귀 실행기·내부 검사 JVM까지 agent를 전달해 계측한다.
-`LegacyRegressionTest`는 자식 실행 전후 coverage 파일 크기 증가를 확인하고, `check`는
-제품 전체 line coverage 70%를 검사한다. HTML/XML 보고서에서 측정 대상과 실제 실행된
-제품 코드를 확인할 수 있다. 현재 실측값과 최종 제출 조건은 [R2-07 원장](req2-final-verification.md)에 연결한다.
-GitHub push/PR 자동 실행은 아래 CI 구성을 따른다.
+## 3. 테스트와 보고서
 
-## GitHub Actions CI
+### JUnit·커버리지
 
-`.github/workflows/ci.yml`의 `Java CI`가 모든 브랜치의 push와 PR 생성/갱신 시 실행된다.
-GitHub의 Actions 탭에서 실행을 선택하거나 PR의 Checks에서 결과를 확인한다.
-fork에서 처음 사용하는 경우 해당 저장소의 Actions 활성화가 필요할 수 있다.
+```bash
+./gradlew --no-daemon --console=plain test
+./gradlew --no-daemon --console=plain jacocoTestReport jacocoTestCoverageVerification
+```
 
-| 검사 작업 | 실행 환경 | 명령 |
+주요 결과 위치:
+
+```text
+build/test-results/test/             JUnit XML
+build/reports/tests/test/            JUnit HTML
+build/reports/jacoco/test/html/      JaCoCo HTML
+build/reports/jacoco/test/jacocoTestReport.xml
+build/reports/req2/block-distribution.csv
+build/reports/req2/item-distribution.csv
+```
+
+`test`는 `java.awt.headless=true`로 실행된다.<br>
+기존 독립 회귀 프로그램은 `LegacyRegressionTest` 한 개의 JUnit 어댑터를 통해 별도 JVM에서 실행되고 같은 JaCoCo 파일에 append한다.<br>
+보고할 때 JUnit 개수와 그 안에서 실행된 기존 회귀 항목을 단순 합산하지 않는다.
+
+### 확률 분포
+
+일반 블록 분포 검사는 실제 `BlockGenerator.nextBlock(difficulty)`를 난이도마다 100,000회 호출한다.
+
+- seed: `20261024`
+- Easy 가중치: I 12, 나머지 여섯 종류 각각 10
+- Normal 가중치: 일곱 종류 각각 1
+- Hard 가중치: I 8, 나머지 여섯 종류 각각 10
+- 판정: `|관측확률 - 기대확률| / 기대확률 ≤ 0.05`
+
+아이템 분포 검사는 실제 `BlockGenerator.nextItemBlock()`을 100,000회 호출한다.
+
+- seed: `20261025`
+- L/O/C/B/P 기대확률: 각각 20%
+- 판정: 상대오차 5% 이하
+
+두 CSV에는 seed·반복 수·기대/관측 확률·오차·판정이 들어간다.<br>
+원문 최소 반복 수 1,000회와 현재 100,000회 검증량을 구분해서 보고한다.
+
+### 핵심 연산 성능
+
+`PerformanceRegressionTest`는 빈 20×10 보드에서 일곱 블록의 아래·왼쪽·오른쪽·회전 판정을 각 100,000회, 총 400,000회 실행한다.<br>
+팀 자동 기준은 5초 미만이고 테스트 timeout은 10초다.<br>
+이 검사는 실제 창 렌더링·물리 입력·전체 플레이 성능을 대신하지 않는다.
+
+## 4. 실제 창 검사
+
+두 task 모두 표시 가능한 데스크톱 세션에서 실행한다.
+
+```bash
+./gradlew --no-daemon --console=plain desktopSmoke
+./gradlew --no-daemon --console=plain desktopFocusSmoke
+```
+
+| task | 확인 범위 | 결과 위치 |
 |---|---|---|
-| `Build and test (windows-2025)` | Windows Server 2025, PowerShell, Temurin Java 21 | `./gradlew.bat --no-daemon --console=plain build desktopSmoke packageRelease` |
-| `Build and test (macos-26)` | macOS 26, Bash, Temurin Java 21 | `./gradlew --no-daemon --console=plain build desktopSmoke packageRelease` |
+| `desktopSmoke` | 실제 JFrame, 메뉴·반복 합성 입력·정지/재개·B/P 아이템·설정/기록 재로드·순위·세 크기·네 팔레트 | `build/reports/desktop/` |
+| `desktopFocusSmoke` | 활성 창에서 클릭/포커스 뒤 입력, 설정·게임·순위 화면 | `build/reports/desktop-focus/` |
 
-두 작업은 독립 실행된다. 한 OS에서 실패해도 다른 OS의 검사는 계속 진행한다.
-같은 브랜치/PR에 새 변경이 올라오면 이전 실행을 취소하고 최신 변경을 검사한다.
-Gradle Wrapper의 공식 JAR 검증 후 빌드하며, 기존 JUnit 어댑터를 통해 55개 회귀 검사도 실행한다.
-검사가 실패하면 해당 작업이 실패로 표시된다. 외부 Action은 확인한 릴리스의 전체 commit SHA로 고정한다.
+`desktopFocusSmoke`는 기본적으로 AWT `Robot`을 사용한다.<br>
+화면 그룹을 제한하거나 Swing 이벤트 경로를 확인할 수 있다.
 
-성공·실패 모두 `test-reports-windows-2025`, `test-reports-macos-26` 아티팩트를 7일간 보관한다.
-실행 화면의 Artifacts에서 다운로드하면 JUnit XML/내부 회귀 로그, JaCoCo·성능·실제 창 보고서,
-요구사항 2 분포 CSV·팔레트 PNG와 Gradle 문제 보고서를 볼 수 있다. 성공한 OS job의
-`package-<OS>`에는 실행 ZIP과 SHA-256도 보관한다. 컴파일/환경 준비가 먼저 실패해 보고서가 없으면
-아티팩트 미생성 경고와 해당 단계의 로그를 확인한다.
+```bash
+./gradlew desktopFocusSmoke --args="start"
+./gradlew desktopFocusSmoke --args="game scoreboard"
+./gradlew desktopFocusSmoke --args="swing all"
+```
 
-워크플로의 저장소 권한은 `contents: read`이며 checkout 인증 정보는 남기지 않는다.
-CI에 개인 토큰이나 배포용 secret은 필요 없다. Windows Server의 headless 검사 결과는
-Windows 11의 실제 게임 창·키 입력·설치 검증을 대신하지 않으며, 해당 검증은 TEST-06/RELEASE-04에서 진행한다.
+그룹은 `start`, `game`, `scoreboard`, `all`만 허용한다.<br>
+`swing` 옵션은 실제 물리 키보드 검증이 아니라 실제 포커스 라우팅 위의 합성 Swing 이벤트 검증이다.<br>
+현재 CI의 `desktopSmoke`도 합성 KeyListener 입력을 사용하므로 실제 키보드·마우스와 최종 설치 환경은 별도로 인수 검증한다.
 
-## 공식 근거
+## 5. 실행 데이터 격리
 
-- [Gradle 9.8.2 Wrapper](https://docs.gradle.org/9.8.2/userguide/gradle_wrapper.html): Wrapper 파일의 버전 관리와 배포 체크섬
-- [Gradle Java toolchains](https://docs.gradle.org/9.8.2/userguide/toolchains.html): Java 21 선택과 release 설정
-- [Gradle JVM testing](https://docs.gradle.org/9.8.2/userguide/java_testing.html): JUnit Platform·검사 실패 처리
-- [Gradle 공식 체크섬](https://gradle.org/release-checksums/): ZIP 및 Wrapper JAR 검증
-- [JUnit 5.14.1 Gradle 설정](https://docs.junit.org/5.14.1/running-tests/build-support.html): BOM·Jupiter·Launcher 구성
-- [GitHub 호스팅 실행 환경](https://docs.github.com/en/actions/reference/runners/github-hosted-runners): Windows/macOS 실행 환경
-- [Gradle setup-gradle](https://github.com/gradle/actions/blob/v6.4.0/docs/setup-gradle.md): Wrapper 검증과 캐시
-- [GitHub 테스트 산출물 보관](https://docs.github.com/en/actions/tutorials/store-and-share-data): 아티팩트 업로드와 보관 기간
+| 실행 형태 | 기본 위치 |
+|---|---|
+| Gradle `run`·일반 클래스 실행 | 현재 작업 디렉터리의 `setting.txt`, `tetris_score.txt` |
+| `jpackage` 앱 | `${user.home}/.seoultech-tetris/` |
+| 테스트·임시 실행 | `-Dtetris.dataDir=/absolute/path`로 지정한 디렉터리 |
 
+테스트는 실제 사용자 데이터를 건드리지 않도록 임시 디렉터리를 지정한다.<br>
+패키지 launcher는 `-Dtetris.packaged=true`를 자동 전달한다.
 
-## 커버리지·성능·실제 창 검사·배포
+직접 Java 명령을 사용할 때의 예:
 
-- `./gradlew clean build`: 독립 회귀 55개, 추가 JUnit 검사, 전체 제품 코드 line coverage 70% 검증. JaCoCo HTML/XML은 `build/reports/jacoco/test/`.
-- `./gradlew desktopSmoke`: 그래픽 세션에서 실제 JFrame을 띄우고 합성 KeyListener 입력으로 메뉴·반복 입력·정지/재개·설정·점수판·순위 진입/미진입을 검사한다. OS 물리 입력 검증을 대체하지 않는다. `build/reports/desktop/`에 결과·화면을 남긴다.
-- `./gradlew desktopFocusSmoke`: 활성 데스크톱에서 AWT Robot으로 OS 마우스·키 이벤트를 보내 시작·설정·키 변경, 일반/아이템 게임·일시정지·MENU 클릭 취소, 게임오버 이름 입력, 랭킹 텍스트·필터·스크롤바의 클릭 후 입력을 검사한다. 실제 이벤트 도착과 동작 결과를 함께 확인하며 클릭 뒤 포커스를 강제로 복구하지 않는다. `--args=start`, `--args=game`, `--args=scoreboard`로 그룹을 선택할 수 있다. 실행 중 마우스·키보드를 사용하지 말아야 하며 OS에 따라 입력 제어 권한이 필요하다. 자동 CI와 분리된 검사다.
-- `./gradlew desktopFocusSmoke --args="swing all"`: 같은 실제 창에서 합성 마우스 이벤트와 현재 포커스 소유자를 통한 키 전달로 Swing 내부 포커스 경로를 검사한다. 키 리스너를 직접 호출하지 않지만 OS 물리 입력을 증명하지도 않는다. 두 방식 모두 `build/reports/desktop-focus/result.txt`에 입력 방식·실행 그룹·환경을 기록하고, 실패 시 가능한 경우 해당 창 영역을 `failure.png`로 남긴다. 사람의 물리 키보드 조작이나 배포 ZIP 인수를 대체하지 않는다.
-- 성능 검사는 `PerformanceRegressionTest`에서 핵심 이동·회전 판정 400,000회를 5초 예산으로 검증하고 JUnit 로그에 환경·시간을 남긴다.
-- `./gradlew packageRelease`: 현재 OS의 Java 21 런타임 포함 앱 이미지 ZIP·SHA-256 생성. Windows에서는 `gradlew.bat` 사용. 배포 방식과 실행법은 [사용자 안내](user-guide.md), 검증 범위·한계는 [검증 기록](verification.md).
-- GitHub CI는 Windows Server 2025·macOS 26에서 `build desktopSmoke packageRelease`를 수행하고 테스트·커버리지·실제 창 결과 및 OS별 실행 ZIP을 각각 7일간 보관한다. 실제 Windows 11 설치 확인은 별도다.
+```bash
+java -Dtetris.dataDir=/tmp/tetris-data -jar build/libs/seoultech-tetris.jar
+```
+
+## 6. 네이티브 패키징
+
+`packageRelease`는 실행 중인 호스트용 앱 이미지·portable ZIP·SHA-256을 만든다.
+
+```bash
+./gradlew --no-daemon --console=plain clean build desktopSmoke packageRelease
+```
+
+Windows:
+
+```powershell
+.\gradlew.bat --no-daemon --console=plain clean build desktopSmoke packageRelease
+```
+
+task 흐름:
+
+```text
+jar
+  → preparePackageInput
+  → packageAppImage
+  → packagePortable
+  → packageChecksum
+  → packageRelease
+```
+
+출력:
+
+```text
+build/distributions/seoultech-tetris-0.1.0-<platform>-<architecture>.zip
+build/distributions/seoultech-tetris-0.1.0-<platform>-<architecture>.zip.sha256
+```
+
+- `<platform>`: `macos` 또는 `windows`
+- `<architecture>`: `aarch64`, `x64` 또는 JVM이 보고한 기타 아키텍처
+- 앱 이름: `SeoulTech Tetris`
+- macOS bundle: `SeoulTech Tetris.app`
+- 아이콘: macOS `tetris.icns`, Windows `tetris.ico`
+- Java 21 runtime: 앱 이미지 내부 포함
+
+macOS는 `ditto`, Windows는 PowerShell `Compress-Archive`로 ZIP을 만든다.<br>
+Linux 패키징은 지원하지 않는다.<br>
+패키징은 빌드 호스트와 같은 OS용으로만 수행된다.
+
+최종 제출에서는 소스 커밋, CI run/job, ZIP 파일명·SHA-256과 대상 OS/CPU를 같은 버전으로 묶는다.
+실제 tag·ZIP·SHA-256·CI·인수 결과는 [GitHub Releases](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases)의 해당 릴리스 본문에 기록한다.
+
+## 7. CI 구성과 실행 결과
+
+`.github/workflows/ci.yml`은 모든 push와 pull request에서 `windows-2025`, `macos-26` matrix를 실행한다.<br>
+각 job은 Temurin 21과 검증된 Wrapper로 `build desktopSmoke packageRelease`를 실행하고 보고서·패키지를 7일간 artifact로 보관한다.<br>
+`desktopFocusSmoke`는 기본 CI에 포함되지 않는다.
+
+현재 기준 커밋 `154fd097`의 로컬 `build` 결과:
+
+| 항목 | 결과 |
+|---|---|
+| JUnit | 98개, 실패·오류 0 |
+| Line Coverage | 1534/1703 = **90.08%** |
+| 70% gate | 통과 |
+| 일반·아이템 분포 | 난이도별 100,000회·5종 100,000회, 전체 통과 |
+| 핵심 연산 성능 | 400,000회 26ms / 5,000ms 기준 통과 |
+| `desktopSmoke` | PASS |
+| `packageRelease` | macOS aarch64 ZIP·runtime·아이콘·런처 생성 확인 |
+| 로컬 후보 ZIP SHA-256 | `87a8402eb40931f34052c5880f504c33d96c28c37635bca6dde99c616bb2e301` |
+
+이 결과는 로컬 자동검사이며 최종 릴리스의 실제 물리 키보드·마우스·완전 종료 후 재실행 인수를 대신하지 않는다.
+로컬 실행 명령은 `./gradlew --no-daemon --console=plain build desktopSmoke packageRelease`였다.
+원본 결과와 비공개 후보 ZIP 메타데이터는 [154fd097 로컬 증빙](evidence/req12-154fd09-local/)에 보관했다.
+이 후보는 게시된 최종 릴리스가 아니며, 최종 파일의 신원은 병합 후 릴리스 본문에서 확정한다.
+
+이전 PR #22 커밋 `e19f900`의 macOS CI 결과:
+
+| 환경 | 결과 | 검증 범위 |
+|---|---|---|
+| macOS 26, Java 21 | `build desktopSmoke packageRelease` 성공 | JUnit·커버리지·분포·GUI 자동검사·패키징 |
+
+CI: <https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/runs/40315760987>
+
+위 CI는 이전 소스 증빙이며 `154fd097`의 B·C 정착 변경을 검증한 결과가 아니다.
+최종 PR에서 현재 코드의 macOS CI를 다시 통과해야 한다.
+수동 인수 결과는 실제 수행 후에만 릴리스 본문·검증 증빙에 기록한다.
+
+## 8. 코드 구조
+
+| 영역 | 주요 클래스 | 책임 |
+|---|---|---|
+| 실행 진입 | `main/Tetris` | Swing EDT에서 `Maincontainer` 생성 |
+| 화면·설정 | `component/Maincontainer` | 화면 전환, 설정 로드·적용·저장, 색상 변환 |
+| 메뉴 UI | `Startpanel`, `Settingpanel`, `Scoreboardpanel`, `MenuButtons` | 메뉴·설정·모드별 순위 |
+| 게임 UI | `Gamepanel`, `Nextblockpanel` | 입력, 점수·예고, 정지·게임오버·이름 입력 |
+| 게임 상태 | `Board` | 보드·타이머·낙하·고정·행 삭제·레벨·점수·아이템 효과 |
+| 충돌 | `rules/CollisionRules` | 이동·회전 위치 판정 |
+| 블록·생성 | `blocks/Block` 하위 클래스, `BlockGenerator` | shape·text·color·회전·난이도별 선택 |
+| 저장 | `ScoreStore`, `DataPaths` | 순위·모드 필터, 쓰기 가능한 데이터 경로 |
+
+보드와 다음 블록은 Monospaced 문자·색상으로 렌더한다.<br>
+`shape`는 점유 여부, `text`는 실제 표시 문자를 담당한다.<br>
+색상 모드는 주요 색을 `Maincontainer.changeColor`로 변환한다.
+
+## 9. 설정·메뉴 확장
+
+설정 추가 시 다음을 함께 수정한다.
+
+1. `Maincontainer.Setting.validSettingMap`에 허용 값과 기본값 추가
+2. `Settingpanel`에 선택 UI 등록
+3. `Maincontainer.applySetting()`에서 런타임 상태 반영
+4. 구형 파일의 누락 항목이 기본값을 유지하는지 확인
+5. 저장·재로드·기본값·잘못된 값 테스트 추가
+
+메뉴는 `MenuButtons.add(parent, child)` 순서대로 등록되고 위·아래 순환과 선택을 공통 처리한다.<br>
+항목 추가 후 최소 창 크기에서도 가시성을 확인한다.
+
+## 10. 블록·아이템 확장
+
+일반 블록을 추가하려면 `Block` 하위 클래스, `BlockGenerator.createBlock()`, 난이도별 가중치, 회전·충돌·미리보기·색상·분포 테스트를 함께 수정한다.<br>
+현재 분포 코드는 일곱 종류를 전제로 한다.
+
+Item 모드 아이템은 블록 클래스·생성기·보드 효과 처리를 연결해 추가한다.<br>
+추가 절차는 다음과 같다.
+
+1. `ItemBlock` 하위 클래스에 shape·text·color·회전·`createNew()` 정의
+2. `BlockGenerator.nextItemBlock()` 선택 분기와 확률 갱신
+3. `Board.useItem()`에 타입별 효과 추가
+4. 특수 이동·회전 제약이 있으면 `Board` 관련 분기 확인
+5. `ItemDistributionTest`의 식별자·확률 갱신
+6. 발동·경계·점수·줄 누계·중첩·정지/종료·예고 회귀 추가
+7. [게임 명세서](specification.md)와 [요구사항 2 체크리스트](requirements-2-checklist.md) 갱신
+
+P 아이템의 실제 변경 면:
+
+| 파일 | 역할 |
+|---|---|
+| `blocks/CrossBlock.java` | 2×2 `P` shape·색상·회전 불변 |
+| `blocks/BlockGenerator.java` | L/O/C/B/P 중 선택 |
+| `component/Board.java` | 두 행·두 열 효과, 행 점수·누계, 중복 행, 애니메이션 |
+| 공통 미리보기·렌더 경로 | shape·문자·색 표시 |
+| `CrossItemAcceptanceTest`, `ItemSupplyAcceptanceTest`, `ItemDistributionTest` | 효과·공급·분포 회귀 |
+
+아이템 추가 시 `Board`·생성기·시험·명세를 함께 갱신한다.
+
+B·C 효과는 대상 셀을 비운 뒤 `Board.settleColumns()`로 모든 열을 독립적으로 정착시킨다.
+정착은 열 간 이동 없이 세로 순서·문자·색상을 보존한다.
+B 정착으로 생긴 완성 행은 공통 `eraseLine()` 경로에서 기존 점수·줄 누계·아이템 공급을 적용한다.
+C가 지운 열은 비어 있으므로 정착만으로 새 완성 행을 만들지 않는다.
+P는 기존 행 삭제·압축 경로를 유지한다.
+
+근거: [B·C 효과와 정착](../src/main/java/seoultech/se/tetris/component/Board.java#L269), [B·C 인수 테스트](../src/test/java/seoultech/se/tetris/component/ColumnBombAcceptanceTest.java#L268).
+
+## 11. 변경 검증 순서
+
+1. 변경 동작의 직접 JUnit
+2. 전체 `build`와 70% Line Coverage gate
+3. GUI 영향 시 `desktopSmoke`
+4. 클릭·포커스·물리 입력 영향 시 표시 가능한 환경에서 `desktopFocusSmoke`
+5. 제출 후보면 대상 OS에서 `packageRelease`
+6. ZIP SHA-256 확인
+7. 최종 ZIP으로 더블클릭·입력·저장·완전 종료 후 재실행 수동 검증
+
+자동검사와 배포 검증 결과는 검증 보고서에서 관리한다.
+
+## 12. 수업 내용의 실제 적용
+
+이 표는 코드·자동화에서 직접 확인할 수 있는 사실만 정리한다.<br>
+팀 합의 과정·개인별 기여·브랜치/PR 운영 정책은 [프로젝트 관리 기록](project-management.md)에서 다룬다.
+
+| 수업 개념 | 실제 문제·선택 | 코드·검증 근거 |
+|---|---|---|
+| 버전 관리 | 소스·테스트·아이콘·Wrapper·CI를 같은 저장소에서 변경 이력으로 관리 | Git 이력, `src/`, `gradle/wrapper/`, `.github/workflows/ci.yml` |
+| 책임 분리 | 화면 전환·게임 상태·충돌·생성·저장을 클래스로 나눔 | `Maincontainer`, `Board`, `CollisionRules`, `BlockGenerator`, `ScoreStore` |
+| 회귀 테스트 | 기존 기능과 요구사항 2의 난이도·모드·아이템 변경을 함께 검증 | `src/test/java`, `LegacyRegressionTest`, 아이템 acceptance test |
+| 반복 가능한 빌드 | 개발자 환경 차이를 줄이기 위해 Java toolchain과 Gradle Wrapper 고정 | `build.gradle`, `gradle-wrapper.properties` |
+| 지속적 통합 | push·PR마다 두 OS matrix에서 build·GUI smoke·패키징 실행 | `.github/workflows/ci.yml` |
+| 커버리지 | 직접 작성한 main 코드 전체의 Line Coverage를 측정하고 70% gate 적용 | `jacocoTestReport`, `jacocoTestCoverageVerification`; 제외 목록 없음 |
+| 비기능 측정 | 막연한 “빠름” 대신 핵심 이동·회전 판정 400,000회/5초의 팀 기준을 자동화 | `PerformanceRegressionTest`; 실제 GUI·물리 입력 성능은 별도 검증 |
+| 확률 검증 | 실제 생성기의 기대 분포를 seed·반복 수·상대오차 식으로 재현 | `BlockDistributionTest`, `ItemDistributionTest`, 생성된 CSV |
+| 배포 자동화 | 소스에서 host-native 앱·runtime·아이콘·ZIP·SHA-256을 한 task로 생성 | `gradle/packaging.gradle`, `packageRelease` |
+
+커버리지 70%는 현재 자동 gate이고 요구사항 2에서 기말 기준으로 명시된 값이다.
+
+중간평가 기준은 50%다.
+
+성능 5초 기준은 핵심 연산 회귀 검사에 적용한다.
+
+## 13. 제출 버전 고정
+
+README와 검증 자료에는 다음을 함께 남긴다.
+
+```text
+source commit / branch 또는 tag
+Java·Gradle 버전
+대상 OS·버전·CPU
+CI run/job URL
+JUnit 수·실패·skip
+Line Coverage covered/missed와 범위
+분포 CSV seed·반복 수·계산식
+ZIP 파일명·SHA-256
+수동 검증자·실제 날짜·기기·결과
+검증 범위·참고 사항
+```
+
+서로 다른 커밋의 소스·CI·패키지를 같은 버전으로 표현하지 않는다.
+
+최종 순서는 다음과 같다.
+
+1. 코드·테스트·문서·증빙을 단일 PR로 제출
+2. 현재 소스의 macOS CI 통과와 후보 ZIP·체크섬 확인
+3. 동일 후보 ZIP으로 M01~M08을 수행하고 실제 결과를 같은 PR에 반영
+4. 작성자 외 팀원 1명 검토와 macOS CI 확인 후 `main` 병합
+5. 병합 커밋에 tag를 붙이고 인수한 동일 ZIP·SHA-256을 GitHub Release에 게시
+6. 릴리스 본문에 tag·소스·빌드 커밋·CI·파일·체크섬·인수 결과·문서 링크 기록
+
+릴리스 본문이 최종 파일과 검증 연결을 담당하므로 릴리스 정보만을 반영하기 위한 추가 문서 PR은 만들지 않는다.
+
+## 관련 문서
+
+- [제출 안내](../README.md)
+- [요구사항 1 체크리스트](requirements-1-checklist.md)
+- [요구사항 2 체크리스트](requirements-2-checklist.md)
+- [게임 명세서](specification.md)
+- [사용자 안내서](user-guide.md)
+
+## 구현·빌드 근거
+
+- [Gradle 빌드와 검증 task](../build.gradle)
+- [네이티브 패키징 task](../gradle/packaging.gradle)
+- [Windows·macOS CI](../.github/workflows/ci.yml)
+- [화면 전환·설정](../src/main/java/seoultech/se/tetris/component/Maincontainer.java)
+- [보드·아이템 효과](../src/main/java/seoultech/se/tetris/component/Board.java)
+- [충돌 규칙](../src/main/java/seoultech/se/tetris/rules/CollisionRules.java)
+- [블록 생성기](../src/main/java/seoultech/se/tetris/blocks/BlockGenerator.java)
+- [P 아이템](../src/main/java/seoultech/se/tetris/blocks/CrossBlock.java)
+- [일반 블록 분포 검사](../src/test/java/seoultech/se/tetris/blocks/BlockDistributionTest.java)
+- [아이템 분포 검사](../src/test/java/seoultech/se/tetris/blocks/ItemDistributionTest.java)
+- [핵심 연산 성능 검사](../src/test/java/seoultech/se/tetris/component/PerformanceRegressionTest.java)
+- [실제 창 smoke](../src/test/java/seoultech/se/tetris/component/DesktopSmoke.java)
+- [포커스 smoke](../src/test/java/seoultech/se/tetris/component/DesktopFocusSmoke.java)
+
+- [검증 보고서](verification.md)
+- [프로젝트 관리 기록](project-management.md)

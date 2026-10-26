@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.AnchorAcceptanceTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:42:11.074Z" hostname="gilmingyuui-MacBookPro.local" time="0.847">
+  <properties/>
+  <testcase name="level=1" classname="seoultech.se.tetris.component.AnchorAcceptanceTest" time="0.099"/>
+  <testcase name="level=2" classname="seoultech.se.tetris.component.AnchorAcceptanceTest" time="0.547"/>
+  <testcase name="level=19" classname="seoultech.se.tetris.component.AnchorAcceptanceTest" time="0.004"/>
+  <testcase name="x=0" classname="seoultech.se.tetris.component.AnchorAcceptanceTest" time="0.004"/>
+  <testcase name="x=6" classname="seoultech.se.tetris.component.AnchorAcceptanceTest" time="0.004"/>
+  <testcase name="R2-12: 무게추는 모든 색상 모드에서 너비 4와 고유 형상으로 식별" classname="seoultech.se.tetris.component.AnchorAcceptanceTest" time="0.142"/>
+  <testcase name="R2-12: 빈 보드의 하드드롭은 18칸 낙하만 계산하고 바닥에 정지" classname="seoultech.se.tetris.component.AnchorAcceptanceTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

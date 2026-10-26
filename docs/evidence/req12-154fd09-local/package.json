@@ -1,0 +1,19 @@
+{
+  "filename": "seoultech-tetris-0.1.0-macos-aarch64.zip",
+  "sha256": "87a8402eb40931f34052c5880f504c33d96c28c37635bca6dde99c616bb2e301",
+  "size_bytes": 53777615,
+  "tested_commit": "154fd097deff2675e7030f607b0ceeb35b9e69c5",
+  "jar_matches_build": true,
+  "classes_match_build": 67,
+  "runtime_included": true,
+  "icon_included": true,
+  "launcher_included": true,
+  "published": false,
+  "scope": "Local build candidate; final release identity is recorded in the release body.",
+  "runtime_members_verified": [
+    "SeoulTech Tetris.app/Contents/runtime/Contents/Home/release",
+    "SeoulTech Tetris.app/Contents/runtime/Contents/Home/lib/server/libjvm.dylib",
+    "SeoulTech Tetris.app/Contents/runtime/Contents/Home/lib/modules"
+  ],
+  "runtime_java_version": "JAVA_VERSION=\"21.0.13\""
+}

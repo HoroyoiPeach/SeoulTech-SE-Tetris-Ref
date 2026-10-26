@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.blocks.RowBlockTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-26T11:32:33.949Z" hostname="sjc22-bm210-b48edad2-4b10-4356-ad42-2afb5e626599-46D94E7403FB.local" time="0.019">
+  <properties/>
+  <testcase name="itemMarkerRemainsUniqueAndTracksItsOccupiedCellAcrossAllShapesAndRotations()" classname="seoultech.se.tetris.blocks.RowBlockTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
