@@ -54,7 +54,12 @@ public class Scoreboardpanel extends JPanel{
         for (int index = 0; index < modeButtons.length; index++) {
             GameMode filterMode = index == 0 ? null : GameMode.values()[index - 1];
             JToggleButton button = new JToggleButton(labels[index]);
-            button.setFocusable(false);
+            MenuButtons.styleActionButton(button);
+            button.setOpaque(false);
+            button.addItemListener(event -> {
+                button.setOpaque(button.isSelected());
+                button.repaint();
+            });
             button.addActionListener(event -> showMode(filterMode));
             modeButtons[index] = button;
             filterGroup.add(button);
