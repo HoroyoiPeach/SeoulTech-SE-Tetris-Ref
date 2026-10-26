@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.DifficultyAcceptanceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-26T11:32:33.475Z" hostname="sjc22-bm210-b48edad2-4b10-4356-ad42-2afb5e626599-46D94E7403FB.local" time="0.075">
+  <properties/>
+  <testcase name="R2-09: Normal은 기존 레벨별 타이머 공식을 유지" classname="seoultech.se.tetris.DifficultyAcceptanceTest" time="0.037"/>
+  <testcase name="R2-09: 1~19레벨의 세 난이도 간격과 속도 순서는 승인된 표와 일치" classname="seoultech.se.tetris.DifficultyAcceptanceTest" time="0.007"/>
+  <testcase name="R2-09: 초기값·레벨 범위·최소 타이머 간격 경계를 유지" classname="seoultech.se.tetris.DifficultyAcceptanceTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

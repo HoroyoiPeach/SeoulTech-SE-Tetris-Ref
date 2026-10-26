@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.storage.DataPathsTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:43:07.965Z" hostname="gilmingyuui-MacBookPro.local" time="0.007">
+  <properties/>
+  <testcase name="packagedDataUsesUserHomeRegardlessOfWorkingDirectory()" classname="seoultech.se.tetris.storage.DataPathsTest" time="0.005"/>
+  <testcase name="explicitDataDirectoryIsCreatedAndWritable()" classname="seoultech.se.tetris.storage.DataPathsTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

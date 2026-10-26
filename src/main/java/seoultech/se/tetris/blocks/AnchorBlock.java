@@ -13,7 +13,7 @@ public class AnchorBlock extends ItemBlock {
 			{" ", "O", "O", " "},
 			{"O", "O", "O", "O"}
 		};
-		color = Color.GRAY;
+		color = Color.LIGHT_GRAY;
 	}
 
     @Override 

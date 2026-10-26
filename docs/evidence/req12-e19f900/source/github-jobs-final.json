@@ -1,0 +1,253 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 121547834723,
+      "run_id": 40315760987,
+      "workflow_name": "Java CI",
+      "head_branch": "fix/midterm-final",
+      "run_url": "https://api.github.com/repos/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/runs/40315760987",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbO9l88AAAAcTNDFYw",
+      "head_sha": "e19f9009d0639c3d6458f6e42f8ac30ad43094da",
+      "url": "https://api.github.com/repos/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/jobs/121547834723",
+      "html_url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/runs/40315760987/job/121547834723",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-26T11:31:57Z",
+      "started_at": "2026-10-26T11:32:00Z",
+      "completed_at": "2026-10-26T11:35:14Z",
+      "name": "Build and test (macos-26)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-26T11:32:01Z",
+          "completed_at": "2026-10-26T11:32:03Z"
+        },
+        {
+          "name": "Check out source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-26T11:32:03Z",
+          "completed_at": "2026-10-26T11:32:06Z"
+        },
+        {
+          "name": "Set up Java 21",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-26T11:32:06Z",
+          "completed_at": "2026-10-26T11:32:12Z"
+        },
+        {
+          "name": "Set up Gradle and validate Wrapper",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-26T11:32:12Z",
+          "completed_at": "2026-10-26T11:32:18Z"
+        },
+        {
+          "name": "Build and test on Windows",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 5,
+          "started_at": "2026-10-26T11:32:18Z",
+          "completed_at": "2026-10-26T11:32:18Z"
+        },
+        {
+          "name": "Build and test on macOS",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-26T11:32:18Z",
+          "completed_at": "2026-10-26T11:34:57Z"
+        },
+        {
+          "name": "Upload test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-26T11:34:57Z",
+          "completed_at": "2026-10-26T11:35:00Z"
+        },
+        {
+          "name": "Upload portable package",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-26T11:35:00Z",
+          "completed_at": "2026-10-26T11:35:08Z"
+        },
+        {
+          "name": "Post Set up Gradle and validate Wrapper",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-26T11:35:08Z",
+          "completed_at": "2026-10-26T11:35:08Z"
+        },
+        {
+          "name": "Post Set up Java 21",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-26T11:35:08Z",
+          "completed_at": "2026-10-26T11:35:09Z"
+        },
+        {
+          "name": "Post Check out source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-26T11:35:09Z",
+          "completed_at": "2026-10-26T11:35:09Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-26T11:35:09Z",
+          "completed_at": "2026-10-26T11:35:11Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/check-runs/121547834723",
+      "labels": [
+        "macos-26"
+      ],
+      "runner_id": 1000000034,
+      "runner_name": "GitHub Actions 1000000034",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 121547835066,
+      "run_id": 40315760987,
+      "workflow_name": "Java CI",
+      "head_branch": "fix/midterm-final",
+      "run_url": "https://api.github.com/repos/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/runs/40315760987",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUbO9l88AAAAcTNDGug",
+      "head_sha": "e19f9009d0639c3d6458f6e42f8ac30ad43094da",
+      "url": "https://api.github.com/repos/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/jobs/121547835066",
+      "html_url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/runs/40315760987/job/121547835066",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-10-26T11:31:57Z",
+      "started_at": "2026-10-26T11:32:00Z",
+      "completed_at": "2026-10-26T11:33:59Z",
+      "name": "Build and test (windows-2025)",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-26T11:32:01Z",
+          "completed_at": "2026-10-26T11:32:02Z"
+        },
+        {
+          "name": "Check out source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-26T11:32:02Z",
+          "completed_at": "2026-10-26T11:32:10Z"
+        },
+        {
+          "name": "Set up Java 21",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-26T11:32:10Z",
+          "completed_at": "2026-10-26T11:32:11Z"
+        },
+        {
+          "name": "Set up Gradle and validate Wrapper",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-26T11:32:11Z",
+          "completed_at": "2026-10-26T11:32:16Z"
+        },
+        {
+          "name": "Build and test on Windows",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 5,
+          "started_at": "2026-10-26T11:32:16Z",
+          "completed_at": "2026-10-26T11:33:54Z"
+        },
+        {
+          "name": "Build and test on macOS",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-26T11:33:54Z",
+          "completed_at": "2026-10-26T11:33:54Z"
+        },
+        {
+          "name": "Upload test reports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-26T11:33:54Z",
+          "completed_at": "2026-10-26T11:33:55Z"
+        },
+        {
+          "name": "Upload portable package",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-26T11:33:55Z",
+          "completed_at": "2026-10-26T11:33:55Z"
+        },
+        {
+          "name": "Post Set up Gradle and validate Wrapper",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-26T11:33:55Z",
+          "completed_at": "2026-10-26T11:33:56Z"
+        },
+        {
+          "name": "Post Set up Java 21",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-26T11:33:56Z",
+          "completed_at": "2026-10-26T11:33:56Z"
+        },
+        {
+          "name": "Post Check out source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-26T11:33:56Z",
+          "completed_at": "2026-10-26T11:33:58Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-26T11:33:58Z",
+          "completed_at": "2026-10-26T11:33:58Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/check-runs/121547835066",
+      "labels": [
+        "windows-2025"
+      ],
+      "runner_id": 1000000035,
+      "runner_name": "GitHub Actions 1000000035",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

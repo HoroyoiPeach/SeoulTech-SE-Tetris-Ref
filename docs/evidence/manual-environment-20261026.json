@@ -1,0 +1,12 @@
+{
+  "recorded_at": "2026-10-26T22:11:11.006675+09:00",
+  "os": "macOS 26.6.2",
+  "architecture": "arm64",
+  "model": "MacBookPro17,1",
+  "cpu": "Apple M1",
+  "ram_bytes": 8589934592,
+  "disk_free_bytes": 30517522432,
+  "cpu_clock_hz": null,
+  "cpu_clock_note": "hw.cpufrequency returned no value on this Apple Silicon host. CPU model is recorded; clock-frequency threshold is not directly measured.",
+  "scope": "Host inventory only; not a physical-input or full-process acceptance result."
+}

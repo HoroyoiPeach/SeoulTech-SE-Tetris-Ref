@@ -276,6 +276,7 @@ public class Board extends JComponent {
 					textChunks.set(idx, new TextChunk(" ", Color.WHITE));
 				}
 			}
+			settleColumns();
 		} else if (curr instanceof CrossBlock) {
             return eraseCrossLines();
 		} else if (curr instanceof RowBlock) {
@@ -458,7 +459,28 @@ public class Board extends JComponent {
             board[row][column] = 0;
             textChunks.set((row + 1) * (WIDTH + 3) + column + 1, new TextChunk(" ", Color.WHITE));
         }
+        settleColumns();
         return true;
+    }
+
+    // Item gravity moves individual occupied cells, preserving their order and appearance.
+    private void settleColumns() {
+        for (int column = 0; column < WIDTH; column++) {
+            int destination = HEIGHT - 1;
+            for (int source = HEIGHT - 1; source >= 0; source--) {
+                if (board[source][column] == 0) continue;
+                board[destination][column] = board[source][column];
+                textChunks.set((destination + 1) * (WIDTH + 3) + column + 1,
+                    textChunks.get((source + 1) * (WIDTH + 3) + column + 1));
+                destination--;
+            }
+            while (destination >= 0) {
+                board[destination][column] = 0;
+                textChunks.set((destination + 1) * (WIDTH + 3) + column + 1,
+                    new TextChunk(" ", Color.WHITE));
+                destination--;
+            }
+        }
     }
 
     protected boolean eraseRowAnimation(int row) {

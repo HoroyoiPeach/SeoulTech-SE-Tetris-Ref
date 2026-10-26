@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.LineItemAcceptanceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:43:01.786Z" hostname="gilmingyuui-MacBookPro.local" time="1.136">
+  <properties/>
+  <testcase name="R2-11: L행과 비연속 완성 행을 한 번에 압축하고 문자 좌표도 이동" classname="seoultech.se.tetris.component.LineItemAcceptanceTest" time="0.326"/>
+  <testcase name="R2-11: 모든 팔레트에서 L 문자와 일반 삭제 행 강조를 화면으로 구분" classname="seoultech.se.tetris.component.LineItemAcceptanceTest" time="0.15"/>
+  <testcase name="R2-11: L은 미완성 최상단·최하단 행도 삭제" classname="seoultech.se.tetris.component.LineItemAcceptanceTest" time="0.657"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

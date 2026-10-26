@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.score.ScoreStoreDifficultyTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-26T11:34:24.611Z" hostname="sjc22-bm210-b48edad2-4b10-4356-ad42-2afb5e626599-46D94E7403FB.local" time="0.013">
+  <properties/>
+  <testcase name="parserAcceptsOnlyKnownDifficultyMetadata()" classname="seoultech.se.tetris.score.ScoreStoreDifficultyTest" time="0.007"/>
+  <testcase name="legacyAndDifficultyRecordsRoundTripWithoutChangingTheLegacyFormat()" classname="seoultech.se.tetris.score.ScoreStoreDifficultyTest" time="0.004"/>
+  <testcase name="difficultyAppendSeparatesAnUnterminatedLegacyRecord()" classname="seoultech.se.tetris.score.ScoreStoreDifficultyTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.ItemSupplyAcceptanceTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:42:17.179Z" hostname="gilmingyuui-MacBookPro.local" time="0.257">
+  <properties/>
+  <testcase name="R2-10: 일반 이동 타이머 틱은 이미 공급한 아이템 미리보기를 중복 교체하지 않음" classname="seoultech.se.tetris.component.ItemSupplyAcceptanceTest" time="0.002"/>
+  <testcase name="R2-10: 게임 종료용 애니메이션 정지는 이전 게임의 미공급 아이템 권리를 제거" classname="seoultech.se.tetris.component.ItemSupplyAcceptanceTest" time="0.002"/>
+  <testcase name="clearedBefore=9" classname="seoultech.se.tetris.component.ItemSupplyAcceptanceTest" time="0.003"/>
+  <testcase name="clearedBefore=19" classname="seoultech.se.tetris.component.ItemSupplyAcceptanceTest" time="0.002"/>
+  <testcase name="R2-10: 실제 생성 충돌 게임오버에서 지급 권리를 버리고 새 게임은 누계 없이 시작" classname="seoultech.se.tetris.component.ItemSupplyAcceptanceTest" time="0.004"/>
+  <testcase name="R2-10: 클래식 모드는 10줄 경계를 넘어도 일반 블록만 공급" classname="seoultech.se.tetris.component.ItemSupplyAcceptanceTest" time="0.003"/>
+  <testcase name="R2-10: 복수 공급 권리는 일반 삭제 강조 종료 후에도 남아 다음 고정에서 순차 소비" classname="seoultech.se.tetris.component.ItemSupplyAcceptanceTest" time="0.232"/>
+  <testcase name="R2-10: 새 게임 격자 초기화는 이전 게임의 미공급 아이템 권리를 제거" classname="seoultech.se.tetris.component.ItemSupplyAcceptanceTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

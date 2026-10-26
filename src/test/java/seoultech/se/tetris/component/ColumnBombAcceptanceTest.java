@@ -25,6 +25,7 @@ import seoultech.se.tetris.blocks.Block;
 import seoultech.se.tetris.blocks.BombBlock;
 import seoultech.se.tetris.blocks.ColumnBlock;
 import seoultech.se.tetris.blocks.OBlock;
+import seoultech.se.tetris.blocks.ItemBlock;
 
 /** R2-13 acceptance boundaries for the original column and bomb items. */
 class ColumnBombAcceptanceTest {
@@ -70,9 +71,9 @@ class ColumnBombAcceptanceTest {
                 for (int row = 0; row < 20; row++) {
                     assertEquals(0, result[row][effectColumn], "C 효과 열에 블록이 남았습니다: " + row);
                 }
-                assertEquals(1, result[2][outsideColumn]);
+                assertEquals(1, result[18][outsideColumn]);
                 assertEquals(" ", text(fixture, 2, effectColumn).text);
-                assertEquals("S", text(fixture, 2, outsideColumn).text);
+                assertEquals("S", text(fixture, 18, outsideColumn).text);
                 assertEquals(0, fixture.board.getScore());
                 assertEquals(0, intField(fixture.board, "erasedLineNum"));
             }
@@ -140,9 +141,9 @@ class ColumnBombAcceptanceTest {
                 assertTrue(fixture.board.useItem());
 
                 assertEquals(0, board(fixture)[insideRow][insideColumn]);
-                assertEquals(1, board(fixture)[outsideRow][outsideColumn]);
+                assertEquals(1, board(fixture)[19][outsideColumn]);
                 assertEquals(" ", text(fixture, insideRow, insideColumn).text);
-                assertEquals("S", text(fixture, outsideRow, outsideColumn).text);
+                assertEquals("S", text(fixture, 19, outsideColumn).text);
                 assertEquals(0, fixture.board.getScore());
                 assertEquals(0, intField(fixture.board, "erasedLineNum"));
             }
@@ -173,8 +174,8 @@ class ColumnBombAcceptanceTest {
                 int[][] result = board(fixture);
                 assertEquals(expectedScore, fixture.board.getScore());
                 assertEquals(0, intField(fixture.board, "erasedLineNum"));
-                assertEquals(1, result[0][0]);
-                assertEquals("S", text(fixture, 0, 0).text);
+                assertEquals(1, result[19][0]);
+                assertEquals("S", text(fixture, 19, 0).text);
                 for (int row = effectStartRow; row <= effectEndRow; row++) {
                     for (int column = 1; column < 8; column++) {
                         assertEquals(0, result[row][column]);
@@ -206,8 +207,8 @@ class ColumnBombAcceptanceTest {
                 assertEquals(105, fixture.board.getScore(),
                     "5칸 낙하와 범위 밖 일반 한 줄의 100점만 더해야 합니다.");
                 assertEquals(1, intField(fixture.board, "erasedLineNum"));
-                assertEquals(1, board(fixture)[2][0], "완성 행 위 셀은 한 행 아래로 압축되어야 합니다.");
-                assertEquals("S", text(fixture, 2, 0).text);
+                assertEquals(1, board(fixture)[19][0], "정착 후 완성 행을 제거해도 남은 셀은 바닥에 있어야 합니다.");
+                assertEquals("S", text(fixture, 19, 0).text);
                 assertSame(queued, ExistingFeatureFixture.get(fixture.board, "curr", Block.class));
                 assertEquals(3, fixture.board.x);
                 assertEquals(0, fixture.board.y);
@@ -262,6 +263,78 @@ class ColumnBombAcceptanceTest {
                 return null;
             });
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"B", "C"})
+    @Timeout(15)
+    @DisplayName("B/C 삭제 후 각 열의 칸은 순서·문자·색을 유지하며 바닥까지 정착")
+    void remainingCellsSettleWithTheirAppearance(String kind) throws Exception {
+        ExistingFeatureFixture.onEdt(() -> {
+            try (ExistingFeatureFixture fixture = new ExistingFeatureFixture(Difficulty.NORMAL)) {
+                Block item = kind.equals("B") ? new BombBlock() : columnBlock(0, 0);
+                int[][] grid = new int[20][10];
+                grid[2][0] = 2;
+                grid[7][0] = 3;
+                fixture.prepare(item, new OBlock(), grid, 3, 16);
+                setText(fixture, 2, 0, "S", Color.MAGENTA);
+                setText(fixture, 7, 0, "T", Color.CYAN);
+
+                assertTrue(fixture.board.useItem());
+
+                assertEquals(2, board(fixture)[18][0]);
+                assertEquals(3, board(fixture)[19][0]);
+                assertEquals("S", text(fixture, 18, 0).text);
+                assertEquals(Color.MAGENTA, text(fixture, 18, 0).color);
+                assertEquals("T", text(fixture, 19, 0).text);
+                assertEquals(Color.CYAN, text(fixture, 19, 0).color);
+                for (int row = 0; row < 18; row++) {
+                    assertEquals(0, board(fixture)[row][0]);
+                    assertEquals(" ", text(fixture, row, 0).text);
+                }
+                for (int column = 0; column < 10; column++) {
+                    boolean occupied = false;
+                    for (int row = 0; row < 20; row++) {
+                        if (board(fixture)[row][column] != 0) occupied = true;
+                        else assertTrue(!occupied, "정착된 칸 아래에 빈 공간이 있습니다.");
+                    }
+                }
+                assertEquals(0, fixture.board.getScore());
+                assertEquals(0, intField(fixture.board, "erasedLineNum"));
+            }
+            return null;
+        });
+    }
+
+    @Test
+    @Timeout(15)
+    @DisplayName("B 정착으로 새로 완성된 두 줄은 300점·2줄·아이템 공급 1회 반영")
+    void settlingCompletesRowsAndAwardsSupplyOnce() throws Exception {
+        ExistingFeatureFixture.onEdt(() -> {
+            try (ExistingFeatureFixture fixture = new ExistingFeatureFixture(Difficulty.NORMAL)) {
+                int[][] grid = new int[20][10];
+                for (int column = 0; column < 10; column++) {
+                    grid[column % 3][column] = 1;
+                    grid[5 + column % 3][column] = 1;
+                }
+                OBlock queued = new OBlock();
+                fixture.prepare(new BombBlock(), queued, grid, 3, 11);
+                ExistingFeatureFixture.set(fixture.board, "erasedLineNum", 8);
+
+                fixture.board.hardDrop();
+
+                assertEquals(305, fixture.board.getScore());
+                assertEquals(10, intField(fixture.board, "erasedLineNum"));
+                assertEquals(2, intField(fixture.board, "level"));
+                assertEquals(0, intField(fixture.board, "pendingItems"));
+                assertSame(queued, ExistingFeatureFixture.get(fixture.board, "curr", Block.class));
+                assertTrue(ExistingFeatureFixture.get(fixture.board, "next", Block.class) instanceof ItemBlock);
+                for (int row = 2; row < 20; row++) {
+                    assertTrue(Arrays.stream(board(fixture)[row]).allMatch(cell -> cell == 0));
+                }
+            }
+            return null;
+        });
     }
 
     private static ColumnBlock columnBlock(int type, int attachment) throws Exception {

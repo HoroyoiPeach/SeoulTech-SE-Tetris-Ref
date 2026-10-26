@@ -1,71 +1,93 @@
-# SeoulTech SE Tetris 0.1.0 릴리스 노트
+# 중간평가 릴리스 안내
 
-## 요구사항 2 통합 후보와 최신 증빙
+공식 제출 환경은 **macOS 26 이상**이다.
+실행 앱에는 Java 21 runtime과 아이콘을 포함한다.
 
-P를 포함한 5종 아이템·지급 권리 보존·모드별 기록까지 포함하는 소스 `15e46ec`의 [양 OS CI](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/runs/40185986802)가 성공했다. 실행 ZIP 다운로드와 버전별 SHA-256은 [최종 검증 원장](req2-final-verification.md#4-배포물과-실제-런처)을 따른다. 아래의 과거 패키지 링크는 각 소스 버전의 이력이다.
+## 이전 공개 버전 · 2026-10-26 확인
 
-`chore/req2-final-verification`은 같은 제품 코드 위에서 저장한 키·화면 구성의 통합 검사와 평가 증빙을 보강한다. 이번 보강의 원격 CI와 main 병합, 실제 Windows 11·물리 입력·깨끗한 환경 저장/재실행 인수는 아직 대기다. 이 후보를 수동 검증이 끝난 최종 릴리스로 표시하지 않는다.
+| 항목 | 값 |
+|---|---|
+| 공개 후보 | [v0.1.0-req2.2](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.2) · prerelease |
+| 소스 | main `62a035f` · 포커스 수정 PR #22 포함 |
+| 실행 ZIP | `seoultech-tetris-0.1.0-macos-aarch64.zip` |
+| ZIP SHA-256 | `520970449586b8693325d1fedfb3b9d723601189cdd28233f8c7b82a3e8ce23a` |
+| 검증 | [이전 macOS CI 원본](evidence/req12-e19f900/summary.json) |
+| 문서 | 현재 tag의 문서이며 이번 최종 업데이트는 미포함 |
 
-## 제공 기능
+이 공개 후보는 `62a035f`를 가리킨다.<br>
+B/C 효과 뒤 셀 정착과 O 색상 조정은 포함하지 않는다.
 
-- 아이템 후속 변경: 2×2 P의 가로 2행·세로 2열 삭제, 총 5종 각 20% 공급, 여러 10줄 경계의 지급 권리 보존과 C/B 검증을 추가했다. 회전하지 않는 B가 회전 보정으로 밀리던 동작을 막았다. [아이템 규칙과 검증](req2-items.md)을 따른다. 아래 이전 패키지 체크섬은 이 변경을 포함하지 않는다.
+## 이번 제출에 포함하는 변경
 
-- 모드별 기록 후속 변경: Classic/Item 정보 저장, 모드별 상위 10개와 순위 진입 판정, All 목록의 이전 파일 호환 및 새 기록 강조. 정책과 검증은 [R2-14 기록](req2-mode-scores.md)을 따른다. 아래 이전 패키지 체크섬은 이 변경을 포함하지 않는다.
+| 항목 | 값 |
+|---|---|
+| 기준 | 팀 `main` `62a035f` |
+| 작업 커밋 | `154fd097deff2675e7030f607b0ceeb35b9e69c5` |
+| B/C 효과 | 삭제 뒤 열마다 남은 셀을 아래로 정착하며 순서·색·문자 유지 |
+| O 색상 | 기존 회색보다 밝게 조정 |
+| P 아이템 | 기존 행·열 삭제, 점수·누계 정책 유지 |
+| 로컬 JUnit | 98개 통과 · 실패 0 · 오류 0 |
+| 로컬 Line Coverage | 1,534/1,703 = 90.08% |
 
-- 20×10 보드, 7종 테트로미노, 회전·이동·하드드롭·다음 블록 표시
-- 줄 삭제, 점수·레벨·낙하 속도, 일시정지와 게임 종료 처리
-- 창 크기 3종, 조작키 변경, 색각이상 대응 팔레트
-- 점수 기록 저장·정렬·상위 10개 표시·초기화
-- 설정 메뉴의 Easy·Normal·Hard 선택·저장, 난이도별 블록 확률·속도 증가와 점수판 난이도 표기
-- 삭제 행의 짧은 강조 애니메이션과 진행 중 `Esc` 메뉴 복귀
-- Java 21 런타임과 앱 아이콘을 포함한 Windows/macOS 실행 패키지
+위 수치는 `154fd09`의 로컬 자동검증 결과다.
+GUI 검사와 macOS 패키징도 통과했으며, 원본은 [검증 보고서](verification.md)에 연결했다.
+PR의 CI 결과와 최종 배포 파일은 해당 릴리스 본문에서 확인한다.
 
-## 패키지 생성
+## 단일 PR과 제출 릴리스
 
-JDK 21의 `jpackage`를 사용하며, 해당 운영체제에서만 그 운영체제의 앱 이미지를 생성한다.
+코드·테스트·정본 문서·증빙을 하나의 PR에서 완성한다.
 
-```bash
-./gradlew clean build packageRelease
-```
+1. PR의 macOS CI에서 제출 후보 ZIP과 체크섬을 생성한다.
+2. CI에서 받은 동일 ZIP으로 수동 인수 M01~M08을 수행한다.
+3. 실제 환경·파일·SHA-256·관찰 결과를 같은 PR의 검증 자료에 반영한다.
+4. 작성자 외 팀원 1명이 최종 변경과 인수 결과를 검토한다.
+5. macOS CI 통과를 다시 확인한 뒤 PR을 `main`에 병합한다.
+6. 병합 커밋에 새 tag를 만들고, 인수한 동일 ZIP과 체크섬을 릴리스에 첨부한다.
 
-Windows PowerShell에서는 다음 명령을 사용한다.
+인수 뒤 제품 코드나 ZIP이 바뀌면 새 파일로 M01~M08을 다시 수행한다.<br>
+인수 결과를 기록하는 문서만 바뀐 경우에도 최종 tag와 인수 ZIP의 제품 코드가 같은지 확인한다.
 
-```powershell
-.\gradlew.bat clean build packageRelease
-```
+릴리스 뒤 별도 최종 문서 PR은 만들지 않는다.<br>
+정본 문서는 tag의 README와 [GitHub Releases](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases)에서 연결한다.
 
-결과는 `build/distributions/`에 ZIP과 같은 이름의 `.sha256` 파일로 생성된다. `app-image` 형식을 압축하므로 설치 프로그램 권한이나 별도 Java 설치 없이 압축 해제 후 실행할 수 있다. 생성된 런처는 `-Dtetris.packaged=true`를 사용해 설정과 점수를 사용자 홈의 `.seoultech-tetris`에 저장한다.
+### 릴리스 본문에 기록할 값
 
-| 대상 | 산출물 | 상태 |
-|---|---|---|
-| macOS 26 / Apple Silicon | `seoultech-tetris-0.1.0-macos-aarch64.zip` | 로컬 생성·SHA-256·압축 해제·엄격 서명 구조 검사·번들 런처 기동 확인 |
-| Windows Server 2025 / x64 | `seoultech-tetris-0.1.0-windows-x64.zip` | CI 생성·SHA-256·런처/JVM/JAR/아이콘 구조 검증 성공; 실제 Windows 11 설치·조작은 RELEASE-04 기록에서 별도 확인 |
+| 항목 | 기록 원칙 |
+|---|---|
+| tag·소스 | 실제 tag와 tag가 가리키는 병합 커밋 SHA |
+| 빌드 | 인수 ZIP을 만든 정확한 커밋 SHA와 macOS CI URL |
+| 실행 파일 | 실제 첨부한 ZIP 파일명과 SHA-256 |
+| 검증 | 같은 ZIP의 M01~M08 결과와 검증 보고서 링크 |
+| 문서 | tag에 포함된 README·정본 문서 링크 |
 
-## 무결성과 재현 조건
+문서의 다운로드 링크는 Releases 페이지로 유지하고, 위 값은 배포 시 릴리스 본문에 확정한다.
 
-- 소스 기준: `docs/req1-nondev-tasks` 브랜치의 릴리스 검증 commit
-- Gradle Wrapper 9.8.2, Temurin/OpenJDK 21
-- 앱 버전 `0.1.0`, 비모듈 JAR 진입점 `seoultech.se.tetris.main.Tetris`
-- macOS `CFBundleShortVersionString`은 첫 숫자가 양수여야 하는 jpackage 제약 때문에 `1.0.0`을 사용하고, 배포 ZIP·릴리스 표기는 `0.1.0`으로 유지
-- 패키지별 `.sha256` 파일을 함께 보관
+## 릴리스에 제공할 자료
 
-## 알려진 제약
+| 자료 | 제공 방식 |
+|---|---|
+| macOS 실행 ZIP | Release asset |
+| 실행 ZIP의 SHA-256 | Release asset |
+| 실행 안내 | 릴리스 본문과 해당 tag의 사용자 안내서 |
+| 요구사항·명세·검증·프로젝트 관리 | 해당 tag의 README에서 정본 8개로 연결 |
+| 원본 CSV·그래프·JUnit·커버리지·인수 결과 | 해당 tag의 `docs/evidence/` |
+| 전체 소스와 문서 | GitHub가 제공하는 해당 tag의 Source code ZIP |
 
-- 수업용 후보 빌드로 Windows 코드 서명과 Apple 서명·공증을 적용하지 않았다.
-- OS별 패키지는 교차 생성하지 않는다. Windows 패키지는 Windows에서, macOS 패키지는 macOS에서 만든다.
-- headless 자동 테스트는 실제 키 반복 입력, 창 표시, 더블클릭 실행을 대체하지 않는다. 사용자 환경 검증 범위는 릴리스 검증 기록에 따로 남긴다.
-- 이후 게임 규칙·화면·저장 형식이 바뀌면 동일 절차로 패키지를 다시 생성하고 전체 회귀·실행 검증을 반복해야 한다.
+현재 패키징 설정의 파일명 버전은 `0.1.0`이다.
+정확한 제출 파일은 tag·생성 커밋·체크섬으로 구분한다.
 
-소스 `456d876`의 [양 OS CI](https://github.com/CODEhenryKIL/SeoulTech-SE-Tetris-Ref/actions/runs/40085571922)와 다운로드·체크섬은 [검증 기록](verification.md#실제-github-ci와-배포-산출물-확인)에 연결했다. 실제 Windows 11/깨끗한 사용자 환경 검증은 별도 조건으로 남긴다.
+## 포함 기능
 
-## 최신 main 통합 범위
+- Classic·Item 모드, Easy·Normal·Hard 난이도
+- 7종 테트로미노, 이동·회전·하드드롭·줄 삭제·점수·레벨
+- L·O·C·B·P 5종 아이템과 10줄 단위 누적 공급
+- 모드별 순위와 난이도·모드 기록, 설정·기록 저장 및 초기화
+- 화면 크기 3종, 조작키 변경, 색상 모드 4종
+- 점수창·MENU·랭킹 스크롤바 조작 뒤 키보드 입력 유지
 
-요구사항 2 PR #15가 머지된 main을 통합하여 다섯 시작 메뉴와 아이템 모드 진입을 유지한다. 요구사항 1의 표준 소스 경로, Java 21 빌드·CI·패키징, 기존 점수 파일 호환성과 일반 행 삭제 효과를 함께 유지한다. 요구사항 2의 신규 테스트 및 아이템 효과·난이도 UI 등의 알려진 오류 수정은 별도 작업이다. 위 이전 패키지 체크섬은 해당 소스 commit에만 적용된다.
+## 관련 문서
 
-## BUG-03 후속 수정
-
-- 아이템 애니메이션 중 정지·재개·메뉴 복귀와 연속 입력을 처리하고, 일반 줄 삭제 강조와 아이템 효과의 Timer 정리를 분리했다.
-- 설정 메뉴의 난이도 항목을 연결하고, 속도 증가량에 Easy 0.8·Normal 1.0·Hard 1.2 계수를 적용했다.
-- L 표시 좌표를 한 점유 칸에 고정하고, L과 일반 삭제 행의 합집합에 점수·누계·아이템 지급을 한 번씩 반영한다.
-- 무게추는 최초 접촉 후 좌우 이동을 막고 회전 위치 보정을 적용하지 않는다.
-- 추가 회귀와 전체 빌드·실행 패키지 검증 결과는 [BUG-03 검증 기록](verification.md#bug-03-pr-15-후속-수정-검증-2026-10-24)에 남겼다. 위의 과거 패키지 링크는 각 기록의 소스 버전에만 해당한다.
+- [제출 안내](../README.md)
+- [검증 보고서](verification.md)
+- [프로젝트 관리 기록](project-management.md)
+- [개발 안내서](development.md)

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.DifficultyUiTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-26T13:42:17.072Z" hostname="gilmingyuui-MacBookPro.local" time="0.107">
+  <properties/>
+  <testcase name="startMenuKeepsFiveActionsAndSavedDifficultyRoundTrips()" classname="seoultech.se.tetris.component.DifficultyUiTest" time="0.022"/>
+  <testcase name="runningGamesKeepIndependentDifficultyAndBoardState()" classname="seoultech.se.tetris.component.DifficultyUiTest" time="0.006"/>
+  <testcase name="duplicateScoreHighlightsTheNewlyAppendedRow()" classname="seoultech.se.tetris.component.DifficultyUiTest" time="0.038"/>
+  <testcase name="scoreboardLabelsOnlyRecordsThatContainDifficultyMetadata()" classname="seoultech.se.tetris.component.DifficultyUiTest" time="0.004"/>
+  <testcase name="settingsMenuCyclesSavesResetsAndAppliesDifficultyToNewGame()" classname="seoultech.se.tetris.component.DifficultyUiTest" time="0.035"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
