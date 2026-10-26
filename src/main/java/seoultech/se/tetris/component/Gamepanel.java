@@ -65,6 +65,7 @@ public class Gamepanel extends JPanel{
 
         scorepanel = new JTextPane();
         scorepanel.setEditable(false);
+        scorepanel.setFocusable(false);
         scorepanel.setBounds(WIDTH*330/500+20, HEIGHT*140/600+20, WIDTH*140/500, HEIGHT*50/600);
 		scorepanel.setBorder(BorderFactory.createLineBorder(changeColor(Color.GRAY), 1));
         scorepanel.setOpaque(false);

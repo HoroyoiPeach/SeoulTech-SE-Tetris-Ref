@@ -151,6 +151,7 @@ Windows 11의 실제 게임 창·키 입력·설치 검증을 대신하지 않�
 
 - `./gradlew clean build`: 독립 회귀 55개, 추가 JUnit 검사, 전체 제품 코드 line coverage 70% 검증. JaCoCo HTML/XML은 `build/reports/jacoco/test/`.
 - `./gradlew desktopSmoke`: 그래픽 세션에서 실제 JFrame을 띄우고 합성 KeyListener 입력으로 메뉴·반복 입력·정지/재개·설정·점수판·순위 진입/미진입을 검사한다. OS 물리 입력 검증을 대체하지 않는다. `build/reports/desktop/`에 결과·화면을 남긴다.
+- `./gradlew desktopFocusSmoke`: 활성 데스크톱에서 AWT Robot으로 실제 OS 마우스·키 이벤트를 보내, 일반·아이템 게임의 점수창 클릭 후 포커스 유지·이동·정지/재개를 검사한다. 점수창에 클릭이 도착했는지도 확인한다. 실행 중 마우스·키보드를 사용하지 말아야 하며 OS에 따라 입력 제어 권한이 필요하다. 자동 CI에는 연결하지 않은 별도 검사이며 `build/reports/desktop-focus/result.txt`에 성공 결과를 남긴다. 사람의 물리 키보드 조작이나 배포 ZIP 인수를 대체하지 않는다.
 - 성능 검사는 `PerformanceRegressionTest`에서 핵심 이동·회전 판정 400,000회를 5초 예산으로 검증하고 JUnit 로그에 환경·시간을 남긴다.
 - `./gradlew packageRelease`: 현재 OS의 Java 21 런타임 포함 앱 이미지 ZIP·SHA-256 생성. Windows에서는 `gradlew.bat` 사용. 배포 방식과 실행법은 [사용자 안내](user-guide.md), 검증 범위·한계는 [검증 기록](verification.md).
 - GitHub CI는 Windows Server 2025·macOS 26에서 `build desktopSmoke packageRelease`를 수행하고 테스트·커버리지·실제 창 결과 및 OS별 실행 ZIP을 각각 7일간 보관한다. 실제 Windows 11 설치 확인은 별도다.

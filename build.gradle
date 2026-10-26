@@ -94,3 +94,13 @@ tasks.register('desktopSmoke', JavaExec) {
     javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
     systemProperty 'java.awt.headless', 'false'
 }
+
+tasks.register('desktopFocusSmoke', JavaExec) {
+    group = 'verification'
+    description = 'Checks game input after native mouse clicks with AWT Robot in an active desktop session.'
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'seoultech.se.tetris.component.DesktopFocusSmoke'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+    systemProperty 'java.awt.headless', 'false'
+}
