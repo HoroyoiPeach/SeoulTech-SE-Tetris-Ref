@@ -2,9 +2,14 @@ package seoultech.se.tetris.component;
 
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
+import javax.swing.plaf.basic.BasicButtonUI;
 
 final class MenuButtons<T extends JPanel> {
     private final List<T> buttons = new ArrayList<>();
@@ -17,6 +22,18 @@ final class MenuButtons<T extends JPanel> {
 
     MenuButtons(Insets insets) {
         this.insets = insets;
+    }
+
+    static void styleActionButton(AbstractButton button) {
+        button.setUI(new BasicButtonUI());
+        button.setFont(new Font("Courier", Font.BOLD, 16));
+        button.setForeground(Maincontainer.changeColor(Color.BLACK));
+        button.setBackground(Maincontainer.changeColor(Color.GRAY));
+        button.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+        button.setRolloverEnabled(false);
+        button.setFocusable(false);
     }
 
     void add(JPanel parent, T button) {
