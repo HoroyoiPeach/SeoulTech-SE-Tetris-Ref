@@ -1,91 +1,104 @@
 # 검증 보고서
 
-이 문서는 요구사항 1·2 구현에 대한 자동검증 결과와 원본 증빙을 연결한다.<br>
-공식 제출 환경인 **macOS 26 이상**의 결과를 기준으로 작성했다.
+이 문서는 요구사항 1·2 구현에 대한 자동검증과 공개 배포본 인수 결과를 연결한다.
 
-## 1. 검증 기준
+공식 제출 환경은 **macOS 26 이상**이다.
+
+## 1. 대상과 환경
 
 | 항목 | 값 |
 |---|---|
-| 실행 날짜 | 2026-10-26 |
-| 운영체제 | macOS 26.6.2, aarch64 |
-| Java | 21.0.13 |
-| 제품 소스 | `154fd097deff2675e7030f607b0ceeb35b9e69c5` |
-| 변경 범위 | B·C 효과 후 열별 정착, O 밝은 회색, P 기존 동작 유지 |
-| 실행 환경 | 로컬 macOS · GitHub Actions 결과와 구분 |
-| 소스 대조 | [소스 해시](evidence/req12-154fd09-local/source.json) · 커밋의 제품·테스트·빌드 파일과 대조 |
-| 실행 로그 | [build.log](evidence/req12-154fd09-local/build.log) |
+| 검증일 | 2026-10-26~27 |
+| 공개 릴리스 | [`v0.1.0-req2.3`](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3) |
+| 태그 커밋 | `10d7b78` |
+| 제품 커밋 | `154fd097deff2675e7030f607b0ceeb35b9e69c5` |
+| 실행 환경 | macOS 26.6.2 · Apple M1 · RAM 8GB · 여유 디스크 약 28.4GiB |
+| Java | 공개 앱 동봉 runtime 21.0.13 |
+| 연속 실행 설정 | 600X500 · Normal 팔레트 · Easy 난이도 |
 
-다음 명령으로 테스트·커버리지·GUI 검사·실행 ZIP 생성을 확인했다.
+실행용 ZIP을 공개 릴리스에서 내려받아 Finder에서 압축을 풀었다.
 
-```bash
-./gradlew --no-daemon --console=plain build desktopSmoke packageRelease
-```
+앱은 별도 Java 설치나 명령 입력 없이 실행됐다.
 
-PR의 macOS CI 결과와 실제 배포 태그·ZIP은 릴리스 본문에서 이 증빙과 함께 연결한다.
-이전 `e19f900`의 [CI 결과](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/runs/40315760987)와 [원본](evidence/req12-e19f900/summary.json)은 변경 전 이력으로 보관한다.
+실행용 ZIP과 최종 제출용 ZIP에 포함된 앱의 파일 내용·권한·심볼릭 링크도 대조했다.
 
-## 2. 결과 요약
+[검증 요약](evidence/release-acceptance-20261027/summary.json)과 [다운로드 대조 기록](evidence/release-acceptance-20261027/download-verification.json)에 대상과 해시를 기록했다.
+
+실행 환경의 원본 조회값은 [기기 정보](evidence/release-acceptance-20261027/environment.json)에 보관했다.
+
+## 2. 배포 무결성
+
+| 파일 | SHA-256 | CRC |
+|---|---|---|
+| `seoultech-tetris-v0.1.0-req2.3-macos-aarch64.zip` | `87a8402eb40931f34052c5880f504c33d96c28c37635bca6dde99c616bb2e301` | 통과 |
+| `seoultech-tetris-v0.1.0-req2.3-submission.zip` | `b610cc1b95ddd13f4ac67b1db4cec3b9dbad82c5a5da992841bbf8411f94de62` | 통과 |
+
+두 ZIP에 포함된 앱의 394개 엔트리는 경로·내용·권한·심볼릭 링크가 모두 일치했다.
+
+제출 ZIP의 내장 검증기는 소스·98개 테스트 결과·90.08% 커버리지를 정상 대조했다.
+
+## 3. 결과 요약
 
 | 검증 항목 | 결과 | 판정 |
 |---|---:|---|
-| JUnit | 98개 실행 · 실패 0 · 오류 0 · 건너뜀 0 | 통과 |
-| Line Coverage | 1,534 / 1,703 = **90.08%** | 70% 기준 통과 |
-| 일반 블록 분포 | 3난이도 × 100,000회 · 21개 조합 | 모두 통과 |
-| 아이템 분포 | 100,000회 · 5종 | 모두 통과 |
-| 핵심 이동·회전 판정 | 400,000회 · 26ms | 5,000ms 기준 통과 |
-| 실제 JFrame 자동검사 | 메뉴·게임·아이템·설정·순위·화면 크기·팔레트 | 통과 |
-| macOS 패키징 | 앱·런처·아이콘·Java runtime·ZIP | 생성·구성 확인 |
+| 빌드 시 JUnit | 98개 실행 · 실패 0 · 오류 0 · 건너뜀 0 | 통과 |
+| 빌드 시 Line Coverage | 1,534 / 1,703 = **90.08%** | 70% 기준 통과 |
+| 공개 앱 JAR 새 회귀검사 | 50개 성공 · 실패 0 · 중단 0 · 건너뜀 0 | 통과 |
+| 일반 블록 분포 | 3난이도 × 100,000회 · 21개 조합 | 통과 |
+| 공개 앱 JAR 아이템 분포 | 100,000회 · 5종 | 통과 |
+| 공개 앱 GUI 기능 | 실행·메뉴·입력·저장·순위·초기화·5종 아이템 | 통과 |
+| Classic 연속 실행 | 310.121초 · 254회 상태 관찰 | 통과 |
+| Item 연속 실행 | 310.129초 · 254회 상태 관찰 | 통과 |
 
-원본 XML·CSV와 이미지의 해시는 [`summary.json`](evidence/req12-154fd09-local/summary.json)에 기록했다.
+98개는 빌드 당시 전체 회귀검사다.
 
-## 3. 단위·회귀 검사와 커버리지
+50개는 공개 앱의 번들 JAR을 대상으로 다시 실행한 아이템·공급·모드 기록 중심 검사다.
 
-JUnit XML 22개에서 테스트 98개가 모두 통과했다.<br>
+두 집합에는 겹치는 사례가 있으므로 **148개로 합산하지 않는다**.
+
+## 4. 단위·회귀 검사와 커버리지
+
+제품 커밋 빌드에서 JUnit 98개가 모두 통과했다.
+
 난이도·아이템 효과·공급·모드별 기록·설정 저장·예외 처리와 기존 기능 회귀를 포함한다.
-이번에는 B·C 정착의 문자·색상·순서 보존과 B 정착 후 줄 점수·아이템 공급 검사를 추가했다.
-O는 4개 팔레트의 렌더링으로 확인했고, P의 기존 삭제·행 압축 검사도 통과했다.
 
-JaCoCo는 `src/main` 제품 코드 전체의 Line Coverage를 측정했다.<br>
-커버리지는 90.08%로 중간평가 50%와 빌드 기준 70%를 모두 넘었다.
+JaCoCo Line Coverage는 1,534 / 1,703, **90.08%**다.
 
+중간평가 50%와 기말평가 70% 기준을 모두 넘는다.
+
+- [빌드 검증 요약](evidence/req12-154fd09-local/summary.json)
 - [JUnit XML](evidence/req12-154fd09-local/junit/)
 - [JaCoCo XML](evidence/req12-154fd09-local/coverage/jacocoTestReport.xml)
 
-## 4. 일반 블록 분포
+공개 앱에 포함된 제품 JAR에서는 관련 테스트 소스만 다시 컴파일해 50개 검사를 새로 실행했다.
 
-실제 게임의 `BlockGenerator`를 난이도별로 100,000회 실행했다.<br>
-고정 seed는 `20261024`이며, 관측 확률의 상대오차가 기대 확률의 5% 이내인지 검사했다.
-Easy의 I는 가중치 12, 나머지는 각각 10이므로 기대 확률은 12/72 = 16.67%다.
-이는 요구사항 2의 4쪽에 제시된 가중치 예시를 적용한 값이다.
+제품 클래스는 다시 컴파일하지 않았다.
 
-```text
-상대오차(%) = |관측 확률 - 기대 확률| / 기대 확률 × 100
-통과 조건 = 상대오차 5% 이하
-```
+검사한 제품 JAR의 SHA-256은 `f33dfabf6b4d8be03e8213a883dc00cb93aa4e016e3378d2bd918f8aa051478e`다.
 
-그래프의 검은 마름모는 기대 확률이고 세로 구간은 기대 확률의 95~105%다.<br>
-이 구간은 시험의 허용 범위이며 통계적 신뢰구간을 뜻하지 않는다.
+[새 실행 로그](evidence/release-acceptance-20261027/fresh-headless/test-run-2.log)에 16개 컨테이너와 50개 테스트의 성공 결과가 남아 있다.
 
-난이도별 100,000회 실행은 요구사항의 최소 반복 수 1,000회를 충족한다.
+[검사 실행기](evidence/release-acceptance-20261027/fresh-headless/ReleaseJUnitRunner.java)도 함께 보관했다.
+
+## 5. 생성 분포
+
+### 일반 블록
+
+실제 게임의 `BlockGenerator`를 Easy·Normal·Hard에서 각각 100,000회 실행했다.
+
+모든 21개 블록·난이도 조합이 기대 확률에 대한 상대오차 5% 이내를 충족했다.
+
+최대 상대오차는 Easy의 Z 블록에서 1.9736%였다.
 
 ![난이도별 일반 블록 분포](evidence/req12-154fd09-local/block-distribution.png)
 
-모든 21개 조합이 통과했다.<br>
-최대 상대오차는 Easy의 Z 블록에서 **1.9736%**였다.
+[분포 원본](evidence/req12-154fd09-local/distribution/block-distribution.csv)에 난이도·기대 확률·관측값·판정을 보관했다.
 
-- [원본 CSV](evidence/req12-154fd09-local/distribution/block-distribution.csv)
-- [그래프 생성 코드](evidence/req12-154fd09-local/plot.py)
+### 아이템
 
-## 5. 아이템 분포
+공개 앱의 번들 JAR에 포함된 실제 아이템 생성기를 100,000회 실행했다.
 
-실제 게임의 아이템 생성기를 100,000회 실행했다.<br>
-고정 seed는 `20261025`이며, L·O·C·B·P의 기대 확률은 각각 20%다.
-
-그래프의 녹색 구간 19~21%는 기대 확률 20%에 대한 상대오차 5% 허용 범위다.<br>
-이 구간도 통계적 신뢰구간이 아니며, 100,000회 실행은 최소 반복 수 1,000회를 충족한다.
-
-![아이템 5종 분포](evidence/req12-154fd09-local/item-distribution.png)
+L·O·C·B·P의 기대 확률은 각각 20%다.
 
 | 아이템 | 관측 횟수 | 관측 확률 | 상대오차 |
 |---|---:|---:|---:|
@@ -97,115 +110,114 @@ Easy의 I는 가중치 12, 나머지는 각각 10이므로 기대 확률은 12/7
 
 다섯 아이템이 모두 상대오차 5% 이내를 충족했다.
 
-- [원본 CSV](evidence/req12-154fd09-local/distribution/item-distribution.csv)
-- [그래프 생성 코드](evidence/req12-154fd09-local/plot.py)
+100,000회 검사는 원문의 최소 반복 수 1,000회 이상 조건을 충족한다.
 
-## 6. 기능·화면 자동검사
+![아이템 5종 분포](evidence/req12-154fd09-local/item-distribution.png)
 
-`desktopSmoke`는 실제 JFrame을 열고 합성 입력으로 다음 흐름을 검사했다.
+[새 분포 CSV](evidence/release-acceptance-20261027/fresh-headless/item-distribution.csv)에 seed와 판정을 보관했다.
 
-- 시작 메뉴 이동과 반복 입력
-- Classic·Item 게임, 정지·재개와 게임 종료
-- P 아이템 고정, 300점, 삭제 누계와 10줄 공급
-- 설정 저장·재로드와 변경 키 적용
-- 게임오버, 모드별 순위 저장·조회·초기화
-- 화면 크기 3종과 팔레트 4종의 대표 조합 렌더링
+두 그래프의 허용 구간은 기대 확률에 대한 상대오차 5% 범위다.
 
-대표 화면은 아래 원본 이미지로 보관했다.
+통계적 신뢰구간을 뜻하지 않는다.
 
-| 범위 | 증빙 |
-|---|---|
-| Classic · 기본 크기 · Normal | [화면](evidence/req12-154fd09-local/desktop/final-600x500-normal-classic.png) |
-| Item · 중간 크기 · Protanopia | [화면](evidence/req12-154fd09-local/desktop/final-750x625-protanopia-item.png) |
-| Hard Item · 점수·모드 기록 | [화면](evidence/req12-154fd09-local/desktop/final-hard-item-score.png) |
-| P 아이템과 미리보기 | [화면](evidence/req12-154fd09-local/desktop/cross-item-and-preview.png) |
+```text
+상대오차(%) = |관측 확률 - 기대 확률| / 기대 확률 × 100
+통과 조건 = 상대오차 5% 이하
+```
 
-[자동검사 결과 원문](evidence/req12-154fd09-local/desktop/result.txt)은 합성 `KeyListener` 입력의 결과다.<br>
-제출 후보의 물리 키보드·마우스 확인은 M02에서 별도로 기록한다.
+## 6. 공개 앱 GUI 인수검사
 
-## 7. 성능 검사
+실제 공개 ZIP의 앱을 Finder에서 실행하고 컴퓨터 유즈의 키보드·마우스 입력으로 다음 항목을 확인했다.
 
-빈 20×10 보드에서 7종 블록의 아래·왼쪽·오른쪽·회전 판정을 총 400,000회 실행했다.<br>
-로컬 측정값은 **26ms**이며 팀 기준 5,000ms 이내를 충족했다.
+[M01~M08 인수 기록](evidence/manual-acceptance.csv)에 절차·관찰 결과·검증 환경과 증빙을 연결했다.
 
-이 결과는 핵심 판정 연산의 회귀 검사다.<br>
-실제 장시간 플레이의 응답성과 화면 체감은 최종 배포본 확인 절차에서 다룬다.
+- 시작 메뉴 순환과 Classic·Item·설정·순위 진입 및 복귀
+- 이동·회전·낙하·일시정지·재개와 정지 중 게임 입력 차단
+- 점수 영역 클릭 후에도 두 모드의 키 입력 유지
+- 예약키·중복키 거부와 변경키 저장·재실행 후 복원
+- 설정과 모드별 순위의 저장·재실행 후 복원
+- 설정 초기화와 순위 초기화의 독립 동작
+- 게임오버·이름 입력·10자 제한·빈 이름 기본값
+- O·B·C·L·P의 표시·고정·효과와 다음 블록 진행
 
-## 8. 패키지 결과
+5종 아이템은 자연 플레이 중 실제 화면에서 관찰했다.
 
-`154fd09`에서 새 macOS 실행 ZIP을 생성했다.
-아래는 로컬 후보 파일의 기록이며, 최종 게시 파일은 릴리스 본문에서 식별한다.
+| 아이템 | 확인한 결과 | 대표 화면 |
+|---|---|---|
+| O | 4×2 형상, 접촉 후 아래 블록 제거, 다음 블록 진행 | [접촉](evidence/release-acceptance-20261027/gui/37-anchor-contact.jpg) · [완료](evidence/release-acceptance-20261027/gui/38-anchor-finished.jpg) |
+| B | 회전 불가, 주변 범위 삭제, 남은 블록 정착 | [효과 전](evidence/release-acceptance-20261027/gui/42-b-rotation.jpg) · [효과 후](evidence/release-acceptance-20261027/gui/43-b-after-effect.jpg) |
+| C | 지정 열 삭제와 남은 블록 정착 | [효과 전](evidence/release-acceptance-20261027/gui/47-item-watch.jpg) · [효과 후](evidence/release-acceptance-20261027/gui/48-c-after-effect.jpg) |
+| L | 미완성 행 삭제와 위 행 압축 | [효과 전](evidence/release-acceptance-20261027/gui/50-l-before-effect.jpg) · [효과 후](evidence/release-acceptance-20261027/gui/51-l-after-effect.jpg) |
+| P | 두 행·두 열 삭제, 300점, 반복 공급 후 재사용 | [효과 전](evidence/release-acceptance-20261027/gui/33-p-before-effect.jpg) · [완료](evidence/release-acceptance-20261027/gui/35-p-effect-complete.jpg) · [반복](evidence/release-acceptance-20261027/gui/45-p-repeat.jpg) |
 
-| 항목 | 결과 |
-|---|---|
-| 실행 ZIP | `seoultech-tetris-0.1.0-macos-aarch64.zip` |
-| 로컬 후보 ZIP SHA-256 | `87a8402eb40931f34052c5880f504c33d96c28c37635bca6dde99c616bb2e301` |
-| 구성 | 런처·아이콘·Java 21 runtime 포함 |
-| 제품 클래스 | 67개 · 패키지 JAR과 해당 빌드의 클래스가 바이트 단위로 일치 |
-| 원본 대조 기록 | [package.json](evidence/req12-154fd09-local/package.json) |
+## 7. 두 모드 연속 실행
 
-[릴리스 안내](release-notes.md)의 순서로 인수한 파일과 최종 게시 파일의 체크섬을 연결한다.
-빌드 환경·서명 등에 따라 ZIP 바이트가 달라질 수 있으므로 파일명이 같다는 이유만으로 같은 제출본으로 취급하지 않는다.
+Classic와 Item을 각각 독립된 새 게임에서 5분 10초 이상 일시정지 없이 실행했다.
 
-## 9. 제출 후보 인수와 남은 마감 조건
+자연 낙하를 유지하고 화면에 보이는 셀을 기준으로 회전·좌우 이동을 입력했다.
 
-자동검증·분포·커버리지 증빙과 Issue 등록·해결 PR 연결은 완료했다.
-코드·문서·증빙을 하나의 PR로 제출하고, 후보 ZIP의 인수 결과도 같은 PR에 반영한다.
-팀원 검토와 macOS CI를 확인한 뒤 병합하고 새 tag 릴리스를 게시한다.
-태그·소스·빌드·파일·체크섬은 릴리스 본문에 기록하므로 배포 정보만을 위한 후속 문서 PR은 필요 없다.
-인수한 ZIP을 그대로 게시하며, 변경한 ZIP에는 이전 결과를 적용하지 않는다.
+두 모드의 시간을 합치거나 중단 전후를 이어 붙이지 않았다.
 
-담당자는 길민규다.
-[결과표](evidence/manual-acceptance.csv)에 실제 검증자·날짜·파일·SHA-256·관찰 결과를 기록한다.
-현재 기기는 macOS 26.6.2, MacBookPro17,1, Apple M1, RAM 8GiB이며 기록 당시 여유 공간은 약 28.4GiB다.
-[기기 정보](evidence/manual-environment-20261026.json)에 조회값을 보관했다.
-CPU 주파수는 이 Mac의 시스템 조회에 노출되지 않아, 원문의 1.2GHz 조건과의 대응은 M08에서 확인한다.
+| 확인 항목 | Classic | Item |
+|---|---:|---:|
+| 실제 상태 관찰 시간 | 310.121초 | 310.129초 |
+| 상태 기록 | 254회 | 254회 |
+| 최대 기록 간격 | 6.361초 | 7.014초 |
+| 입력 묶음 / 키 수 | 18 / 71 | 15 / 53 |
+| 점수 변화 | 0 → 692 | 0 → 592 |
+| 일시정지 / 게임오버 | 0 / 0 | 0 / 0 |
 
-아래는 팀이 정한 인수 절차다.
-관찰·판정은 실제 수행 후 기록한다.
+전체 구간에서 보드·점수·MENU가 표시됐다.
 
-| ID | 확인할 내용 | 통과 기준 | 연결 요구사항 |
-|---|---|---|---|
-| M01 | ZIP 압축 해제·앱 더블클릭 | 별도 Java·명령 없이 시작 메뉴 표시 | D03·D04·I11, R2-P35·36 |
-| M02 | 두 모드의 물리 입력·클릭 후 포커스 | 조작 가능한 상태에서 좌우 교대 20회, 회전·낙하·정지/재개·메뉴 입력이 의도대로 반영 | N04·I07, R2-N06 |
-| M03 | 크기·키·색상·난이도 저장 후 완전 종료·재실행 | 저장한 값 복원, 변경 키로 조작 | N09·I07, R2-N08 |
-| M04 | 모드별 기록 저장 후 완전 종료·재실행 | All·Classic·Item의 이름·점수·난이도·모드 유지 | N10·I11, R2-N08 |
-| M05 | 4팔레트에서 일반 블록·5종 아이템 식별 | J/L·S/Z 등 일반 블록과 L·O·C·B·P를 모양·문자·색으로 구분, 효과·점수는 명세와 일치 | N06~N08, R2-N05·P42 |
-| M06 | Classic·Item 각각 5분 플레이, 3크기 전환 | 필수 정보 가림·조작 가능 상태의 입력 누락·플레이 중단 지연 없음, 오류는 재현 절차와 함께 기록 | N14·E07, R2-N10 |
-| M07 | 설정·순위 초기화 후 완전 종료·재실행 | 설정 기본값과 빈 순위 유지, 두 초기화의 독립성 유지 | I09·E10 |
-| M08 | 실제 인수 기기 사양 대조 | OS·CPU 기준·RAM 1GB 이상·여유 디스크 500MB 이상 확인 | N13·E08, R2-N10 |
+점수는 단조 증가했고 보드 상태가 계속 변했다.
 
-M05는 팔레트 이미지 생성과 별도로 사용자 구분성을 확인하는 절차다.
-색각 유형별 판별에 사용한 방법·대상 조합·관찰 결과도 함께 남긴다.
+시작과 종료 모두 활성 게임 화면이었다.
 
-단일 PR에는 코드·테스트·정본 8개·[204개 증빙 색인](evidence/requirements-status-20261026.csv)·Issue #23~29·인수 결과를 포함한다.
-[릴리스 안내](release-notes.md)에 게시할 파일과 버전 연결 순서를 정리했다.
-Windows CI [Issue #29](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/issues/29)는 제출 대상 외 환경의 후속 작업으로 추적한다.
+- [검산 결과](evidence/release-acceptance-20261027/final-continuous/verified-summary.json)
+- [Classic 상태 로그](evidence/release-acceptance-20261027/final-continuous/classic-attempt-2.jsonl)
+- [Item 상태 로그](evidence/release-acceptance-20261027/final-continuous/item-attempt-1.jsonl)
+- Classic [시작](evidence/release-acceptance-20261027/final-continuous/screenshots/classic-attempt-2-000.jpg) · [종료](evidence/release-acceptance-20261027/final-continuous/screenshots/classic-attempt-2-023.jpg)
+- Item [시작](evidence/release-acceptance-20261027/final-continuous/screenshots/item-attempt-1-000.jpg) · [종료](evidence/release-acceptance-20261027/final-continuous/screenshots/item-attempt-1-023.jpg)
 
-## 10. 증빙 원본
+검사 종료 후 앱 프로세스가 종료됐고 검사 전 설정·점수 파일을 복원했다.
 
-| 자료 | 위치 |
-|---|---|
-| 검증 결과·파일 해시 | [`summary.json`](evidence/req12-154fd09-local/summary.json) |
-| 일반·아이템 분포 CSV | [`distribution/`](evidence/req12-154fd09-local/distribution/) |
-| JUnit XML 22개 | [`junit/`](evidence/req12-154fd09-local/junit/) |
-| JaCoCo XML | [`coverage/jacocoTestReport.xml`](evidence/req12-154fd09-local/coverage/jacocoTestReport.xml) |
-| GUI 결과·대표 이미지 | [`desktop/`](evidence/req12-154fd09-local/desktop/) |
-| 소스·실행·패키지 기록 | [`source.json`](evidence/req12-154fd09-local/source.json) · [`build.log`](evidence/req12-154fd09-local/build.log) · [`package.json`](evidence/req12-154fd09-local/package.json) |
-| 분포 그래프 재생성 | [`plot.py`](evidence/req12-154fd09-local/plot.py) |
-| 원본 해시 목록 | [`files.json`](evidence/req12-154fd09-local/files.json) |
-| 원본 대조 검사 | [`verify.py`](evidence/req12-154fd09-local/verify.py) |
+[복원 확인](evidence/release-acceptance-20261027/final-continuous/final-check.json)에서 두 파일의 SHA-256 일치와 Git 상태 불변을 확인했다.
 
-그래프와 요약 파일은 저장소 루트에서 다음 명령으로 재생성·검증한다.<br>
-Matplotlib은 이 작업에서만 내려받으며 프로젝트 의존성에는 추가하지 않는다.
+## 8. 재검산 방법
+
+제품 커밋의 빌드·테스트·커버리지·GUI 자동검사·패키징은 다음 명령으로 실행한다.
 
 ```bash
-uv run --with matplotlib==3.11.2 python docs/evidence/req12-154fd09-local/plot.py
+./gradlew --no-daemon --console=plain build desktopSmoke packageRelease
+```
+
+보관한 XML·CSV의 수치와 해시는 저장소 루트에서 다시 대조할 수 있다.
+
+```bash
 python3 docs/evidence/req12-154fd09-local/verify.py
 ```
 
-`verify.py`는 보관한 XML·CSV의 수치와 파일 해시, 검증 커밋의 소스 해시를 다시 대조한다.
-수동 인수 결과표는 빌드별 자동검증 자료와 분리하여 관리한다.
+분포 그래프는 다음 명령으로 재생성한다.
+
+```bash
+uv run --with matplotlib==3.11.2 python docs/evidence/req12-154fd09-local/plot.py
+```
+
+Matplotlib은 그래프 재생성에만 사용하며 제품 의존성에는 포함하지 않는다.
+
+## 9. 판정 범위
+
+이 보고서의 통과 판정은 공개 arm64 macOS 앱, 위 기기, 600X500 설정에서 확인한 결과다.
+
+자동 렌더링과 실제 GUI 표본으로 4개 팔레트의 동작을 확인했다.
+
+실제 색각 이상 사용자를 대상으로 한 구분성 평가는 수행하지 않았다.
+
+핵심 판정 연산 검사와 두 모드 연속 실행은 완료했다.
+
+CPU 1.2GHz·RAM 1GB의 최저 사양 기기에서 정량 성능을 별도로 측정한 결과는 아니다.
+
+Windows와 Intel Mac은 공식 제출 검증 범위에 포함하지 않는다.
 
 ## 관련 문서
 

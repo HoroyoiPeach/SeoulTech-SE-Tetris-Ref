@@ -1,0 +1,15 @@
+{"at":"2026-10-26T16:25:22.361Z","elapsedMs":1411,"keys":["Left","Left","Left"],"plan":{"rotations":0,"targetMinX":0,"landingY":18,"score":-2.593713,"clearedLines":0}}
+{"at":"2026-10-26T16:25:40.915Z","elapsedMs":19965,"keys":["Left"],"plan":{"rotations":0,"targetMinX":2,"landingY":18,"score":-4.633977,"clearedLines":0}}
+{"at":"2026-10-26T16:25:59.738Z","elapsedMs":38789,"keys":["Right","Right"],"plan":{"rotations":0,"targetMinX":5,"landingY":19,"score":-6.674241,"clearedLines":0}}
+{"at":"2026-10-26T16:26:20.503Z","elapsedMs":59554,"keys":["Up","Right","Right","Right","Right","Right"],"plan":{"rotations":1,"targetMinX":8,"landingY":17,"score":-3.222145,"clearedLines":1}}
+{"at":"2026-10-26T16:26:37.884Z","elapsedMs":76935,"keys":["Left"],"plan":{"rotations":0,"targetMinX":2,"landingY":18,"score":-6.902107000000001,"clearedLines":0}}
+{"at":"2026-10-26T16:26:57.605Z","elapsedMs":96657,"keys":["Up","Up","Right","Right"],"plan":{"rotations":2,"targetMinX":5,"landingY":18,"score":-8.063339,"clearedLines":0}}
+{"at":"2026-10-26T16:27:16.728Z","elapsedMs":115779,"keys":["Up","Left","Left","Left"],"plan":{"rotations":1,"targetMinX":0,"landingY":16,"score":-4.611243,"clearedLines":1}}
+{"at":"2026-10-26T16:27:33.480Z","elapsedMs":132532,"keys":["Right"],"plan":{"rotations":0,"targetMinX":4,"landingY":18,"score":-7.412173,"clearedLines":0}}
+{"at":"2026-10-26T16:28:09.826Z","elapsedMs":168879,"keys":["Up","Left","Left"],"plan":{"rotations":1,"targetMinX":1,"landingY":16,"score":-14.830721000000002,"clearedLines":0}}
+{"at":"2026-10-26T16:28:26.691Z","elapsedMs":185744,"keys":["Up","Right","Right","Right","Right","Right"],"plan":{"rotations":1,"targetMinX":8,"landingY":17,"score":-11.378625000000001,"clearedLines":1}}
+{"at":"2026-10-26T16:29:01.024Z","elapsedMs":220078,"keys":["Up","Left","Left","Left"],"plan":{"rotations":1,"targetMinX":0,"landingY":15,"score":-17.326717,"clearedLines":0}}
+{"at":"2026-10-26T16:29:17.413Z","elapsedMs":236467,"keys":["Up","Up","Up","Right","Right","Right"],"plan":{"rotations":3,"targetMinX":6,"landingY":17,"score":-18.998015,"clearedLines":0}}
+{"at":"2026-10-26T16:29:49.157Z","elapsedMs":268211,"keys":["Up","Right","Right","Right","Right"],"plan":{"rotations":1,"targetMinX":7,"landingY":16,"score":-26.416563,"clearedLines":0}}
+{"at":"2026-10-26T16:30:06.206Z","elapsedMs":285261,"keys":["Up","Left","Left","Left"],"plan":{"rotations":1,"targetMinX":0,"landingY":13,"score":-28.64131,"clearedLines":0}}
+{"at":"2026-10-26T16:30:19.520Z","elapsedMs":298575,"keys":["Right","Right","Right"],"plan":{"rotations":0,"targetMinX":6,"landingY":15,"score":-30.681574,"clearedLines":0}}

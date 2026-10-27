@@ -1,0 +1,17 @@
+{
+  "at": "2026-10-27T01:31:20.294049+09:00",
+  "matching_processes": [],
+  "restored": [
+    {
+      "name": "setting.txt",
+      "sha256": "ff56956922ff6103ce29ba51d0127344d2dff2605a0c0f49d38f51660310bebb",
+      "matches_before_test": true
+    },
+    {
+      "name": "tetris_score.txt",
+      "sha256": "31f063c4ce177e8cb3cc88fb1c3c1838b53096b6a545520ee381ea4734694fb2",
+      "matches_before_test": true
+    }
+  ],
+  "git_status_unchanged": true
+}

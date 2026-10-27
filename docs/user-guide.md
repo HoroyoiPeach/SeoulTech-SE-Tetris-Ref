@@ -1,27 +1,26 @@
 # SeoulTech SE Tetris 사용자 안내서
 
-공식 제출 환경은 **macOS 26 이상**이다.
+공식 제출 환경은 **macOS 26 이상 · Apple Silicon**이다.
+공개 제출 버전은 **`v0.1.0-req2.3`**이다.
 
-코드와 문서를 함께 검토·병합한 후 최종 tag와 ZIP을 새 릴리스에서 제공한다.
-배포 버전·파일·SHA-256·CI·인수 결과는 [GitHub Releases](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases)의 해당 릴리스 본문에서 확인한다.
+[릴리스 페이지](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)에서 실행 파일을 받는다.
+파일 무결성과 실행 검증 결과는 [검증 보고서](verification.md)에 정리했다.
 
 ## 1. 실행 파일 준비
 
-배포 ZIP에는 Java 21 런타임과 아이콘이 포함된 macOS 앱이 들어간다.
+배포 ZIP에는 Java 21 런타임과 아이콘이 포함된 macOS 앱이 들어 있다.
 
 별도의 Java 설치 없이 실행할 수 있다.
 
-| ZIP 이름 형식 | 압축 해제 후 실행 대상 |
+| 실행용 ZIP | 압축 해제 후 실행 대상 |
 |---|---|
-| `seoultech-tetris-<version>-macos-<architecture>.zip` | `SeoulTech Tetris.app` |
+| `seoultech-tetris-v0.1.0-req2.3-macos-aarch64.zip` | `SeoulTech Tetris.app` |
 
-`<version>`과 `<architecture>`는 릴리스와 빌드 환경에 따라 달라진다.
-
-최종 파일명과 SHA-256은 해당 릴리스의 본문과 체크섬 파일에서 안내한다.
+소스·문서·증빙까지 필요한 평가자는 같은 릴리스의 `seoultech-tetris-v0.1.0-req2.3-submission.zip`을 받는다.
 
 실행 순서는 다음과 같다.
 
-1. Mac의 CPU에 맞는 ZIP을 받는다.
+1. 위 표의 macOS 실행용 ZIP을 받는다.
 2. ZIP 전체를 압축 해제한다.
 3. `SeoulTech Tetris.app`을 더블클릭한다.
 4. `TETRIS` 제목과 시작 메뉴가 표시되는지 확인한다.
@@ -103,7 +102,7 @@ Item 모드도 일반 블록과 같은 난이도·조작·점수 규칙을 사�
 | `B` | 3×4 폭탄 모양이다. 고정된 위치 주변의 직사각형 범위를 비운 뒤, 모든 열의 남은 칸을 바닥까지 내린다. 이때 완성된 행은 기존 줄 점수·누계·아이템 공급 규칙을 따른다. |
 | `P` | 2×2 모양이다. 고정된 두 행과 두 열을 지우며, 두 행에는 100+200점과 2줄 누계가 적용된다. 열 삭제에는 별도 점수가 없다. |
 
-https://github.com/user-attachments/assets/802f2ea1-6f9c-48a9-a2f4-95a6dfa79e87
+[아이템 동작 영상](https://github.com/user-attachments/assets/802f2ea1-6f9c-48a9-a2f4-95a6dfa79e87)
 
 아이템의 실제 모양, 회전, 발동 범위, 점수·줄 누계와 중첩 규칙은 [게임 명세서](specification.md)를 기준으로 한다.
 

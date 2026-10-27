@@ -1,0 +1,39 @@
+{
+  "verified_at": "2026-10-27T01:32:04.755695+09:00",
+  "runs": [
+    {
+      "run_id": "classic-attempt-2",
+      "mode": "Classic",
+      "status": "PASS",
+      "observed_duration_ms": 310121,
+      "sample_count": 254,
+      "max_gap_ms": 6361,
+      "score_start": 0,
+      "score_end": 692,
+      "input_batches": 18,
+      "keys_sent": 71,
+      "pause_count": 0,
+      "game_over_count": 0,
+      "screenshots": 24,
+      "first_screenshot": "screenshots/classic-attempt-2-000.jpg",
+      "last_screenshot": "screenshots/classic-attempt-2-023.jpg"
+    },
+    {
+      "run_id": "item-attempt-1",
+      "mode": "Item",
+      "status": "PASS",
+      "observed_duration_ms": 310129,
+      "sample_count": 254,
+      "max_gap_ms": 7014,
+      "score_start": 0,
+      "score_end": 592,
+      "input_batches": 15,
+      "keys_sent": 53,
+      "pause_count": 0,
+      "game_over_count": 0,
+      "screenshots": 24,
+      "first_screenshot": "screenshots/item-attempt-1-000.jpg",
+      "last_screenshot": "screenshots/item-attempt-1-023.jpg"
+    }
+  ]
+}

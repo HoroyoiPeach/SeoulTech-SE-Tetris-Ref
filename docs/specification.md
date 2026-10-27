@@ -3,11 +3,10 @@
 이 문서는 평가자가 게임의 예상 동작을 코드와 대조할 수 있도록 현재 구현 정책을 정리한다.
 
 - 현재 구현 기준 커밋: `154fd097deff2675e7030f607b0ceeb35b9e69c5`
-- 이전 macOS CI 증빙 기준: `e19f9009d0639c3d6458f6e42f8ac30ad43094da`
 - 제품 동작의 근거: 현재 소스와 자동 테스트
 - 사용자와 별도로 확정한 정책: P 아이템의 형태·발동·점수, 5종 균등 선택, 10줄 공급권 누적
 - 최종 제출 OS: macOS 26 이상
-- 배포 계획: 코드·문서 단일 PR을 macOS CI와 팀원 검토 후 병합하고 새 tag와 인수한 macOS ZIP 제공
+- 공개 제출 버전: [`v0.1.0-req2.3`](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)
 
 이 문서는 게임이 어떻게 동작하는지를 정의한다.
 
@@ -457,8 +456,8 @@ P의 2×2 형태, 바닥·스택 어디서든 고정 발동, 두 행·두 열 �
 
 최종 제출 대상은 macOS 26 이상이다.
 
-최종 tag와 ZIP은 다음 [GitHub Release](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases)에서 제공한다.
-실제 tag·ZIP·SHA-256·CI·인수 상태는 해당 릴리스 본문에 기록한다.
+최종 tag와 두 ZIP은 [v0.1.0-req2.3 릴리스](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)에 공개했다.
+파일 무결성과 공개 앱의 실행 결과는 [검증 보고서](verification.md)에서 확인한다.
 
 ## 11. 정책 근거
 

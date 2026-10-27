@@ -1,0 +1,15 @@
+{
+  "runId": "item-attempt-1",
+  "mode": "Item",
+  "startedAt": "2026-10-26T16:25:20.950Z",
+  "endedAt": "2026-10-26T16:30:31.288Z",
+  "elapsedMs": 310344,
+  "placements": 15,
+  "observations": 254,
+  "frames": 24,
+  "maxObservationGapMs": 7014,
+  "firstScore": 0,
+  "lastScore": 592,
+  "failed": false,
+  "failure": null
+}

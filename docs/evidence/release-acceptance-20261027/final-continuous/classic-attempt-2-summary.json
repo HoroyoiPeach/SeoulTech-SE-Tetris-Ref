@@ -1,0 +1,15 @@
+{
+  "runId": "classic-attempt-2",
+  "mode": "Classic",
+  "startedAt": "2026-10-26T16:19:42.321Z",
+  "endedAt": "2026-10-26T16:24:52.669Z",
+  "elapsedMs": 310354,
+  "placements": 18,
+  "observations": 254,
+  "frames": 24,
+  "maxObservationGapMs": 6361,
+  "firstScore": 0,
+  "lastScore": 692,
+  "failed": false,
+  "failure": null
+}

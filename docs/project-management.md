@@ -1,12 +1,12 @@
 # 프로젝트 관리 기록
 
-이 문서는 요구사항 1·2의 업무 분담, 버전 관리, PR, 이슈 및 주요 결정을 한곳에서 확인하기 위한 기록이다.
+이 문서는 요구사항 1·2의 업무 분담, 작업 규칙, PR, Issue와 주요 결정을 한곳에서 관리한다.
 
 - 저장소: [HoroyoiPeach/SeoulTech-SE-Tetris-Ref](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref)
 - 진척 관리: [GitHub Project](https://github.com/users/HoroyoiPeach/projects/3/views/1)
-- 제품 기준: `154fd09` · 팀 `main` `62a035f`에서 후속 아이템 동작 개선
-- 제출 대상: macOS 26 이상
-- 최종 tag와 macOS ZIP: 다음 릴리스에서 배포
+- 공개 릴리스: [`v0.1.0-req2.3`](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)
+- 제출 소스: `10d7b78` · 제품 코드 `154fd09`
+- 제출 대상: macOS 26 이상 Apple Silicon
 
 ## 1. 팀원별 수행 내역
 
@@ -20,21 +20,23 @@
 
 ## 2. 개발·검토 흐름
 
-앞으로의 변경은 다음 순서로 처리한다.
-
-1. 칸반 카드에 목적·담당·완료 조건을 기록한다.
-2. 작업별 브랜치에서 작은 단위로 커밋한다.
-3. `main` 대상 PR에 변경 이유와 검증 결과를 작성한다.
-4. macOS CI 통과를 확인한다.
-5. 작성자 외 팀원 1명이 검토한 뒤 병합한다.
-6. 병합 결과와 관련 카드·Issue 상태를 갱신한다.
-
-브랜치 이름과 상세 작업 규칙은 [CONTRIBUTING](../CONTRIBUTING.md)을 따른다.
-
-일반 기능·문서 작업은 칸반으로 관리한다.<br>
+일반 기능·문서 작업은 칸반으로 관리한다.
 실제 버그와 CI 검증 실패는 GitHub Issue로 등록하고 해결 PR을 연결한다.
 
-적용 기준일은 2026-10-26이다.
+1. 카드에 목적·담당·완료 조건을 기록하고 `In Progress`로 옮긴다.
+2. 최신 `main`에서 `feature/`, `fix/`, `docs/` 브랜치를 만든다.
+3. 한 브랜치에서 한 작업만 진행하고 이해 가능한 작은 단위로 커밋한다.
+4. 직접 실행과 관련 테스트를 마친 뒤 `main` 대상 PR에 변경 이유와 결과를 기록한다.
+5. 카드를 `Review`로 옮기고 제출 대상 macOS의 CI 결과를 확인한다.
+6. 작성자 외 팀원 1명이 기능·회귀·코드·검증 결과를 확인한 뒤 병합한다.
+7. 병합 뒤 카드와 Issue를 갱신하고 완료 작업을 `Done`으로 옮긴다.
+
+`main`에는 일반 작업을 직접 push하지 않는다.
+충돌이 나면 어느 한쪽 변경을 임의로 버리지 않고 작성자와 범위를 확인한 뒤 두 기능을 다시 검증한다.
+중요한 합의는 대화에만 남기지 않고 카드나 이 문서에 기록한다.
+
+이 규칙은 2026-10-26부터 적용한다.
+과거 모든 PR이 동일한 검토 절차를 거쳤다는 의미는 아니다.
 
 ## 3. 주요 변경 이력
 
@@ -49,25 +51,21 @@
 | 요구사항 2 보완 | [#17](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/17), [#18](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/18), [#19](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/19), [#20](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/20) | PR #15 오류 수정, 기존 기능 수용 검사, 모드별 기록, 5종 아이템과 누적 공급 완성 |
 | 통합 검증 | [#21](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/21) | 요구사항 1·2 회귀, 설정·기록 유지, 화면 조합과 평가 증빙 통합 |
 | 입력 안정화 | [#22](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/22) | 클릭 뒤 키보드 포커스 유지와 관련 회귀 검사 추가 |
+| 중간평가 제출 | [#30](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/30) | B·C 정착, O 색상 조정, 정본 문서와 제출 증빙을 `10d7b78`에 통합 |
 
 PR #15는 구현을 보존한 뒤 확인된 오류를 별도 브랜치에서 고치는 방식으로 처리했다.<br>
 여섯 오류의 원인·수정·검증은 [PR #17](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/17)에 연결되어 있다.
 
-### 중간평가 제출 변경
+### 중간평가 제출 결과
 
-현재 작업 커밋은 `154fd097deff2675e7030f607b0ceeb35b9e69c5`이며 팀 `main`의 `62a035f`에서 시작했다.
+PR #30을 `main`의 `10d7b78`로 병합하고 `v0.1.0-req2.3`을 공개했다.
+실행용 ZIP과 소스·문서·증빙을 묶은 제출용 ZIP을 같은 릴리스에서 제공한다.
 
-- B 효과 뒤 남은 셀을 열마다 아래로 정착한다.
-- C 효과 뒤 남은 셀을 열마다 아래로 정착한다.
-- 정착 과정에서 셀의 순서·색·문자를 유지한다.
-- O 색상을 기존 회색보다 밝게 조정한다.
-- P의 기존 효과·점수·누계 정책은 유지한다.
+제품 코드는 B·C 효과 뒤 열별 정착, 셀 순서·색·문자 보존과 밝은 회색 O 표시를 포함한다.
+P의 행·열 삭제와 점수·누계 정책은 유지했다.
 
-로컬 `build`에서 JUnit 98개가 실패·오류 없이 통과했다.<br>
-Line Coverage는 1,534/1,703 = 90.08%다.
-
-GUI 자동검사와 macOS 패키징도 통과했다.
-[검증 보고서](verification.md)에 로컬 원본을 연결하고, 실제 PR·CI·배포 정보는 릴리스 본문에 기록한다.
+검증 수치와 원본은 [검증 보고서](verification.md)에서 관리한다.
+배포 파일명과 SHA-256은 [개발 안내서](development.md#13-버전과-릴리스-식별)와 릴리스 본문에서 확인한다.
 
 ## 4. Issue와 칸반
 
@@ -112,30 +110,28 @@ PR에는 카드·선행 작업·검증 결과를 연결한다.
 | 형상 관리 | 기능·오류·리팩터링을 브랜치와 PR 단위로 분리 | [Pull Requests](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pulls?q=is%3Apr) |
 | 회귀 테스트·CI | JUnit·JaCoCo·분포·성능·GUI 검사를 Gradle과 CI로 반복 실행 | [개발 안내서](development.md), [검증 보고서](verification.md) |
 | 리팩터링 | 중복 흐름과 책임을 단계별 PR로 정리하고 회귀 검사로 동작 보존 | [PR #11–14](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pulls?q=is%3Apr+is%3Aclosed+author%3ACODEhenryKIL) |
-| 릴리스 관리 | 소스·CI·패키지·체크섬을 같은 버전으로 연결 | [개발 안내서](development.md#13-제출-버전-고정) |
+| 릴리스 관리 | 소스·CI·패키지·체크섬을 같은 버전으로 연결 | [개발 안내서](development.md#13-버전과-릴리스-식별) |
 
-## 7. 단일 PR과 최종 릴리스
+## 7. 릴리스와 문서 정본 관리
 
-현재 작업은 코드·테스트·정본 문서·증빙을 하나의 PR로 제출한다.
+릴리스에는 tag, 소스 커밋, 빌드 기준, 대상 OS, 실행 파일명과 SHA-256, 검증 결과와 정본 문서 링크를 기록한다.
+제품 코드나 배포 ZIP이 바뀌면 변경된 파일로 자동검사와 수동 인수를 다시 수행한다.
 
-1. PR의 macOS CI에서 제출 후보 ZIP과 체크섬을 생성한다.
-2. 생성된 동일 ZIP으로 macOS 수동 인수 M01~M08을 수행한다.
-3. 실제 환경·파일·SHA-256·관찰 결과를 같은 PR의 검증 자료에 반영한다.
-4. 작성자 외 팀원 1명이 최종 변경과 결과를 검토한다.
-5. CI 통과와 인수 결과를 확인한 뒤 `main`에 병합한다.
-6. 병합 커밋에 새 tag를 만들고, 인수한 동일 ZIP과 체크섬을 릴리스에 첨부한다.
+현재 공개 제출본은 `v0.1.0-req2.3`이다.
+병합 PR은 #30, 제출 소스는 `10d7b78`, 제품 코드는 `154fd09`다.
 
-인수 뒤 제품 코드나 ZIP이 바뀌면 새 파일로 M01~M08을 다시 수행한다.<br>
-문서·증빙만 추가한 경우에도 인수 ZIP의 제품 코드와 최종 tag의 제품 코드가 같은지 확인한다.
+현재 안내는 README와 `docs/`의 정본 7개만 유지한다.
+완료된 계획·임시 점검표·과거 논의는 Git 이력에서 확인하며 현재 기준으로 사용하지 않는다.
+자동검증 원본과 평가 증빙은 `docs/evidence/`에 유지한다.
 
-릴리스 본문에는 실제 tag, tag의 소스 커밋, ZIP을 만든 커밋과 CI, 파일명, SHA-256을 기록한다.<br>
-문서는 [GitHub Releases](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases)와 tag에 포함된 README에서 확인한다.
+### 2026-10-27 문서 정리 예외
 
-이 릴리스 이후 별도 최종 문서 PR은 만들지 않는다.
+사용자가 정본 8개만 남기도록 요청한 문서 정리는 PR 없이 `main`에 직접 반영한다.
+범위는 기존 문서의 로컬 백업, 중복·과거 문서 삭제, 정본 링크와 현재 사실 정리에 한정한다.
+제품 코드·빌드·CI 설정은 변경하지 않는다.
 
-현재 공개 후보는 [v0.1.0-req2.2](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.2)다.
-이 후보는 `62a035f`를 가리키므로 위 B/C 정착과 O 색상 조정을 포함하지 않는다.
-세부 순서는 [릴리스 안내](release-notes.md)를 따른다.
+이 항목은 이번 문서 정리에만 적용되는 예외다.
+이후 작업은 작성자 외 팀원 1명 검토와 PR 원칙을 다시 따른다.
 
 ## 관련 문서
 

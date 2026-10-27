@@ -1,12 +1,10 @@
 # SeoulTech SE Tetris 개발 안내서
 
-이 문서는 커밋 `154fd097deff2675e7030f607b0ceeb35b9e69c5`의 코드·빌드 정의를 기준으로 한다.
+이 문서는 공개 릴리스 `v0.1.0-req2.3`의 개발·빌드 기준을 설명한다.
 
-이 기준은 B·C 삭제 후 열별 정착 동작과 O 무게추의 밝은 회색 표시를 포함한다.
+제출 소스는 `main`의 `10d7b78`이며, 제품 코드는 `154fd09`와 같다.
 
-최종 제출 대상은 macOS 26 이상이다.
-
-코드와 문서를 단일 PR로 병합한 뒤 최종 tag와 ZIP을 새 릴리스에서 제공한다.
+최종 제출 대상은 macOS 26 이상 Apple Silicon이다.
 
 ## 1. 개발 환경
 
@@ -18,7 +16,7 @@
 | 테스트 | JUnit Jupiter 5.14.1 |
 | 커버리지 | JaCoCo 0.8.15, 전체 main 코드 Line Coverage 70% gate |
 | UI | Java Swing/AWT |
-| 네이티브 패키지 | JDK 21의 `jpackage`, Windows 또는 macOS 호스트 |
+| 네이티브 패키지 | JDK 21의 `jpackage`, macOS 호스트 |
 
 시스템에 Gradle을 따로 설치하지 않고 저장소의 Wrapper를 사용한다.<br>
 Wrapper가 Java를 찾지 못하면 JDK 21 경로를 `JAVA_HOME`에 지정한다.
@@ -26,13 +24,6 @@ Wrapper가 Java를 찾지 못하면 JDK 21 경로를 `JAVA_HOME`에 지정한다
 ```bash
 export JAVA_HOME=/absolute/path/to/jdk-21
 ./gradlew --version
-```
-
-PowerShell에서는 다음처럼 지정한다.
-
-```powershell
-$env:JAVA_HOME = 'C:\absolute\path\to\jdk-21'
-.\gradlew.bat --version
 ```
 
 프로젝트가 별도로 요구하는 환경 변수는 없다.<br>
@@ -45,13 +36,6 @@ macOS·Linux 계열 셸:
 ```bash
 ./gradlew --no-daemon --console=plain clean build
 ./gradlew --no-daemon --console=plain run
-```
-
-Windows PowerShell:
-
-```powershell
-.\gradlew.bat --no-daemon --console=plain clean build
-.\gradlew.bat --no-daemon --console=plain run
 ```
 
 `build`는 컴파일·JUnit·JaCoCo 보고서·70% Line Coverage gate를 실행한다.<br>
@@ -153,16 +137,10 @@ java -Dtetris.dataDir=/tmp/tetris-data -jar build/libs/seoultech-tetris.jar
 
 ## 6. 네이티브 패키징
 
-`packageRelease`는 실행 중인 호스트용 앱 이미지·portable ZIP·SHA-256을 만든다.
+`packageRelease`는 macOS 앱 이미지·portable ZIP·SHA-256을 만든다.
 
 ```bash
 ./gradlew --no-daemon --console=plain clean build desktopSmoke packageRelease
-```
-
-Windows:
-
-```powershell
-.\gradlew.bat --no-daemon --console=plain clean build desktopSmoke packageRelease
 ```
 
 task 흐름:
@@ -183,27 +161,26 @@ build/distributions/seoultech-tetris-0.1.0-<platform>-<architecture>.zip
 build/distributions/seoultech-tetris-0.1.0-<platform>-<architecture>.zip.sha256
 ```
 
-- `<platform>`: `macos` 또는 `windows`
-- `<architecture>`: `aarch64`, `x64` 또는 JVM이 보고한 기타 아키텍처
+- `<platform>`: `macos`
+- `<architecture>`: `aarch64` 또는 JVM이 보고한 기타 아키텍처
 - 앱 이름: `SeoulTech Tetris`
 - macOS bundle: `SeoulTech Tetris.app`
-- 아이콘: macOS `tetris.icns`, Windows `tetris.ico`
+- 아이콘: macOS `tetris.icns`
 - Java 21 runtime: 앱 이미지 내부 포함
 
-macOS는 `ditto`, Windows는 PowerShell `Compress-Archive`로 ZIP을 만든다.<br>
-Linux 패키징은 지원하지 않는다.<br>
+macOS는 `ditto`로 ZIP을 만든다.<br>
 패키징은 빌드 호스트와 같은 OS용으로만 수행된다.
 
 최종 제출에서는 소스 커밋, CI run/job, ZIP 파일명·SHA-256과 대상 OS/CPU를 같은 버전으로 묶는다.
 실제 tag·ZIP·SHA-256·CI·인수 결과는 [GitHub Releases](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases)의 해당 릴리스 본문에 기록한다.
 
-## 7. CI 구성과 실행 결과
+## 7. 자동화 구성과 공개 릴리스 결과
 
-`.github/workflows/ci.yml`은 모든 push와 pull request에서 `windows-2025`, `macos-26` matrix를 실행한다.<br>
-각 job은 Temurin 21과 검증된 Wrapper로 `build desktopSmoke packageRelease`를 실행하고 보고서·패키지를 7일간 artifact로 보관한다.<br>
-`desktopFocusSmoke`는 기본 CI에 포함되지 않는다.
+`.github/workflows/ci.yml`은 push와 pull request에서 Java 21, Gradle Wrapper, JUnit, JaCoCo, GUI smoke와 호스트별 패키징을 실행한다.<br>
+보고서와 패키지는 workflow artifact로 7일간 보관한다.<br>
+`desktopFocusSmoke`는 표시 가능한 로컬 환경에서 별도로 실행한다.
 
-현재 기준 커밋 `154fd097`의 로컬 `build` 결과:
+공개 릴리스 제품 코드 `154fd09`의 macOS 로컬 결과:
 
 | 항목 | 결과 |
 |---|---|
@@ -214,24 +191,12 @@ Linux 패키징은 지원하지 않는다.<br>
 | 핵심 연산 성능 | 400,000회 26ms / 5,000ms 기준 통과 |
 | `desktopSmoke` | PASS |
 | `packageRelease` | macOS aarch64 ZIP·runtime·아이콘·런처 생성 확인 |
-| 로컬 후보 ZIP SHA-256 | `87a8402eb40931f34052c5880f504c33d96c28c37635bca6dde99c616bb2e301` |
+| 실행 ZIP SHA-256 | `87a8402eb40931f34052c5880f504c33d96c28c37635bca6dde99c616bb2e301` |
 
-이 결과는 로컬 자동검사이며 최종 릴리스의 실제 물리 키보드·마우스·완전 종료 후 재실행 인수를 대신하지 않는다.
-로컬 실행 명령은 `./gradlew --no-daemon --console=plain build desktopSmoke packageRelease`였다.
-원본 결과와 비공개 후보 ZIP 메타데이터는 [154fd097 로컬 증빙](evidence/req12-154fd09-local/)에 보관했다.
-이 후보는 게시된 최종 릴리스가 아니며, 최종 파일의 신원은 병합 후 릴리스 본문에서 확정한다.
-
-이전 PR #22 커밋 `e19f900`의 macOS CI 결과:
-
-| 환경 | 결과 | 검증 범위 |
-|---|---|---|
-| macOS 26, Java 21 | `build desktopSmoke packageRelease` 성공 | JUnit·커버리지·분포·GUI 자동검사·패키징 |
-
-CI: <https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/actions/runs/40315760987>
-
-위 CI는 이전 소스 증빙이며 `154fd097`의 B·C 정착 변경을 검증한 결과가 아니다.
-최종 PR에서 현재 코드의 macOS CI를 다시 통과해야 한다.
-수동 인수 결과는 실제 수행 후에만 릴리스 본문·검증 증빙에 기록한다.
+실행 명령은 `./gradlew --no-daemon --console=plain build desktopSmoke packageRelease`였다.
+원본 결과는 [자동검증 증빙](evidence/req12-154fd09-local/)에 보관했다.
+배포 파일과 전체 제출 ZIP의 식별 정보는 [v0.1.0-req2.3 릴리스](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)에서 확인한다.
+검사 범위와 수동 실행 결과는 [검증 보고서](verification.md)를 기준으로 한다.
 
 ## 8. 코드 구조
 
@@ -334,9 +299,22 @@ P는 기존 행 삭제·압축 경로를 유지한다.
 
 성능 5초 기준은 핵심 연산 회귀 검사에 적용한다.
 
-## 13. 제출 버전 고정
+## 13. 버전과 릴리스 식별
 
-README와 검증 자료에는 다음을 함께 남긴다.
+공개 제출본은 다음 값으로 고정한다.
+
+| 항목 | 값 |
+|---|---|
+| 릴리스 | [`v0.1.0-req2.3`](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3) |
+| 병합 PR | [#30](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/30) |
+| 제출 소스 | `10d7b78fbea00ce57be75d7f966e4fd13c00b818` |
+| 제품 코드 | `154fd097deff2675e7030f607b0ceeb35b9e69c5` |
+| 실행 ZIP | `seoultech-tetris-v0.1.0-req2.3-macos-aarch64.zip` |
+| 실행 ZIP SHA-256 | `87a8402eb40931f34052c5880f504c33d96c28c37635bca6dde99c616bb2e301` |
+| 제출 ZIP | `seoultech-tetris-v0.1.0-req2.3-submission.zip` |
+| 제출 ZIP SHA-256 | `b610cc1b95ddd13f4ac67b1db4cec3b9dbad82c5a5da992841bbf8411f94de62` |
+
+후속 릴리스에는 다음 값을 함께 남긴다.
 
 ```text
 source commit / branch 또는 tag
@@ -347,22 +325,11 @@ JUnit 수·실패·skip
 Line Coverage covered/missed와 범위
 분포 CSV seed·반복 수·계산식
 ZIP 파일명·SHA-256
-수동 검증자·실제 날짜·기기·결과
+수동 검증 환경·실제 날짜·기기·결과
 검증 범위·참고 사항
 ```
 
 서로 다른 커밋의 소스·CI·패키지를 같은 버전으로 표현하지 않는다.
-
-최종 순서는 다음과 같다.
-
-1. 코드·테스트·문서·증빙을 단일 PR로 제출
-2. 현재 소스의 macOS CI 통과와 후보 ZIP·체크섬 확인
-3. 동일 후보 ZIP으로 M01~M08을 수행하고 실제 결과를 같은 PR에 반영
-4. 작성자 외 팀원 1명 검토와 macOS CI 확인 후 `main` 병합
-5. 병합 커밋에 tag를 붙이고 인수한 동일 ZIP·SHA-256을 GitHub Release에 게시
-6. 릴리스 본문에 tag·소스·빌드 커밋·CI·파일·체크섬·인수 결과·문서 링크 기록
-
-릴리스 본문이 최종 파일과 검증 연결을 담당하므로 릴리스 정보만을 반영하기 위한 추가 문서 PR은 만들지 않는다.
 
 ## 관련 문서
 

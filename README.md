@@ -3,20 +3,26 @@
 Java Swing으로 만든 소프트웨어공학 팀 프로젝트.
 Classic·Item 모드, 3단계 난이도와 5종 아이템을 제공한다.
 
-[실행 파일 다운로드](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases) · [사용자 안내서](docs/user-guide.md) · [검증 보고서](docs/verification.md)
+[실행 파일 다운로드](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3) · [사용자 안내서](docs/user-guide.md) · [검증 보고서](docs/verification.md)
 
 ## 다운로드와 실행
 
 **제출 환경: macOS 26 이상 · Apple Silicon**
 배포 ZIP에는 Java 21 runtime이 포함돼 있어 별도 Java 설치가 필요 없다.
 
-1. [Releases](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases)에서 제출용 릴리스의 macOS ZIP을 받는다.
+1. [v0.1.0-req2.3 릴리스](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)에서 macOS 실행용 ZIP을 받는다.
 2. ZIP 전체를 압축 해제한다.
 3. `SeoulTech Tetris.app`을 더블클릭한다.
 4. `CLASSIC` 또는 `ITEM`을 선택한다.
 
-정확한 제출 태그·실행 파일·SHA-256과 소스·검증 링크는 **해당 릴리스 본문**에서 확인한다.
-현재 작업의 배포 순서는 [릴리스 안내](docs/release-notes.md)에 정리했다.
+공개 제출 버전은 **`v0.1.0-req2.3`**이다.
+
+| 파일 | 구성 |
+|---|---|
+| `seoultech-tetris-v0.1.0-req2.3-macos-aarch64.zip` | 실행 앱·아이콘·Java 런타임 |
+| `seoultech-tetris-v0.1.0-req2.3-submission.zip` | 실행 앱·소스·문서·테스트와 평가 증빙 |
+
+파일의 SHA-256과 다운로드 검증 결과는 [검증 보고서](docs/verification.md)에서 확인한다.
 
 ![Classic 모드 게임 화면](docs/evidence/req12-154fd09-local/desktop/final-600x500-normal-classic.png)
 
@@ -48,7 +54,9 @@ B·C는 효과가 끝난 뒤 남은 칸들이 각 열에서 아래로 내려앉�
 ## 요구사항과 평가 자료
 
 이 README와 아래 7개 문서가 제출용 정본이다.
-기존 계획·점검 문서는 작업 이력으로 보관하며, 현재 동작과 판정은 정본을 기준으로 확인한다.
+문서의 상세 근거와 원본 결과는 `docs/evidence/`에 모았다.
+현재 문서에는 릴리스 공개 후인 10월 27일의 최종 실행 검증도 반영했다.
+배포 ZIP과 태그는 공개 당시의 소스·문서를 보관한다.
 
 | 문서 | 확인할 내용 |
 |---|---|
@@ -62,18 +70,21 @@ B·C는 효과가 끝난 뒤 남은 칸들이 각 열에서 아래로 내려앉�
 
 [204개 요구사항 증빙 색인](docs/evidence/requirements-status-20261026.csv)에서 구현·테스트·결과를 함께 확인할 수 있다.
 
-## 자동검증
+## 검증 결과
 
-제품 소스 `154fd09`의 macOS 로컬 검증 결과다.
+제품 소스 `154fd09`의 빌드 검증과 공개 릴리스의 실행 검증 결과다.
 원본과 실행 환경, 검사 범위는 [검증 보고서](docs/verification.md)에 기록했다.
 
 | 항목 | 결과 |
 |---|---|
-| JUnit | 98개 통과 |
+| 빌드 JUnit | 98개 통과 |
 | Line Coverage | 1,534 / 1,703 = **90.08%** |
 | 일반 블록 분포 | 난이도별 100,000회 · 21개 조합 통과 |
 | 아이템 분포 | 100,000회 · 5종 통과 |
 | GUI 자동검사·Mac 패키징 | 통과 |
+| 공개 앱 JAR 재검사 | 아이템·공급·기록 50개 통과 |
+| 공개 앱 연속 플레이 | Classic 310.121초 · Item 310.129초, 정지·게임오버 없이 완료 |
+| 배포 파일 | 두 ZIP의 SHA-256·CRC 및 포함 앱 동일성 확인 |
 
 ## 소스로 실행
 

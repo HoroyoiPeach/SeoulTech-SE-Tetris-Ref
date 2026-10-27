@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "verified_at_utc": "2026-10-26T15:14:43.617251+00:00",
+  "release": "v0.1.0-req2.3",
+  "source_url": "https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/download/v0.1.0-req2.3/seoultech-tetris-v0.1.0-req2.3-submission.zip",
+  "overall": "PASS",
+  "checks": {
+    "submission_sha256": true,
+    "submission_crc": true,
+    "standalone_sha256": true,
+    "standalone_crc": true,
+    "embedded_app_matches_standalone": true,
+    "embedded_verifier": true,
+    "canonical_documents": true,
+    "evidence_index": true,
+    "document_links": true,
+    "protected_document_absent": true
+  },
+  "submission": {
+    "path": "seoultech-tetris-v0.1.0-req2.3-submission.zip",
+    "size_bytes": 56476881,
+    "sha256": "b610cc1b95ddd13f4ac67b1db4cec3b9dbad82c5a5da992841bbf8411f94de62",
+    "expected_sha256": "b610cc1b95ddd13f4ac67b1db4cec3b9dbad82c5a5da992841bbf8411f94de62",
+    "crc": {
+      "entry_count": 1524,
+      "passed": true,
+      "bad_entry": null,
+      "protected_entry_count": 0
+    }
+  },
+  "standalone_app_zip": {
+    "path": "seoultech-tetris-v0.1.0-req2.3-macos-aarch64.zip",
+    "size_bytes": 53777615,
+    "sha256": "87a8402eb40931f34052c5880f504c33d96c28c37635bca6dde99c616bb2e301",
+    "expected_sha256": "87a8402eb40931f34052c5880f504c33d96c28c37635bca6dde99c616bb2e301",
+    "crc": {
+      "entry_count": 875,
+      "passed": true,
+      "bad_entry": null,
+      "protected_entry_count": 0
+    }
+  },
+  "app_comparison": {
+    "entry_count": 394,
+    "same_paths_contents_modes_and_symlinks": true
+  },
+  "embedded_verifier": {
+    "reviewed_before_execution": true,
+    "return_code": 0,
+    "stdout": "PASS: bundle hashes, source, 98 test results and 90.08% coverage",
+    "stderr": ""
+  },
+  "documents": {
+    "expected": [
+      "README.md",
+      "docs/requirements-1-checklist.md",
+      "docs/requirements-2-checklist.md",
+      "docs/specification.md",
+      "docs/user-guide.md",
+      "docs/development.md",
+      "docs/verification.md",
+      "docs/project-management.md"
+    ],
+    "missing": []
+  },
+  "evidence_index": {
+    "path": "docs/evidence/requirements-status-20261026.csv",
+    "rows": 204,
+    "unique_ids": 204,
+    "requirements_1": 119,
+    "requirements_2": 85
+  },
+  "links": {
+    "local_occurrences": 169,
+    "anchor_occurrences": 53,
+    "external_unique_urls": 40,
+    "external_status_counts": {
+      "200": 40
+    },
+    "broken_local": [],
+    "broken_anchors": [],
+    "broken_external": [],
+    "passed": true
+  },
+  "provenance": {
+    "source_artifact": "submission-check/verification.json",
+    "source_sha256": "db796258439cbdff0f158af0b8952edfe8bf0dda9d1c8ed78bdc83b575921bd1",
+    "transformation": "Only local absolute ZIP paths replaced by filenames."
+  }
+}
