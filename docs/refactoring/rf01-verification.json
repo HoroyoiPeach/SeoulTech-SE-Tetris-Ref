@@ -1,0 +1,88 @@
+{
+  "recorded_at": "2026-10-31T13:59:56.418336+00:00",
+  "branch": "refactor/game-engine",
+  "base_sha": "695e725898ca081ec0b79a138b2f2c87e7de460e",
+  "production_source_changed": false,
+  "environment": {
+    "os": "macOS 26.6.2",
+    "architecture": "arm64",
+    "java": "Eclipse Temurin 21.0.13+9",
+    "gradle": "9.8.2"
+  },
+  "baseline": {
+    "tests": 98,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "line_covered": 1534,
+    "line_missed": 169,
+    "line_coverage_percent": 90.08,
+    "java": "Temurin 21.0.13+9",
+    "gradle": "9.8.2",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "source_base": "695e725898ca081ec0b79a138b2f2c87e7de460e",
+    "command": "./gradlew --no-daemon --console=plain clean check build",
+    "exit_code": 0
+  },
+  "final": {
+    "tests": 103,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "line_covered": 1540,
+    "line_missed": 163,
+    "line_coverage_percent": 90.43,
+    "command": "./gradlew --no-daemon --console=plain clean check build",
+    "exit_code": 0
+  },
+  "compiler_warnings": {
+    "baseline_count": 35,
+    "final_count": 35,
+    "new_warnings": 0,
+    "detail": "32 production + 3 existing test warnings unchanged"
+  },
+  "new_test_file": "src/test/java/seoultech/se/tetris/component/RefactorBaselineCharacterizationTest.java",
+  "new_test_sha256": "a7cfe46aa69cbc266c5087e8341d51ae7cb3f5085df6e3eee19de051cad33b17",
+  "test_mapping": {
+    "junit_methods": 86,
+    "legacy_checks": 55,
+    "csv_data_rows": 141,
+    "note": "not runtime invocation counts"
+  },
+  "desktop_checks": [
+    {
+      "command": "./gradlew --no-daemon --console=plain desktopSmoke",
+      "result": "passed",
+      "scope": "real JFrame lifecycle with synthetic listener input"
+    },
+    {
+      "command": "./gradlew --no-daemon --console=plain desktopFocusSmoke --args='swing'",
+      "result": "passed",
+      "scope": "all groups using synthetic events with real JFrame focus"
+    },
+    {
+      "command": "./gradlew --no-daemon --console=plain desktopFocusSmoke",
+      "result": "failed",
+      "location": "DesktopFocusSmoke.checkGame:314",
+      "message": "Classic: MENU native press must arm the button; focus owner=Gamepanel"
+    },
+    {
+      "command": "./gradlew --no-daemon --console=plain desktopFocusSmoke --args='game'",
+      "result": "failed",
+      "location": "DesktopFocusSmoke.checkGame:314",
+      "message": "Classic: MENU native press must arm the button; focus owner=none"
+    }
+  ],
+  "open_items": [
+    {
+      "id": "RF01-UI-01",
+      "status": "unresolved",
+      "summary": "Native Robot MENU press/focus validation fails on unchanged production baseline; synthetic pass is not native acceptance; OS/input environment vs product cause not confirmed."
+    }
+  ],
+  "windows_validation": "not run in this session",
+  "review": "Independent review approved after effect-target sentinel and Difficulty-test retention corrections",
+  "raw_evidence_workspace_path": ".omx/evidence/rf01-20261031/",
+  "test_commit": "ad8d2907e9abe182132e68e22cea6be2b42b0ce5",
+  "contract_commit": "5de9cc5fe6ead7dc4a0daa4422c37b74c44c39f2"
+}
