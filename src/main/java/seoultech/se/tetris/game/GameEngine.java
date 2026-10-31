@@ -6,9 +6,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
+import seoultech.se.tetris.GameMode;
 import seoultech.se.tetris.blocks.AnchorBlock;
 import seoultech.se.tetris.blocks.Block;
 import seoultech.se.tetris.blocks.BombBlock;
+import seoultech.se.tetris.blocks.ColumnBlock;
+import seoultech.se.tetris.blocks.CrossBlock;
+import seoultech.se.tetris.blocks.RowBlock;
 import seoultech.se.tetris.rules.CollisionRules;
 
 /** UI-independent owner of one Tetris game's rules and mutable state. */
@@ -35,7 +39,8 @@ public final class GameEngine {
 
     public GameUpdate handle(GameCommand command) {
         Objects.requireNonNull(command, "command");
-        if (state.phase == GamePhase.ACTIVE && command == GameCommand.TOGGLE_PAUSE) {
+        if ((state.phase == GamePhase.ACTIVE || state.phase == GamePhase.RESOLVING)
+                && command == GameCommand.TOGGLE_PAUSE) {
             state.paused = !state.paused;
             state.gravityElapsedNanos = 0;
             return update(null, null);
@@ -65,6 +70,7 @@ public final class GameEngine {
                 state.highlightElapsedNanos += elapsedNanos;
             }
         }
+        if (state.phase == GamePhase.RESOLVING) return advanceItemEffect(elapsedNanos);
         if (elapsedNanos == 0 || state.phase != GamePhase.ACTIVE || state.paused) {
             return update(null, null);
         }
@@ -86,13 +92,20 @@ public final class GameEngine {
             state.highlightedRows.clear();
             state.highlightElapsedNanos = 0;
             state.gravityElapsedNanos = 0;
+            state.pendingItems = 0;
             GameEnd end = new GameEnd(state.score, state.clearedLines, state.level);
             return update(null, end);
         }
         state.current = state.next;
-        state.next = requireFresh(blocks.nextBlock(config.difficulty()));
+        if (config.mode() == GameMode.ITEM && state.pendingItems > 0) {
+            state.next = requireFresh(blocks.nextItemBlock());
+            state.pendingItems--;
+        } else {
+            state.next = requireFresh(blocks.nextBlock(config.difficulty()));
+        }
         state.x = 3;
         state.y = 0;
+        state.anchorTouched = false;
         state.phase = GamePhase.ACTIVE;
         return update(null, null);
     }
@@ -103,6 +116,9 @@ public final class GameEngine {
         }
         state.phase = GamePhase.STOPPED;
         state.pendingLock = null;
+        state.itemEffect = null;
+        state.pendingItems = 0;
+        state.anchorTouched = false;
         state.highlightedRows.clear();
         state.gravityElapsedNanos = 0;
         state.highlightElapsedNanos = 0;
@@ -124,13 +140,15 @@ public final class GameEngine {
             state.paused, fixedRows, showsActive ? piece(state.current) : null,
             state.next == null ? null : piece(state.next), showsActive ? state.x : null,
             showsActive ? state.y : null, showsActive ? ghostY() : null, state.score,
-            state.clearedLines, state.level, dropIntervalNanos(), bitSetValues(state.highlightedRows), null);
+            state.clearedLines, state.level, dropIntervalNanos(), bitSetValues(state.highlightedRows),
+            snapshotEffect());
     }
 
     private GameUpdate dropOne() {
         if (canDown()) {
             state.y++;
             state.score += state.level;
+            if (state.current instanceof AnchorBlock && !canDown()) state.anchorTouched = true;
             return update(null, null);
         }
         return lockCurrent();
@@ -146,6 +164,38 @@ public final class GameEngine {
 
     private GameUpdate lockCurrent() {
         long turnId = state.nextTurnId++;
+        int clearedBefore = state.clearedLines;
+        placeCurrent(turnId);
+        if (state.current instanceof RowBlock row) {
+            BitSet rows = completedRows();
+            int itemRow = state.y + row.getItemY();
+            rows.set(itemRow);
+            return startItemEffect(new ItemEffectState(ItemEffectState.Kind.ROW, itemRow, -1,
+                GameState.WIDTH / 2, turnId, clearedBefore, rows));
+        }
+        if (state.current instanceof ColumnBlock column) {
+            return startItemEffect(new ItemEffectState(ItemEffectState.Kind.COLUMN, -1,
+                state.x + column.getItemX(), GameState.HEIGHT / 2, turnId, clearedBefore,
+                new BitSet(GameState.HEIGHT)));
+        }
+        if (state.current instanceof CrossBlock) {
+            BitSet rows = completedRows();
+            rows.set(state.y, state.y + 2);
+            return startItemEffect(new ItemEffectState(ItemEffectState.Kind.CROSS, state.y, state.x,
+                GameState.HEIGHT / 2, turnId, clearedBefore, rows));
+        }
+        ClearBatch.Cause cause = ClearBatch.Cause.COMPLETED_ROWS;
+        if (state.current instanceof AnchorBlock) {
+            applyAnchor(turnId);
+            cause = ClearBatch.Cause.ANCHOR_ITEM;
+        } else if (state.current instanceof BombBlock) {
+            applyBomb();
+            cause = ClearBatch.Cause.BOMB_ITEM;
+        }
+        return finishLock(turnId, clearedBefore, clearCompletedRows(turnId, cause, null));
+    }
+
+    private void placeCurrent(long turnId) {
         Block block = state.current;
         for (int row = 0; row < block.height(); row++) {
             for (int column = 0; column < block.width(); column++) {
@@ -156,17 +206,31 @@ public final class GameEngine {
                     value, marker, displayArgb(marker, block.getColor().getRGB()), turnId);
             }
         }
-        List<ClearBatch> batches = clearCompletedRows(turnId);
+    }
+
+    private GameUpdate startItemEffect(ItemEffectState effect) {
+        state.itemEffect = effect;
+        state.phase = GamePhase.RESOLVING;
+        state.gravityElapsedNanos = 0;
+        return update(null, null);
+    }
+
+    private GameUpdate finishLock(long turnId, int clearedBefore, List<ClearBatch> batches) {
         LockResolution resolution = new LockResolution(turnId, batches, state.score,
             state.clearedLines, state.level);
+        if (config.mode() == GameMode.ITEM) {
+            state.pendingItems += state.clearedLines / 10 - clearedBefore / 10;
+        }
         state.pendingLock = resolution;
         state.current = null;
+        state.itemEffect = null;
         state.phase = GamePhase.AWAITING_SPAWN;
         return update(resolution, null);
     }
 
-    private List<ClearBatch> clearCompletedRows(long turnId) {
-        BitSet rows = completedRows();
+    private List<ClearBatch> clearCompletedRows(long turnId, ClearBatch.Cause cause,
+            BitSet plannedRows) {
+        BitSet rows = plannedRows == null ? completedRows() : (BitSet) plannedRows.clone();
         if (rows.isEmpty()) return List.of();
         ArrayList<Integer> indices = new ArrayList<>(rows.cardinality());
         ArrayList<List<GameSnapshot.Cell>> before = new ArrayList<>(rows.cardinality());
@@ -183,10 +247,17 @@ public final class GameEngine {
             origins.add(mask);
         }
         removeRows(rows);
-        state.highlightedRows.clear();
-        state.highlightedRows.or(rows);
-        state.highlightElapsedNanos = 0;
-        return List.of(new ClearBatch(ClearBatch.Cause.COMPLETED_ROWS, indices, before, origins));
+        BitSet highlighted = (BitSet) rows.clone();
+        if (cause == ClearBatch.Cause.ROW_ITEM) highlighted.clear(state.itemEffect.firstRow);
+        if (cause == ClearBatch.Cause.CROSS_ITEM) {
+            highlighted.clear(state.itemEffect.firstRow, state.itemEffect.firstRow + 2);
+        }
+        if (!highlighted.isEmpty()) {
+            state.highlightedRows.clear();
+            state.highlightedRows.or(highlighted);
+            state.highlightElapsedNanos = 0;
+        }
+        return List.of(new ClearBatch(cause, indices, before, origins));
     }
 
     private void removeRows(BitSet rows) {
@@ -201,6 +272,90 @@ public final class GameEngine {
             state.score += 100 * combo;
             state.clearedLines++;
             if (state.clearedLines % 10 == 0 && state.level < 19) state.level++;
+        }
+    }
+
+    private GameUpdate advanceItemEffect(long elapsedNanos) {
+        if (elapsedNanos == 0) return update(null, null);
+        ItemEffectState effect = state.itemEffect;
+        long remaining = ItemEffectState.FRAME_NANOS - effect.elapsedNanos;
+        if (elapsedNanos < remaining) {
+            effect.elapsedNanos += elapsedNanos;
+            return update(null, null);
+        }
+        effect.elapsedNanos = 0;
+        if (effect.frame < effect.frames) {
+            effect.frame++;
+            return update(null, null);
+        }
+        return commitItemEffect(effect);
+    }
+
+    private GameUpdate commitItemEffect(ItemEffectState effect) {
+        ClearBatch.Cause cause;
+        if (effect.kind == ItemEffectState.Kind.ROW) {
+            cause = ClearBatch.Cause.ROW_ITEM;
+        } else if (effect.kind == ItemEffectState.Kind.COLUMN) {
+            clearColumn(effect.firstColumn);
+            settleColumns();
+            cause = ClearBatch.Cause.COLUMN_ITEM;
+        } else {
+            clearCrossColumns(effect.firstColumn);
+            cause = ClearBatch.Cause.CROSS_ITEM;
+        }
+        BitSet planned = effect.kind == ItemEffectState.Kind.COLUMN ? null : effect.rowsToRemove;
+        List<ClearBatch> batches = clearCompletedRows(effect.turnId, cause, planned);
+        state.gravityElapsedNanos = 0;
+        return finishLock(effect.turnId, effect.clearedLinesBeforeLock, batches);
+    }
+
+    private void applyAnchor(long turnId) {
+        Block anchor = state.current;
+        for (int row = 0; row < anchor.height(); row++) {
+            for (int column = 0; column < anchor.width(); column++) {
+                if (anchor.getShape(column, row) != 0) state.fixed[state.y + row][state.x + column] = null;
+            }
+        }
+        for (int row = state.y + anchor.height(); row < GameState.HEIGHT; row++) {
+            for (int column = state.x; column < state.x + anchor.width(); column++) {
+                state.fixed[row][column] = null;
+            }
+        }
+        state.y = GameState.HEIGHT - anchor.height();
+        placeCurrent(turnId);
+    }
+
+    private void applyBomb() {
+        int firstRow = Math.max(0, state.y - 2);
+        int lastRow = Math.min(GameState.HEIGHT - 1, state.y + state.current.height() + 1);
+        int firstColumn = Math.max(0, state.x - 2);
+        int lastColumn = Math.min(GameState.WIDTH - 1, state.x + state.current.width() + 1);
+        for (int row = firstRow; row <= lastRow; row++) {
+            for (int column = firstColumn; column <= lastColumn; column++) {
+                state.fixed[row][column] = null;
+            }
+        }
+        settleColumns();
+    }
+
+    private void clearColumn(int column) {
+        for (int row = 0; row < GameState.HEIGHT; row++) state.fixed[row][column] = null;
+    }
+
+    private void clearCrossColumns(int firstColumn) {
+        clearColumn(firstColumn);
+        clearColumn(firstColumn + 1);
+    }
+
+    private void settleColumns() {
+        for (int column = 0; column < GameState.WIDTH; column++) {
+            int destination = GameState.HEIGHT - 1;
+            for (int source = GameState.HEIGHT - 1; source >= 0; source--) {
+                GameState.FixedCell cell = state.fixed[source][column];
+                if (cell == null) continue;
+                state.fixed[destination--][column] = cell;
+            }
+            while (destination >= 0) state.fixed[destination--][column] = null;
         }
     }
 
@@ -228,17 +383,25 @@ public final class GameEngine {
     }
 
     private void moveHorizontal(int delta) {
+        if (anchorMovementLocked()) return;
         if (delta < 0 && CollisionRules.canLeft(occupancy(), state.current, state.x, state.y)) state.x--;
         if (delta > 0 && CollisionRules.canRight(occupancy(), state.current, state.x, state.y)) state.x++;
     }
 
     private void rotate() {
-        if (state.current instanceof AnchorBlock || state.current instanceof BombBlock) return;
+        if (anchorMovementLocked()
+                || state.current instanceof AnchorBlock || state.current instanceof BombBlock) return;
         int[] position = CollisionRules.rotationPosition(occupancy(), state.current, state.x, state.y);
         if (position == null) return;
         state.x = position[0];
         state.y = position[1];
         state.current.rotate();
+    }
+
+    private boolean anchorMovementLocked() {
+        if (!(state.current instanceof AnchorBlock)) return false;
+        if (!canDown()) state.anchorTouched = true;
+        return state.anchorTouched;
     }
 
     private boolean canDown() {
@@ -272,10 +435,54 @@ public final class GameEngine {
             wakeup = Math.min(HIGHLIGHT_REPAINT_NANOS,
                 Math.max(1, CLEAR_HIGHLIGHT_NANOS - state.highlightElapsedNanos));
         }
+        if (state.phase == GamePhase.RESOLVING && state.itemEffect != null) {
+            wakeup = Math.min(wakeup,
+                Math.max(1, ItemEffectState.FRAME_NANOS - state.itemEffect.elapsedNanos));
+        }
         if (state.phase == GamePhase.ACTIVE && !state.paused) {
             wakeup = Math.min(wakeup, Math.max(1, dropIntervalNanos() - state.gravityElapsedNanos));
         }
         return wakeup == Long.MAX_VALUE ? OptionalLong.empty() : OptionalLong.of(wakeup);
+    }
+
+    private GameSnapshot.Effect snapshotEffect() {
+        ItemEffectState effect = state.itemEffect;
+        if (state.phase != GamePhase.RESOLVING || effect == null) return null;
+        ArrayList<GameSnapshot.OverlayCell> cells = new ArrayList<>();
+        if (effect.kind == ItemEffectState.Kind.ROW) {
+            for (int column = 0; column < GameState.WIDTH; column++) {
+                boolean cleared = column >= GameState.WIDTH / 2 - effect.frame
+                    && column < GameState.WIDTH / 2 + effect.frame;
+                cells.add(overlay(column, effect.firstRow, cleared));
+            }
+        } else if (effect.kind == ItemEffectState.Kind.COLUMN) {
+            for (int row = 0; row < GameState.HEIGHT; row++) {
+                boolean cleared = row >= GameState.HEIGHT / 2 - effect.frame
+                    && row < GameState.HEIGHT / 2 + effect.frame;
+                cells.add(overlay(effect.firstColumn, row, cleared));
+            }
+        } else {
+            for (int row = 0; row < GameState.HEIGHT; row++) {
+                for (int column = 0; column < GameState.WIDTH; column++) {
+                    boolean inRows = row >= effect.firstRow && row < effect.firstRow + 2;
+                    boolean inColumns = column >= effect.firstColumn && column < effect.firstColumn + 2;
+                    if (!inRows && !inColumns) continue;
+                    int horizontalFrame = Math.min(effect.frame, GameState.WIDTH / 2);
+                    boolean horizontallyCleared = inRows
+                        && column >= GameState.WIDTH / 2 - horizontalFrame
+                        && column < GameState.WIDTH / 2 + horizontalFrame;
+                    boolean verticallyCleared = inColumns
+                        && row >= GameState.HEIGHT / 2 - effect.frame
+                        && row < GameState.HEIGHT / 2 + effect.frame;
+                    cells.add(overlay(column, row, horizontallyCleared || verticallyCleared));
+                }
+            }
+        }
+        return new GameSnapshot.Effect(effect.kind.name(), effect.frame, cells);
+    }
+
+    private static GameSnapshot.OverlayCell overlay(int x, int y, boolean cleared) {
+        return new GameSnapshot.OverlayCell(x, y, cleared ? " " : "O", 0xffffffff);
     }
 
     private long dropIntervalNanos() {

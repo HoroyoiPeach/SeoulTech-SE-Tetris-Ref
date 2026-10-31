@@ -23,6 +23,9 @@ final class GameState {
     long highlightElapsedNanos;
     long nextTurnId = 1;
     LockResolution pendingLock;
+    ItemEffectState itemEffect;
+    int pendingItems;
+    boolean anchorTouched;
 
     record FixedCell(int value, String text, int argb, long originTurnId) {}
 }
