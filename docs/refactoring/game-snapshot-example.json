@@ -1,0 +1,317 @@
+{
+  "width": 10,
+  "height": 20,
+  "mode": "CLASSIC",
+  "difficulty": "NORMAL",
+  "phase": "ACTIVE",
+  "paused": false,
+  "fixedCells": [
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "current": {
+    "kind": "O",
+    "cells": [
+      [
+        {
+          "value": 1,
+          "text": "O",
+          "argb": -256
+        },
+        {
+          "value": 1,
+          "text": "O",
+          "argb": -256
+        }
+      ],
+      [
+        {
+          "value": 1,
+          "text": "O",
+          "argb": -256
+        },
+        {
+          "value": 1,
+          "text": "O",
+          "argb": -256
+        }
+      ]
+    ]
+  },
+  "next": {
+    "kind": "O",
+    "cells": [
+      [
+        {
+          "value": 1,
+          "text": "O",
+          "argb": -256
+        },
+        {
+          "value": 1,
+          "text": "O",
+          "argb": -256
+        }
+      ],
+      [
+        {
+          "value": 1,
+          "text": "O",
+          "argb": -256
+        },
+        {
+          "value": 1,
+          "text": "O",
+          "argb": -256
+        }
+      ]
+    ]
+  },
+  "x": 3,
+  "y": 0,
+  "ghostY": 18,
+  "score": 0,
+  "clearedLines": 0,
+  "level": 1,
+  "dropIntervalNanos": 1000000000,
+  "highlightedRows": [],
+  "effect": null
+}
