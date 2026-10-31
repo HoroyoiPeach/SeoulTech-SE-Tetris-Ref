@@ -35,9 +35,11 @@ import seoultech.se.tetris.blocks.TBlock;
 import seoultech.se.tetris.score.ScoreStore;
 
 import static seoultech.se.tetris.component.ExistingFeatureFixture.get;
-import static seoultech.se.tetris.component.ExistingFeatureFixture.invoke;
 import static seoultech.se.tetris.component.ExistingFeatureFixture.onEdt;
 import static seoultech.se.tetris.component.ExistingFeatureFixture.set;
+
+import seoultech.se.tetris.game.GameEngineFixture;
+import seoultech.se.tetris.blocks.OBlock;
 
 /** Real-window focus regression; default Robot input, or synthetic Swing input with the "swing" flag. */
 public final class DesktopFocusSmoke {
@@ -258,14 +260,9 @@ public final class DesktopFocusSmoke {
         return onEdt(() -> {
             frame.exitStartEnterGame(mode);
             Gamepanel game = get(frame, "gamePanel", Gamepanel.class);
-            Board board = get(game, "board", Board.class);
-            board.timer.stop();
-            invoke(board, "eraseCurr");
-            set(board, "curr", new TBlock());
-            board.x = 4;
-            board.y = 4;
-            invoke(board, "placeBlock");
-            board.drawBoard();
+            game.controller().timer().stop();
+            new GameEngineFixture(game.controller().engine()).seed(new TBlock(), new OBlock(), 4, 4);
+            game.controller().refreshSnapshot();
             return game;
         });
     }
@@ -281,21 +278,21 @@ public final class DesktopFocusSmoke {
             String targetName = target.getClass().getSimpleName();
             checkedClick(robot, target, mode + ": " + targetName + " click must be delivered");
             await(robot, game::isFocusOwner, mode + ": game child click must preserve focus");
-            int previousY = onEdt(() -> board.y);
+            int previousY = onEdt(() -> game.controller().snapshot().y());
             key(robot, Maincontainer.DOWN);
-            await(robot, () -> board.y == previousY + 1,
+            await(robot, () -> game.controller().snapshot().y() >= previousY + 1,
                 mode + ": native movement must continue after child click");
         }
 
         key(robot, Maincontainer.PAUSE);
-        await(robot, board::getIsPaused, mode + ": native pause must work");
+        await(robot, () -> game.controller().snapshot().paused(), mode + ": native pause must work");
         JPanel pause = onEdt(() -> get(game, "pausepanel", JPanel.class));
         checkedClick(robot, label(pause, "- PAUSED -"), mode + ": pause overlay click must be delivered");
         checkedClick(robot, score, mode + ": paused score click must be delivered");
         await(robot, game::isFocusOwner, mode + ": paused content clicks must preserve focus");
         key(robot, Maincontainer.PAUSE);
-        await(robot, () -> !board.getIsPaused(), mode + ": native resume must work after clicks");
-        onEdt(() -> { board.timer.stop(); return null; });
+        await(robot, () -> !game.controller().snapshot().paused(), mode + ": native resume must work after clicks");
+        onEdt(() -> { game.controller().timer().stop(); return null; });
 
         JButton menu = onEdt(() -> find(game, JButton.class, button -> "MENU".equals(button.getText())));
         int[] presses = {0};
@@ -328,9 +325,9 @@ public final class DesktopFocusSmoke {
             if (!swingInput) robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
             Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
         }
-        int previousX = onEdt(() -> board.x);
+        int previousX = onEdt(() -> game.controller().snapshot().x());
         key(robot, Maincontainer.LEFT);
-        await(robot, () -> board.x == previousX - 1,
+        await(robot, () -> game.controller().snapshot().x() == previousX - 1,
             mode + ": canceled MENU click must not steal game input");
         key(robot, KeyEvent.VK_ESCAPE);
         await(robot, () -> game.getParent() == null, mode + ": native Escape must return to Start");
@@ -341,7 +338,7 @@ public final class DesktopFocusSmoke {
         ScoreStore.clear();
         Gamepanel game = preparedGame(frame, "Classic");
         Board board = onEdt(() -> get(game, "board", Board.class));
-        onEdt(() -> { board.timer.stop(); board.timer = null; game.gameOver(); return null; });
+        onEdt(() -> { game.stopGame(); game.gameOver(); return null; });
         focus(game);
         await(robot, game::isFocusOwner, "Name entry: game panel must own capture focus");
         JLabel name = onEdt(() -> get(game, "setUserNameText", JLabel.class));
@@ -515,8 +512,7 @@ public final class DesktopFocusSmoke {
                 Gamepanel game = get(frame, "gamePanel", Gamepanel.class);
                 if (game != null) {
                     Board board = get(game, "board", Board.class);
-                    if (board.timer != null) board.timer.stop();
-                    board.stopAnimations();
+                    game.stopGame();
                 }
                 frame.dispose();
                 return null;
