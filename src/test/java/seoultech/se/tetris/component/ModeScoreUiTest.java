@@ -137,6 +137,7 @@ class ModeScoreUiTest {
         ExistingFeatureFixture.onEdt(() -> {
             TestMaincontainer owner = owner();
             Gamepanel tiedClassic = new Gamepanel(owner, GameMode.CLASSIC);
+            tiedClassic.startGame();
             try {
                 board(tiedClassic).addScore(100);
                 tiedClassic.gameOver();
@@ -158,6 +159,7 @@ class ModeScoreUiTest {
 
             TestMaincontainer itemOwner = owner();
             Gamepanel firstItem = new Gamepanel(itemOwner, GameMode.ITEM);
+            firstItem.startGame();
             try {
                 board(firstItem).addScore(1);
                 firstItem.gameOver();
@@ -177,6 +179,7 @@ class ModeScoreUiTest {
             TestMaincontainer owner = owner();
             owner.setDifficulty(Difficulty.EASY);
             Gamepanel game = new Gamepanel(owner, GameMode.ITEM);
+            game.startGame();
             try {
                 assertEquals(GameMode.ITEM, game.getGameMode());
                 assertEquals(Difficulty.EASY, game.getDifficulty());

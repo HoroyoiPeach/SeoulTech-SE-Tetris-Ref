@@ -627,6 +627,7 @@ class Pr15BoardRegressionTest {
             owner.setting = owner.new Setting();
             owner.setDifficulty(difficulty);
             game = new Gamepanel(owner, gameMode);
+            game.startGame();
             board = field(game, "board", Board.class);
             initialTimer = board.timer;
             initialTimer.stop();

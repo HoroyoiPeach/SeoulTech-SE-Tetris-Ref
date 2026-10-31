@@ -150,6 +150,7 @@ class LineAnimationTest {
                 .allocateInstance(Maincontainer.class);
             owner.setting = owner.new Setting();
             Gamepanel game = new Gamepanel(owner);
+            game.startGame();
             board = field(game, "board", Board.class);
             gameTimer = board.timer;
             gameTimer.stop();

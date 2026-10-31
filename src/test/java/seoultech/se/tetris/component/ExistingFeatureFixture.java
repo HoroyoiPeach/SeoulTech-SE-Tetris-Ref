@@ -38,6 +38,7 @@ final class ExistingFeatureFixture implements AutoCloseable {
         owner.setting = owner.new Setting();
         owner.setDifficulty(difficulty);
         game = new Gamepanel(owner, mode);
+        game.startGame();
         board = get(game, "board", Board.class);
         initialTimer = board.timer;
         initialTimer.stop();

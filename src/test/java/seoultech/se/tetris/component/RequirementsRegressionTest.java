@@ -138,6 +138,7 @@ class RequirementsRegressionTest {
                 .allocateInstance(Maincontainer.class);
             owner.setting = owner.new Setting();
             game = new Gamepanel(owner);
+            game.startGame();
             Field boardField = Gamepanel.class.getDeclaredField("board");
             boardField.setAccessible(true);
             board = (Board) boardField.get(game);

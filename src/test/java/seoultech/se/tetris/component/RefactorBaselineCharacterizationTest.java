@@ -313,6 +313,7 @@ class RefactorBaselineCharacterizationTest {
                 .allocateInstance(TestMaincontainer.class);
             owner.setting = owner.new Setting();
             game = new Gamepanel(owner, GameMode.CLASSIC);
+            game.startGame();
             board = get(game, "board", Board.class);
             initialTimer = board.timer;
             initialTimer.stop();
