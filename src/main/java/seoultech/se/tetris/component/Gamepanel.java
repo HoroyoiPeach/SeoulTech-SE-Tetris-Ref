@@ -111,6 +111,8 @@ public class Gamepanel extends JPanel{
 
         playerKeyListener = new PlayerKeyListener();
 		addKeyListener(playerKeyListener);
+        // Gameplay and the ASCII name field use raw keys, not input-method composition.
+        enableInputMethods(false);
 		setFocusable(true);
 		requestFocus();
         setFocusTraversalKeysEnabled(false);
