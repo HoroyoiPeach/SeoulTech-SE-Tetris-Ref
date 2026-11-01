@@ -144,7 +144,15 @@ public final class DesktopFocusSmoke {
             String message) throws Exception {
         int[] presses = {0};
         int[] releases = {0};
+        StringBuilder trace = new StringBuilder();
         AWTEventListener listener = event -> {
+            if (event instanceof MouseEvent mouse
+                    && (event.getID() == MouseEvent.MOUSE_PRESSED
+                        || event.getID() == MouseEvent.MOUSE_RELEASED)) {
+                trace.append(mouse.paramString()).append(" source=")
+                    .append(mouse.getSource().getClass().getName())
+                    .append(" targetHit=").append(hitsTarget(event, component)).append('\n');
+            }
             if (event instanceof MouseEvent mouse && SwingUtilities.isLeftMouseButton(mouse)
                     && hitsTarget(event, component)) {
                 if (event.getID() == MouseEvent.MOUSE_PRESSED) presses[0]++;
@@ -156,6 +164,14 @@ public final class DesktopFocusSmoke {
             click(robot, component, xRatio, yRatio);
             await(robot, () -> presses[0] > 0 && releases[0] > 0, message
                 + " (both press and release required)");
+        } catch (AssertionError failure) {
+            System.err.println(onEdt(() -> "Click diagnostics: target=" + component
+                + " screen=" + component.getLocationOnScreen()
+                + " pointer=" + java.awt.MouseInfo.getPointerInfo().getLocation()
+                + " active=" + SwingUtilities.getWindowAncestor(component).isActive()
+                + " windowEnabled=" + SwingUtilities.getWindowAncestor(component).isEnabled()
+                + " presses=" + presses[0] + " releases=" + releases[0] + "\n" + trace));
+            throw failure;
         } finally {
             Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
         }
