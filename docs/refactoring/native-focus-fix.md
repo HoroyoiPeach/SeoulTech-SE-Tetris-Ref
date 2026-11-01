@@ -1,6 +1,6 @@
 # MENU native 입력 누락 후속 수정
 
-작성: 2026-11-01 · 상태: **native 재검사 실패, 원인 진단 중**
+작성: 2026-11-01 · 상태: **native 게임 그룹 통과, 전체 재검사 대기**
 
 ## 확인한 현상
 
@@ -17,6 +17,10 @@ Gamepanel에 `enableInputMethods(false)`를 적용한 뒤 실제 입력 전체 �
 
 OpenJDK의 [macOS mouseDown 처리](https://github.com/openjdk/jdk21u/blob/ba94eace682733f66e623c089bcafcf4a1b8e39c/src/java.desktop/macosx/native/libawt_lwawt/awt/AWTView.m#L165)에는 입력기가 누름을 먼저 소비할 수 있는 경로가 있다. 그러나 이번 실패의 원인이라고 확정할 증거는 없다. 다음 실행에서는 원본 누름·뗌 이벤트, 수신 대상·좌표, 포인터, 창의 활성·enabled 상태를 함께 기록해 Java 도달 전 누락과 검사 대상 불일치를 구분한다.
 
+상세 진단을 포함한 `desktopFocusSmoke --args=game` 재실행은 **Classic·Item 모두 통과**했다. 기존 `P` 키와 제품 코드를 유지한 채 게임 영역 클릭, pause/resume, MENU 누름·드래그 취소, 취소 후 키 입력, Escape 복귀를 확인했다. 실패가 재현되지 않아 실패 이벤트 기록은 생성되지 않았다. 이 결과는 해당 실행의 통과 증거이며, 이전 실패의 원인을 해결했다는 증거는 아니다.
+
+같은 진단 시간에 먼저 시도한 Java 직접 실행은 게임 검사 이전의 창 활성·포커스 조건에서 실패했다. 이 실패를 MENU 문제로 해석하지 않는다. 준비한 F8 비교 검사는 실행하지 않았다.
+
 ## 검증 결과
 
 | 검사 | 결과 |
@@ -26,7 +30,8 @@ OpenJDK의 [macOS mouseDown 처리](https://github.com/openjdk/jdk21u/blob/ba94e
 | JUnit | 154개, 실패·오류·건너뜀 0개 |
 | JaCoCo Line Coverage | 1,696 / 1,871 = 90.65% |
 | IME 변경 후 native Robot 전체 검사 | 실패: Classic pause overlay의 누름·뗌 확인. 이후 Item·이름 입력·점수판은 미실행 |
-| 상세 이벤트 진단 | 컴파일 완료, 사용자 입력을 비우는 시간 확인 후 실행 예정 |
+| 상세 진단 포함 native 게임 그룹 | 통과: Classic·Item, 기존 P 키. 실패 재현 없음 |
+| 이름 입력·점수판 포함 native 전체 재검사 | 사용자 입력을 비우는 시간 확인 후 실행 예정 |
 
 IME 정책 검사는 변경 전 실패·변경 후 통과했지만 native 문제 해결의 증거가 되지 못했다. 이 검사를 포함했던 이전 155개 통과 기록과, 원복 후 현재 154개 통과 기록을 구분한다. MENU 누름 상태 검사와 클릭의 누름·뗌 확인 기준은 완화하지 않았다.
 
