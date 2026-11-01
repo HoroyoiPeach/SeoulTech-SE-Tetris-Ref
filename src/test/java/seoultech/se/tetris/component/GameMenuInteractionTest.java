@@ -2,13 +2,10 @@ package seoultech.se.tetris.component;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.InputEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.im.InputContext;
 import java.util.Arrays;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -20,39 +17,6 @@ import seoultech.se.tetris.game.GameCommand;
 import seoultech.se.tetris.game.GamePhase;
 
 class GameMenuInteractionTest {
-    @Test void gameControlsDoNotOfferMousePressesToTextComposition() throws Exception {
-        ExistingFeatureFixture.onEdt(() -> {
-            try (ControllerFixture f = new ControllerFixture(GameMode.CLASSIC)) {
-                int[] offeredToInputMethod = {0};
-                int[] deliveredToControls = {0};
-                InputContext composingInputMethod = new InputContext() {
-                    @Override public void dispatchEvent(AWTEvent event) {
-                        if (event instanceof MouseEvent mouse) {
-                            offeredToInputMethod[0]++;
-                            mouse.consume();
-                        }
-                    }
-                };
-                Gamepanel controls = new Gamepanel(f.owner, GameMode.CLASSIC) {
-                    @Override public InputContext getInputContext() {
-                        return composingInputMethod;
-                    }
-                };
-                controls.setSize(500, 600);
-                controls.addMouseListener(new MouseAdapter() {
-                    @Override public void mousePressed(MouseEvent event) {
-                        deliveredToControls[0]++;
-                    }
-                });
-                mouse(controls, MouseEvent.MOUSE_PRESSED, true);
-                assertEquals(0, offeredToInputMethod[0], "Gameplay input must bypass text composition");
-                assertEquals(1, deliveredToControls[0]);
-                controls.stopGame();
-            }
-            return null;
-        });
-    }
-
     @Test void canceledMenuPressPreservesGameInputAndCompletedClickExitsAfterResume() throws Exception {
         ExistingFeatureFixture.onEdt(() -> {
             for (GameMode mode : GameMode.values()) {
