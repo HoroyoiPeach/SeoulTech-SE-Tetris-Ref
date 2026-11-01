@@ -9,10 +9,10 @@ Classic/Item 1인 게임을 담당하는 Java Swing 프로젝트다. 이번 리�
 | 항목 | 기준 |
 |---|---|
 | 최종 통합 브랜치 | `refactor/rf05-06-integration` |
-| 개발 시작 기준 | 원격 게시 후 팀이 확정한 통합 브랜치의 최신 커밋. 이 가이드까지 포함한 커밋 SHA를 함께 공유 |
+| 개발 시작 기준 | 팀이 확정한 통합 브랜치의 최신 커밋. 이 가이드까지 포함한 커밋 SHA를 함께 공유 |
 | 구현 완료 시점 기록 | `b58a33b` — RF-06 구현·검증 완료 시점. 후속 MENU 입력 진단은 [별도 검증 기록](native-focus-fix.md) 참고 |
 | 단계별 브랜치 | RF-01·02 → RF-03·04 → RF-05·06 순서로 누적 |
-| 공유 상태 | 현재 로컬 커밋 완료. 원격 브랜치 게시·PR·팀 리뷰는 아직 진행 전 |
+| 공유 방식 | 세 단계별 브랜치를 연결된 PR로 리뷰. 순서와 병합 시 주의점은 [PR 구성](delivery-plan.md) 참고 |
 | 구현 범위 | Classic/Item 1인 게임, 엔진 두 개의 독립 실행 검증 |
 | 다음 개발 범위 | 실제 대전·공격·P2P·재대전·연결 장애 처리 |
 
@@ -114,6 +114,6 @@ flowchart LR
 ## 참고 자료
 
 - [엔진 계약과 보존할 동작](game-engine-contract.md)
-- [단계별 브랜치 구성·PR 보류 방침](delivery-plan.md)
+- [단계별 브랜치·PR 구성과 리뷰 순서](delivery-plan.md)
 - [기존 테스트 대응표](rf01-test-migration.csv)
 - [RF-05/06 검증 기록](rf05-06-verification.md) · [MENU 입력 후속 진단·최신 검증](native-focus-fix.md)
