@@ -10,7 +10,7 @@ Classic/Item 1인 게임을 담당하는 Java Swing 프로젝트다. 이번 리�
 |---|---|
 | 최종 통합 브랜치 | `refactor/rf05-06-integration` |
 | 개발 시작 기준 | 원격 게시 후 팀이 확정한 통합 브랜치의 최신 커밋. 이 가이드까지 포함한 커밋 SHA를 함께 공유 |
-| 구현 완료 시점 기록 | `b58a33b` — RF-06 구현·검증 완료 시점. 이후 커밋은 문서 변경 |
+| 구현 완료 시점 기록 | `b58a33b` — RF-06 구현·검증 완료 시점. 후속 MENU 입력 수정은 [별도 검증 기록](native-focus-fix.md) 참고 |
 | 단계별 브랜치 | RF-01·02 → RF-03·04 → RF-05·06 순서로 누적 |
 | 공유 상태 | 현재 로컬 커밋 완료. 원격 브랜치 게시·PR·팀 리뷰는 아직 진행 전 |
 | 구현 범위 | Classic/Item 1인 게임, 엔진 두 개의 독립 실행 검증 |
@@ -103,7 +103,7 @@ flowchart LR
 
 **RF-06 마지막 검증 기록:** JUnit 153개 통과, 별도 JVM UI·설정·저장 검사 33개 통과, Line Coverage 90.59%, 빌드·desktopSmoke·합성 입력 포커스 검사 통과. 이는 당시 결과이며 기능 수정 후에는 다시 검사한다.
 
-**미해결:** native Robot 검사의 `Classic: MENU native press must arm the button` 실패가 남아 있다. 사용자가 입력을 비운 상태에서도 재현됐으며 원인은 미확정이다. `desktopFocusSmoke`를 인자 없이 실행하면 실제 마우스·키보드를 사용하므로 실행 시간을 사용자와 먼저 맞춘다. 위 `--args=swing` 검사는 별도 방식이다.
+**후속 수정:** 게임 조작에 문자 조합이 개입하지 않도록 수정했고 JUnit 155개와 빌드가 통과했다. 기존 native MENU 실패의 실제 입력 재검사는 대기 중이다. [수정 내용·최신 검증](native-focus-fix.md)을 확인한다. `desktopFocusSmoke`를 인자 없이 실행하면 실제 마우스·키보드를 사용하므로 실행 시간을 사용자와 먼저 맞춘다. 위 `--args=swing` 검사는 별도 방식이다.
 
 ## 7. 대전 개발을 시작할 때
 
@@ -116,4 +116,4 @@ flowchart LR
 - [엔진 계약과 보존할 동작](game-engine-contract.md)
 - [단계별 브랜치 구성·PR 보류 방침](delivery-plan.md)
 - [기존 테스트 대응표](rf01-test-migration.csv)
-- [최종 검증 기록과 native 검사 미해결 사항](rf05-06-verification.md)
+- [RF-05/06 검증 기록](rf05-06-verification.md) · [MENU 입력 후속 수정·최신 검증](native-focus-fix.md)
