@@ -142,16 +142,20 @@ public final class DesktopFocusSmoke {
 
     private static void checkedClick(Robot robot, Component component, double xRatio, double yRatio,
             String message) throws Exception {
+        int[] presses = {0};
         int[] releases = {0};
         AWTEventListener listener = event -> {
-            if (event.getID() == MouseEvent.MOUSE_RELEASED && hitsTarget(event, component)) {
-                releases[0]++;
+            if (event instanceof MouseEvent mouse && SwingUtilities.isLeftMouseButton(mouse)
+                    && hitsTarget(event, component)) {
+                if (event.getID() == MouseEvent.MOUSE_PRESSED) presses[0]++;
+                if (event.getID() == MouseEvent.MOUSE_RELEASED) releases[0]++;
             }
         };
         Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK);
         try {
             click(robot, component, xRatio, yRatio);
-            await(robot, () -> releases[0] > 0, message);
+            await(robot, () -> presses[0] > 0 && releases[0] > 0, message
+                + " (both press and release required)");
         } finally {
             Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
         }
@@ -296,7 +300,14 @@ public final class DesktopFocusSmoke {
 
         JButton menu = onEdt(() -> find(game, JButton.class, button -> "MENU".equals(button.getText())));
         int[] presses = {0};
+        StringBuilder mouseTrace = new StringBuilder();
         AWTEventListener listener = event -> {
+            if (event instanceof MouseEvent mouse && event.getID() == MouseEvent.MOUSE_PRESSED) {
+                mouseTrace.append("source=").append(mouse.getSource().getClass().getName())
+                    .append(" screen=").append(mouse.getLocationOnScreen())
+                    .append(" button=").append(mouse.getButton())
+                    .append(" consumed=").append(mouse.isConsumed()).append('\n');
+            }
             if (event.getID() == MouseEvent.MOUSE_PRESSED && hitsTarget(event, menu)) presses[0]++;
         };
         Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK);
@@ -321,6 +332,18 @@ public final class DesktopFocusSmoke {
             robot.waitForIdle();
             await(robot, () -> presses[0] > 0 && game.getParent() != null,
                 mode + ": canceled MENU click must leave the game open");
+        } catch (AssertionError failure) {
+            System.err.println(onEdt(() -> {
+                Point center = SwingUtilities.convertPoint(menu, menu.getWidth() / 2,
+                    menu.getHeight() / 2, game);
+                Component hit = SwingUtilities.getDeepestComponentAt(game, center.x, center.y);
+                return "MENU diagnostics: presses=" + presses[0] + " enabled=" + menu.isEnabled()
+                    + " showing=" + menu.isShowing() + " pressed=" + menu.getModel().isPressed()
+                    + " armed=" + menu.getModel().isArmed()
+                    + " hit=" + hit + " listeners=" + Arrays.toString(menu.getMouseListeners())
+                    + "\n" + mouseTrace;
+            }));
+            throw failure;
         } finally {
             if (!swingInput) robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
             Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
