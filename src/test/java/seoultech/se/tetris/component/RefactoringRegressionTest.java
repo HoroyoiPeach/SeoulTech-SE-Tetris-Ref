@@ -1532,6 +1532,7 @@ public final class RefactoringRegressionTest {
         GameFixture() throws Exception {
             owner = owner("");
             game = new Gamepanel(owner);
+            game.startGame();
             board = (Board) get(game, "board");
             initialTimer = board.timer;
             initialTimer.stop(); // EDT에서 생성 직후 중지: 실제 시간 경과에 의존하지 않음.

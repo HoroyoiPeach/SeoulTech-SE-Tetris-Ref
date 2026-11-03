@@ -69,9 +69,11 @@ public class Maincontainer extends JFrame{
         mainPanel.revalidate(); // 변경사항을 재계산
         mainPanel.repaint(); // 변경사항 화면에 다시 그리기
         cardLayout.show(mainPanel, "GameScreen");
+        gamePanel.startGame();
         gamePanel.requestFocusInWindow();
     }
     protected void exitGameEnterStart() {
+        if (gamePanel != null) gamePanel.stopGame();
         if (gamePanel != null && gamePanel.getParent() != null) mainPanel.remove(gamePanel);
         enterStart();
     }
@@ -80,7 +82,10 @@ public class Maincontainer extends JFrame{
     }
 
     protected void exitGameEnterScoreboard(String name, int score, Difficulty difficulty, GameMode mode) {
-        if (gamePanel != null) mainPanel.remove(gamePanel);
+        if (gamePanel != null) {
+            gamePanel.stopGame();
+            mainPanel.remove(gamePanel);
+        }
         scoreboardPanel = new Scoreboardpanel(this, mode);
         if (name != null) scoreboardPanel.highlightScore(name, score, difficulty, mode);
         mainPanel.add(scoreboardPanel, "ScoreboardScreen");

@@ -37,6 +37,7 @@ public class Gamepanel extends JPanel{
     private int HEIGHT;
     private int WIDTH;
     private KeyListener playerKeyListener;
+    private final transient GameController controller;
 
     public Gamepanel(Maincontainer maincontainer) {
         this(maincontainer, "Classic");
@@ -56,6 +57,7 @@ public class Gamepanel extends JPanel{
         HEIGHT = maincontainer.getConfiguredHeight(); WIDTH = maincontainer.getConfiguredWidth();
 
         board = new Board(this);
+        controller = new GameController(this, board);
         board.setBounds(10, 10, WIDTH*330/500, HEIGHT*580/600);
         add(board);
 
@@ -88,13 +90,8 @@ public class Gamepanel extends JPanel{
         MenuButtons.styleActionButton(menuButton);
         menuButton.setOpaque(true);
         menuButton.setBounds(WIDTH*330/500+20, HEIGHT*200/600+30, WIDTH*140/500, 35);
-        menuButton.addActionListener(event -> {
-            if (board.timer != null) { board.timer.stop(); board.timer = null; }
-            gameExit();
-        });
+        menuButton.addActionListener(event -> controller.exitToMenu());
         add(menuButton);
-
-        board.boardStart();
 
         playerKeyListener = new PlayerKeyListener();
 		addKeyListener(playerKeyListener);
@@ -105,6 +102,10 @@ public class Gamepanel extends JPanel{
     
     Difficulty getDifficulty() { return difficulty; }
     GameMode getGameMode() { return gameMode; }
+
+    void startGame() { controller.start(); }
+
+    void stopGame() { controller.stop(); }
 
     protected void drawNextBoard(Block next) {
 		nextblockpanel.drawNextBoard(next);
@@ -119,6 +120,7 @@ public class Gamepanel extends JPanel{
     }
 
     protected void gameOver() {
+        controller.stop();
         var rankings = ScoreStore.readRanked(gameMode);
         if (rankings.size() >= 10 && board.getScore() <= rankings.get(9).score()) {
             board.stopAnimations();
@@ -227,7 +229,10 @@ public class Gamepanel extends JPanel{
     }
 
     protected void gameExit() {
-        board.stopAnimations();
+        controller.exitToMenu();
+    }
+
+    void returnToStartScreen() {
         maincontainer.exitGameEnterStart();
     }
 
@@ -243,51 +248,7 @@ public class Gamepanel extends JPanel{
 
 		@Override
 		public void keyPressed(KeyEvent e) {
-			if (board.getIsPaused()) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					if (board.timer != null) {
-						board.timer.stop();
-						board.timer = null;
-					}
-					gameExit();
-					return;
-				} else if (e.getKeyCode() == Maincontainer.PAUSE) {
-					board.togglePause();
-					return;
-				} else return;
-			}
-			int i = e.getKeyCode();
-            if (i == KeyEvent.VK_ESCAPE && i != Maincontainer.DOWN && i != Maincontainer.LEFT
-                    && i != Maincontainer.RIGHT && i != Maincontainer.ROTATE
-                    && i != Maincontainer.PAUSE && i != Maincontainer.HARD_DROP) {
-                if (board.timer != null) { board.timer.stop(); board.timer = null; }
-                gameExit();
-                return;
-            }
-			if (i == Maincontainer.DOWN) {
-				board.moveDown();
-				board.drawBoard();
-				return;
-			} else if (i == Maincontainer.RIGHT) {
-				board.moveRight();
-				board.drawBoard();
-				return;
-			} else if (i == Maincontainer.LEFT) {
-				board.moveLeft();
-				board.drawBoard();
-				return;
-			} else if (i == Maincontainer.ROTATE) {
-				board.rotate();
-				board.drawBoard();
-				return;
-			} else if (i == Maincontainer.HARD_DROP) { // 하드 드롭 키 할당
-				board.hardDrop();
-				board.drawBoard();
-				return;
-			} else if (i == Maincontainer.PAUSE) {
-				board.togglePause();
-				return;
-			}
+			controller.handleKey(e.getKeyCode());
 		}
 
 		@Override

@@ -98,10 +98,12 @@ class DifficultyUiTest {
             TestMaincontainer owner = owner();
             owner.setDifficulty(Difficulty.EASY);
             Gamepanel easyGame = new Gamepanel(owner);
+            easyGame.startGame();
             Board easyBoard = ExistingFeatureFixture.get(easyGame, "board", Board.class);
             easyBoard.timer.stop();
             owner.setDifficulty(Difficulty.HARD);
             Gamepanel hardGame = new Gamepanel(owner);
+            hardGame.startGame();
             Board hardBoard = ExistingFeatureFixture.get(hardGame, "board", Board.class);
             hardBoard.timer.stop();
             try {
