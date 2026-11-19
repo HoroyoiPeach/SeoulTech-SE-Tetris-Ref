@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import seoultech.se.tetris.score.ScoreStore;
 import seoultech.se.tetris.Difficulty;
@@ -149,9 +150,8 @@ public final class DesktopSmoke {
         check(frame.getConfiguredHeight() == Integer.parseInt(dimensions[0])
                 && frame.getConfiguredWidth() == Integer.parseInt(dimensions[1]),
             "actual frame must apply configured size " + size);
-        check(frame.getContentPane().getHeight() == Integer.parseInt(dimensions[0])
-                && frame.getContentPane().getWidth() == Integer.parseInt(dimensions[1]),
-            "rendered content must use configured size " + size);
+        verifyConfiguredCanvas(frame,
+            new java.awt.Dimension(frame.getConfiguredWidth(), frame.getConfiguredHeight()));
         check(frame.setting.getColorPalette().equals(palette)
                 && Maincontainer.colorPalette.equals(palette),
             "actual frame must apply configured palette " + palette);
@@ -168,6 +168,65 @@ public final class DesktopSmoke {
         key(game, KeyEvent.VK_ESCAPE);
         check(game.getParent() == null && !controller.timer().isRunning(),
             palette + " representative game must cleanly return to the menu");
+    }
+
+    private static void verifyConfiguredCanvas(JFrame frame, java.awt.Dimension expected) throws Exception {
+        JPanel canvas = (JPanel) field(frame, "mainPanel");
+        frame.validate();
+        frame.getToolkit().sync();
+
+        var gc = frame.getGraphicsConfiguration();
+        var screenInsets = frame.getToolkit().getScreenInsets(gc);
+        var workArea = new java.awt.Rectangle(
+            gc.getBounds().x + screenInsets.left,
+            gc.getBounds().y + screenInsets.top,
+            gc.getBounds().width - screenInsets.left - screenInsets.right,
+            gc.getBounds().height - screenInsets.top - screenInsets.bottom);
+        boolean fits = expected.width + frame.getInsets().left + frame.getInsets().right <= workArea.width
+            && expected.height + frame.getInsets().top + frame.getInsets().bottom <= workArea.height;
+        String geometry = "expected=" + expected + ", canvas=" + canvas.getSize()
+            + ", content=" + frame.getContentPane().getSize() + ", frame=" + frame.getBounds()
+            + ", workArea=" + workArea + ", decorations=" + frame.getInsets();
+        System.out.println("Desktop layout: " + geometry);
+
+        check(canvas.getPreferredSize().equals(expected) && canvas.getSize().equals(expected),
+            "configured game canvas must keep its exact dimensions: " + geometry);
+        check(workArea.contains(frame.getBounds()),
+            "visible frame must stay inside the desktop work area: " + geometry);
+        if (fits) {
+            check(frame.getContentPane() == canvas,
+                "a canvas that fits the work area must remain the direct content pane: " + geometry);
+            return;
+        }
+
+        check(frame.getContentPane() instanceof JScrollPane,
+            "an oversized canvas must use a scrollable viewport: " + geometry);
+        JScrollPane scroll = (JScrollPane) frame.getContentPane();
+        check(scroll.getBorder() == null && scroll.getViewport().getView() == canvas,
+            "the viewport must expose the configured canvas without an extra border: " + geometry);
+        var viewportExtent = scroll.getViewport().getExtentSize();
+        boolean widthClipped = expected.width > viewportExtent.width;
+        boolean heightClipped = expected.height > viewportExtent.height;
+        check((!widthClipped || scroll.getHorizontalScrollBar().isVisible())
+                && (!heightClipped || scroll.getVerticalScrollBar().isVisible()),
+            "each clipped canvas edge must have a visible scrollbar: " + geometry);
+        int right = scroll.getHorizontalScrollBar().getMaximum()
+            - scroll.getHorizontalScrollBar().getModel().getExtent();
+        int bottom = scroll.getVerticalScrollBar().getMaximum()
+            - scroll.getVerticalScrollBar().getModel().getExtent();
+        check(right > 0 || bottom > 0,
+            "an oversized canvas must have a reachable clipped edge: " + geometry);
+        scroll.getHorizontalScrollBar().setValue(right);
+        scroll.getVerticalScrollBar().setValue(bottom);
+        check(scroll.getHorizontalScrollBar().getValue() == right
+                && scroll.getVerticalScrollBar().getValue() == bottom,
+            "the viewport must reach the canvas bottom-right edge: " + geometry);
+        check(scroll.getViewport().getViewRect().contains(expected.width - 1, expected.height - 1),
+            "the canvas bottom-right pixel must be visible at the scroll limit: " + geometry);
+        scroll.getHorizontalScrollBar().setValue(0);
+        scroll.getVerticalScrollBar().setValue(0);
+        check(scroll.getViewport().getViewPosition().equals(new java.awt.Point()),
+            "the viewport must return to the canvas origin before game input: " + geometry);
     }
 
     public static void main(String[] args) throws Exception {
