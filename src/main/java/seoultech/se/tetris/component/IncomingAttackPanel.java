@@ -11,6 +11,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import seoultech.se.tetris.attack.AttackQueue;
 import seoultech.se.tetris.attack.AttackRow;
 
 /** Displays the exact pending attack shape using text as well as color. */
@@ -18,7 +19,7 @@ final class IncomingAttackPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private final JLabel title = new JLabel("INCOMING 0/10", SwingConstants.CENTER);
-    private final JTextArea rows = new JTextArea();
+    private final JTextArea rows = new JTextArea(AttackQueue.MAX_ROWS, 0);
 
     IncomingAttackPanel(String componentPrefix) {
         super(new BorderLayout(0, 3));
@@ -40,7 +41,7 @@ final class IncomingAttackPanel extends JPanel {
 
     void showRows(List<AttackRow> attacks) {
         List<AttackRow> safeRows = List.copyOf(attacks);
-        title.setText("INCOMING " + safeRows.size() + "/10");
+        title.setText("INCOMING " + safeRows.size() + "/" + AttackQueue.MAX_ROWS);
         StringBuilder shapes = new StringBuilder();
         for (AttackRow attack : safeRows) {
             if (!shapes.isEmpty()) shapes.append('\n');
