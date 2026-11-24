@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class P2PNetworkManagerTest {
 
@@ -37,6 +39,7 @@ class P2PNetworkManagerTest {
     private static final class RecordingListener implements P2PListener {
         final AtomicInteger connectedCount = new AtomicInteger();
         final List<P2PPacket> gameplayPackets = new ArrayList<>();
+        final List<String> matchFrames = new ArrayList<>();
         final List<Long> seeds = new ArrayList<>();
         final List<String> modes = new ArrayList<>();
         final List<Boolean> agreements = new ArrayList<>();
@@ -54,6 +57,12 @@ class P2PNetworkManagerTest {
         @Override
         public void onPacketReceived(P2PPacket packet) {
             gameplayPackets.add(packet);
+        }
+
+        @Override
+        public void onMatchFrame(String payload) {
+            if (payload.equals("BAD")) throw new IllegalArgumentException("Unknown match message");
+            matchFrames.add(payload);
         }
 
         @Override
@@ -435,6 +444,90 @@ class P2PNetworkManagerTest {
             server.poll();
             assertEquals(P2PConnectionState.DISCONNECTED, server.getConnectionState());
             assertEquals(P2PDisconnectReason.TIMEOUT, server.getLastDisconnectReason());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {9_999, 10_000, 10_001})
+    void alreadyQueuedFramesCannotReviveAnExpiredConnection(long silence) throws Exception {
+        ManualClock clock = new ManualClock(0);
+        RecordingListener listener = new RecordingListener();
+        try (P2PNetworkManager receiver = new P2PNetworkManager(P2PConfig.defaults(), listener, clock::nowNanos);
+             P2PNetworkManager sender = new P2PNetworkManager()) {
+            connectLoopbackPair(receiver, sender);
+            clock.advanceMillis(999);
+            receiver.poll();
+            assertEquals(List.of(999L), listener.pauseSilences);
+            assertTrue(sender.sendMatchFrame("READY"));
+            assertTrue(sender.sendGameplayInput(37, P2PPacket.STATE_NONE));
+            clock.advanceMillis(silence - 999);
+            if (silence < 10_000) {
+                waitUntil(() -> listener.gameplayPackets.size() == 1, receiver::poll);
+                assertEquals(List.of("READY"), listener.matchFrames);
+                assertEquals(1, listener.resumeCount.get());
+                assertTrue(listener.disconnectReasons.isEmpty());
+            } else {
+                receiver.poll();
+                receiver.poll();
+                assertEquals(List.of(P2PDisconnectReason.TIMEOUT), listener.disconnectReasons);
+                assertEquals(0, listener.resumeCount.get());
+                assertTrue(listener.gameplayPackets.isEmpty());
+                assertTrue(listener.matchFrames.isEmpty());
+            }
+        }
+    }
+
+    @Test
+    void matchFramesAndJsonCanShareAConnectionAcrossReadBoundaries() throws Exception {
+        RecordingListener listener = new RecordingListener();
+        try (P2PNetworkManager receiver = new P2PNetworkManager(P2PConfig.defaults(), listener);
+             P2PNetworkManager sender = new P2PNetworkManager()) {
+            connectLoopbackPair(receiver, sender);
+            List<String> expected = new ArrayList<>();
+            String board = "A".repeat(65_534);
+            for (int n = 10; n < 34; n++) {
+                String snapshot = n + board;
+                expected.add(snapshot);
+                assertTrue(sender.sendMatchFrame(snapshot));
+            }
+            assertTrue(sender.sendModeProposal("Item"));
+            expected.add("NEXT");
+            assertTrue(sender.sendMatchFrame("NEXT"));
+            waitUntil(() -> listener.matchFrames.size() == expected.size(), () -> {
+                sender.poll();
+                receiver.poll();
+            });
+            assertEquals(expected, listener.matchFrames);
+            assertEquals(List.of("Item"), listener.modes);
+            assertNull(receiver.pollReceivedPacket());
+        }
+    }
+
+    @Test
+    void rejectedMatchLinesDoNotResetSilenceOrResumeTheMatch() throws Exception {
+        ManualClock clock = new ManualClock(0);
+        RecordingListener listener = new RecordingListener();
+        P2PConfig config = new P2PConfig(17, 20_000, 999, 10_000, 1);
+        try (P2PNetworkManager receiver = new P2PNetworkManager(config, listener, clock::nowNanos);
+             P2PNetworkManager sender = new P2PNetworkManager()) {
+            connectLoopbackPair(receiver, sender);
+            clock.advanceMillis(999);
+            receiver.poll();
+            List<String> badFrames = List.of("B1 ", "B1 A\rB", "B1 한글", "B1 " + "A".repeat(65_537), "B1 BAD");
+            for (String frame : badFrames) assertTrue(sender.sendRawLineForTesting(frame));
+            assertThrows(IllegalArgumentException.class, () -> sender.sendMatchFrame("\n"));
+            waitUntil(() -> receiver.getValidationErrorCount() == badFrames.size(), () -> {
+                sender.poll();
+                receiver.poll();
+            });
+            assertTrue(receiver.isPaused());
+            assertEquals(999, receiver.getSilenceMillis());
+            assertEquals(0, listener.resumeCount.get());
+            assertTrue(listener.matchFrames.isEmpty());
+            assertTrue(sender.sendMatchFrame("VALID"));
+            waitUntil(receiver::isConnected, receiver::poll);
+            assertEquals(List.of("VALID"), listener.matchFrames);
+            assertEquals(1, listener.resumeCount.get());
         }
     }
 

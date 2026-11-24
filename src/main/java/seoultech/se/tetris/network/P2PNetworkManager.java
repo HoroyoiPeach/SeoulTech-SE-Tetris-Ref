@@ -39,7 +39,10 @@ import java.util.function.LongSupplier;
 public final class P2PNetworkManager implements AutoCloseable {
     private static final int READ_BUFFER_CAPACITY = 8192;
     private static final int DEFAULT_CONNECT_TIMEOUT_MS = 3000;
-    private static final int MAX_ZERO_WRITE_RETRIES = 64;
+    private static final String MATCH_PREFIX = "B1 ";
+    private static final int MAX_MATCH_PAYLOAD = 65_536;
+    private static final int MAX_LINE_BYTES = MATCH_PREFIX.length() + MAX_MATCH_PAYLOAD;
+    private static final int MAX_PENDING_WRITE_BYTES = 4 * 1024 * 1024;
 
     private final P2PConfig config;
     private final P2PListener listener;
@@ -48,6 +51,8 @@ public final class P2PNetworkManager implements AutoCloseable {
     private final ByteBuffer readBuffer = ByteBuffer.allocate(READ_BUFFER_CAPACITY);
     private final ByteArrayOutputStream lineBuffer = new ByteArrayOutputStream(256);
     private final Deque<P2PPacket> receivedPackets = new ArrayDeque<>();
+    private final Deque<ByteBuffer> pendingWrites = new ArrayDeque<>();
+    private int pendingWriteBytes;
 
     private ServerSocketChannel serverChannel;
     private SocketChannel peerChannel;
@@ -197,6 +202,29 @@ public final class P2PNetworkManager implements AutoCloseable {
         return false;
     }
 
+    /** Sends one application match frame, preserving the order of all frames on this connection. */
+    public boolean sendMatchFrame(String payload) {
+        validateMatchPayload(payload);
+        if (!isActive() || !writeLine(MATCH_PREFIX + payload)) return false;
+        lastSendTimeMs = nowMillis();
+        sentPacketCount++;
+        if (lastSendTimeMs - lastRttProbeTimeMs >= config.heartbeatIntervalMs()) {
+            return sendHeartbeatPing();
+        }
+        return true;
+    }
+
+    private static void validateMatchPayload(String payload) {
+        if (payload == null || payload.isEmpty() || payload.length() > MAX_MATCH_PAYLOAD
+                || payload.charAt(0) == ' ' || payload.charAt(payload.length() - 1) == ' ') {
+            throw new IllegalArgumentException("Match payload must contain 1 to 65536 printable ASCII characters");
+        }
+        for (int i = 0; i < payload.length(); i++) {
+            char value = payload.charAt(i);
+            if (value < ' ' || value > '~') throw new IllegalArgumentException("Non-printable match payload");
+        }
+    }
+
     /**
      * Shares the random block generator seed with the peer before match start.
      */
@@ -287,6 +315,7 @@ public final class P2PNetworkManager implements AutoCloseable {
             return newlyReceived;
         }
 
+        if (expireIfTimedOut(nowMillis()) || !flushPendingWrites()) return newlyReceived;
         readAvailablePackets(newlyReceived);
 
         if (!isActive()) {
@@ -296,10 +325,7 @@ public final class P2PNetworkManager implements AutoCloseable {
         long nowMs = nowMillis();
         long silenceMs = Math.max(0L, nowMs - lastReceivedTimeMs);
 
-        if (silenceMs >= config.disconnectThresholdMs()) {
-            disconnectInternal(P2PDisconnectReason.TIMEOUT, false);
-            return newlyReceived;
-        }
+        if (expireIfTimedOut(nowMs)) return newlyReceived;
 
         if (silenceMs >= config.pauseThresholdMs() && connectionState == P2PConnectionState.CONNECTED) {
             connectionState = P2PConnectionState.PAUSED;
@@ -311,6 +337,12 @@ public final class P2PNetworkManager implements AutoCloseable {
         }
 
         return newlyReceived;
+    }
+
+    private boolean expireIfTimedOut(long nowMs) {
+        if (nowMs - lastReceivedTimeMs < config.disconnectThresholdMs()) return false;
+        disconnectInternal(P2PDisconnectReason.TIMEOUT, false);
+        return true;
     }
 
     /**
@@ -516,10 +548,9 @@ public final class P2PNetworkManager implements AutoCloseable {
                         String line = lineBuffer.toString(StandardCharsets.UTF_8);
                         lineBuffer.reset();
                         handleIncomingLine(line, newlyReceived);
-                    } else if (b != '\r') {
-                        if (lineBuffer.size() <= P2PPacket.MAX_PACKET_LENGTH + 1) {
-                            lineBuffer.write(b);
-                        }
+                    } else if (lineBuffer.size() < MAX_LINE_BYTES + 2) {
+                        // Keep room for CRLF and one overflow byte; discard the rest up to LF.
+                        lineBuffer.write(b);
                     }
                 }
             }
@@ -529,26 +560,35 @@ public final class P2PNetworkManager implements AutoCloseable {
     }
 
     private void handleIncomingLine(String rawLine, List<P2PPacket> newlyReceived) {
+        long now = nowMillis();
+        if (expireIfTimedOut(now)) return;
+        String line = rawLine.endsWith("\r") ? rawLine.substring(0, rawLine.length() - 1) : rawLine;
         final P2PPacket packet;
         try {
-            packet = P2PPacket.deserialize(rawLine);
+            if (line.startsWith(MATCH_PREFIX)) {
+                String payload = line.substring(MATCH_PREFIX.length());
+                validateMatchPayload(payload);
+                listener.onMatchFrame(payload);
+                if (isActive()) markReceived(now);
+                return;
+            }
+            if (line.length() > P2PPacket.MAX_PACKET_LENGTH) {
+                throw new IllegalArgumentException("Packet exceeds maximum length");
+            }
+            packet = P2PPacket.deserialize(line);
         } catch (IllegalArgumentException e) {
             validationErrorCount++;
-            listener.onValidationError(rawLine, e.getMessage());
+            listener.onValidationError(line, e.getMessage());
             return;
-        }
-
-        lastReceivedTimeMs = nowMillis();
-
-        if (connectionState == P2PConnectionState.PAUSED) {
-            connectionState = P2PConnectionState.CONNECTED;
-            listener.onResumeRequested();
         }
 
         if (packet.hasState(P2PPacket.STATE_DISCONNECT)) {
             disconnectInternal(P2PDisconnectReason.PEER_DISCONNECTED, false);
             return;
         }
+
+        markReceived(now);
+        if (!isActive()) return;
 
         if (packet.hasState(P2PPacket.STATE_HEARTBEAT_PONG)) {
             float rtt = Math.max(0.0f, currentRelativeTimeMillis() - packet.timestamp());
@@ -583,6 +623,14 @@ public final class P2PNetworkManager implements AutoCloseable {
         }
     }
 
+    private void markReceived(long nowMs) {
+        lastReceivedTimeMs = nowMs;
+        if (connectionState == P2PConnectionState.PAUSED) {
+            connectionState = P2PConnectionState.CONNECTED;
+            listener.onResumeRequested();
+        }
+    }
+
     private boolean sendPacketInternal(P2PPacket packet) {
         return writeLine(packet.serialize());
     }
@@ -592,20 +640,22 @@ public final class P2PNetworkManager implements AutoCloseable {
             return false;
         }
         byte[] bytes = (line + '\n').getBytes(StandardCharsets.UTF_8);
-        ByteBuffer buffer = ByteBuffer.wrap(bytes);
-        int zeroWriteRetries = 0;
+        if (pendingWriteBytes + bytes.length > MAX_PENDING_WRITE_BYTES) {
+            disconnectInternal(P2PDisconnectReason.IO_ERROR, false);
+            return false;
+        }
+        pendingWrites.addLast(ByteBuffer.wrap(bytes));
+        pendingWriteBytes += bytes.length;
+        return flushPendingWrites();
+    }
+
+    private boolean flushPendingWrites() {
         try {
-            while (buffer.hasRemaining()) {
-                int written = peerChannel.write(buffer);
-                if (written == 0) {
-                    if (++zeroWriteRetries >= MAX_ZERO_WRITE_RETRIES) {
-                        disconnectInternal(P2PDisconnectReason.IO_ERROR, false);
-                        return false;
-                    }
-                    Thread.yield();
-                } else {
-                    zeroWriteRetries = 0;
-                }
+            while (!pendingWrites.isEmpty()) {
+                ByteBuffer first = pendingWrites.getFirst();
+                pendingWriteBytes -= peerChannel.write(first);
+                if (first.hasRemaining()) break;
+                pendingWrites.removeFirst();
             }
             return true;
         } catch (IOException e) {
@@ -616,7 +666,7 @@ public final class P2PNetworkManager implements AutoCloseable {
 
     private void disconnectInternal(P2PDisconnectReason reason, boolean notifyPeer) {
         boolean wasActiveOrListening = connectionState != P2PConnectionState.DISCONNECTED;
-        if (notifyPeer && peerChannel != null && peerChannel.isOpen()) {
+        if (notifyPeer && pendingWrites.isEmpty() && peerChannel != null && peerChannel.isOpen()) {
             try {
                 byte[] bytes = (P2PPacket.disconnect(currentRelativeTimeMillis()).serialize() + '\n')
                         .getBytes(StandardCharsets.UTF_8);
@@ -640,6 +690,8 @@ public final class P2PNetworkManager implements AutoCloseable {
         peerChannel = null;
         closeChannelQuietly(serverChannel);
         serverChannel = null;
+        pendingWrites.clear();
+        pendingWriteBytes = 0;
         lineBuffer.reset();
         readBuffer.clear();
     }
