@@ -33,7 +33,10 @@ public final class P2PBattleSession implements AutoCloseable {
     private boolean host;
     private boolean hostReady;
     private boolean guestReady;
+    private boolean localDelay;
+    private boolean peerDelay;
     private boolean delayed;
+    private int pendingDelayAcks;
     private String notice = "";
     private GameMode mode = GameMode.CLASSIC;
     private volatile long round;
@@ -96,7 +99,7 @@ public final class P2PBattleSession implements AutoCloseable {
     public void selectMode(GameMode selected) {
         Objects.requireNonNull(selected);
         submit(() -> {
-            if (host && phase == Phase.LOBBY && mode != selected) {
+            if (host && phase == Phase.LOBBY && !delayed && mode != selected) {
                 mode = selected;
                 openLobby();
             }
@@ -129,7 +132,7 @@ public final class P2PBattleSession implements AutoCloseable {
     public void rematch() {
         long requestedRound = round;
         submit(() -> {
-            if (phase != Phase.RESULT || requestedRound != round) return;
+            if (phase != Phase.RESULT || delayed || requestedRound != round) return;
             if (host) openLobby();
             else send(new BattleMessage.Rematch(round));
         });
@@ -187,6 +190,7 @@ public final class P2PBattleSession implements AutoCloseable {
 
     private void openLobby() {
         round++;
+        pendingDelayAcks = 0;
         hostReady = false;
         guestReady = false;
         state = null;
@@ -201,7 +205,7 @@ public final class P2PBattleSession implements AutoCloseable {
     }
 
     private void updateReadiness() {
-        if (!hostReady || !guestReady) {
+        if (!hostReady || !guestReady || delayed) {
             sendLobby();
             return;
         }
@@ -217,7 +221,14 @@ public final class P2PBattleSession implements AutoCloseable {
     }
 
     private void receive(BattleMessage message) {
-        if (host) {
+        if (message instanceof BattleMessage.Link link) {
+            if (link.round() != round) return;
+            peerDelay = link.delayed();
+            updateDelay();
+            if (link.delayed()) send(new BattleMessage.LinkAck(round));
+        } else if (message instanceof BattleMessage.LinkAck ack) {
+            if (ack.round() == round && pendingDelayAcks > 0) pendingDelayAcks--;
+        } else if (host) {
             if (message instanceof BattleMessage.Lobby || message instanceof BattleMessage.State) {
                 throw new IllegalArgumentException("Host owns lobby and game state");
             }
@@ -225,9 +236,10 @@ public final class P2PBattleSession implements AutoCloseable {
             if (message instanceof BattleMessage.Ready && phase == Phase.LOBBY) {
                 guestReady = true;
                 updateReadiness();
-            } else if (message instanceof BattleMessage.Input input && phase == Phase.PLAYING) {
+            } else if (message instanceof BattleMessage.Input input && phase == Phase.PLAYING
+                    && !delayed && pendingDelayAcks == 0) {
                 play(PlayerSide.SECOND, input.command());
-            } else if (message instanceof BattleMessage.Rematch && phase == Phase.RESULT) {
+            } else if (message instanceof BattleMessage.Rematch && phase == Phase.RESULT && !delayed) {
                 openLobby();
             }
         } else if (message instanceof BattleMessage.Lobby lobby) {
@@ -256,11 +268,23 @@ public final class P2PBattleSession implements AutoCloseable {
         }
     }
 
-    private void setDelayed(boolean value) {
-        if (delayed == value) return;
+    private void updateDelay() {
+        boolean next = localDelay || peerDelay;
+        if (delayed == next) return;
         if (host && phase == Phase.PLAYING) sampleClock();
-        delayed = value;
+        delayed = next;
         publish();
+        if (!delayed && host && phase == Phase.LOBBY && hostReady && guestReady) updateReadiness();
+    }
+
+    private void localLinkChanged(boolean value) {
+        localDelay = value;
+        if (round > 0) {
+            // TCP delivers the peer's ack after all inputs it queued before seeing our warning.
+            if (host && value) pendingDelayAcks++;
+            if (!send(new BattleMessage.Link(round, value))) return;
+        }
+        updateDelay();
     }
 
     private void reset(String message) {
@@ -270,7 +294,10 @@ public final class P2PBattleSession implements AutoCloseable {
         host = false;
         hostReady = false;
         guestReady = false;
+        localDelay = false;
+        peerDelay = false;
         delayed = false;
+        pendingDelayAcks = 0;
         mode = GameMode.CLASSIC;
         listeningPort = 0;
         round = 0;
@@ -293,8 +320,8 @@ public final class P2PBattleSession implements AutoCloseable {
             receive(message);
         }
 
-        @Override public void onPauseRequested(long silenceMillis) { setDelayed(true); }
-        @Override public void onResumeRequested() { setDelayed(false); }
+        @Override public void onPauseRequested(long silenceMillis) { localLinkChanged(true); }
+        @Override public void onResumeRequested() { localLinkChanged(false); }
 
         @Override public void onDisconnectRequested(P2PDisconnectReason reason) {
             reset(switch (reason) {
