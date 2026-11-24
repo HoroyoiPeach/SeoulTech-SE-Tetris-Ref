@@ -12,6 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import seoultech.se.tetris.Difficulty;
 import seoultech.se.tetris.GameMode;
+import seoultech.se.tetris.blocks.CrossBlock;
 import seoultech.se.tetris.blocks.OBlock;
 
 class BattleMatchTest {
@@ -30,6 +31,11 @@ class BattleMatchTest {
         BattleMatchSnapshot moved = match.handle(PlayerSide.FIRST, GameCommand.LEFT).snapshot();
         assertEquals(2, moved.first().x());
         assertEquals(3, moved.second().x());
+
+        BattleMatchSnapshot opposite = match.handle(
+            PlayerSide.SECOND, GameCommand.RIGHT).snapshot();
+        assertEquals(2, opposite.first().x());
+        assertEquals(4, opposite.second().x());
     }
 
     @ParameterizedTest
@@ -68,6 +74,44 @@ class BattleMatchTest {
         assertTrue(ended.stopped());
         assertTrue(ended.firstPendingAttackRows().isEmpty());
         assertTrue(ended.secondPendingAttackRows().isEmpty());
+    }
+
+    @Test
+    void simultaneousSpawnCollisionsAreOneDrawDecision() {
+        GameEngineFixture first = activeTarget(GameMode.CLASSIC);
+        GameEngineFixture second = activeTarget(GameMode.CLASSIC);
+        first.fixed(3, 0);
+        second.fixed(3, 0);
+        BattleMatch match = match(first, second, GameMode.CLASSIC, new AtomicLong());
+        match.start();
+
+        BattleMatchSnapshot ended = match.advance(Duration.ofSeconds(1).toNanos()).snapshot();
+
+        MatchDecision result = ended.decision().orElseThrow();
+        assertEquals(MatchOutcome.DRAW, result.outcome());
+        assertEquals(MatchEndReason.SIMULTANEOUS_TOP_OUT, result.reason());
+        assertEquals(GamePhase.GAME_OVER, ended.first().phase());
+        assertEquals(GamePhase.GAME_OVER, ended.second().phase());
+        assertEquals(ended, match.advance(Duration.ofSeconds(1).toNanos()).snapshot());
+    }
+
+    @Test
+    void itemOnlyRowsNeverBecomeAnAttack() {
+        GameEngineFixture first = new GameEngineFixture(config(GameMode.ITEM), new OBlock());
+        first.seed(new CrossBlock(), new OBlock(), 3, 18);
+        GameEngineFixture second = activeTarget(GameMode.ITEM);
+        BattleMatch match = match(first, second, GameMode.ITEM, new AtomicLong());
+        match.start();
+
+        match.handle(PlayerSide.FIRST, GameCommand.HARD_DROP);
+        for (int frame = 0; frame < 11; frame++) {
+            match.advance(ItemEffectState.FRAME_NANOS);
+        }
+
+        BattleMatchSnapshot resolved = match.snapshot();
+        assertTrue(resolved.secondPendingAttackRows().isEmpty());
+        assertEquals(2, resolved.first().clearedLines());
+        assertEquals(GamePhase.ACTIVE, resolved.first().phase());
     }
 
     @Test
