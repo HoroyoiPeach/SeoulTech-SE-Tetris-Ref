@@ -8,7 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -360,6 +365,49 @@ class P2PNetworkManagerTest {
                 client.poll();
             });
             assertEquals(38.0f, client.getRttMillis(), 0.01f);
+        }
+    }
+
+    @Test
+    void samplesSustainedRoundTripDelayWhileMatchFramesKeepArriving() throws Exception {
+        ManualClock clock = new ManualClock(0);
+        RecordingListener listener = new RecordingListener();
+        try (P2PNetworkManager server = new P2PNetworkManager(P2PConfig.defaults(), listener, clock::nowNanos)) {
+            int port = server.startServer("127.0.0.1", 0);
+            try (Socket peer = new Socket("127.0.0.1", port)) {
+                peer.setSoTimeout(2_000);
+                peer.setTcpNoDelay(true);
+                var fromServer = new BufferedReader(new InputStreamReader(peer.getInputStream(), StandardCharsets.US_ASCII));
+                var toServer = new PrintWriter(peer.getOutputStream(), true, StandardCharsets.US_ASCII);
+                waitUntil(server::isConnected, server::poll);
+
+                // Real match traffic arrives every 500 ms. The peer echoes probes 1,000 ms later.
+                List<Float> probes = new ArrayList<>();
+                for (int tick = 1; tick <= 4; tick++) {
+                    clock.advanceMillis(500);
+                    assertTrue(server.sendMatchFrame("state-" + tick));
+                    assertEquals("B1 state-" + tick, fromServer.readLine());
+                    P2PPacket ping = P2PPacket.deserialize(fromServer.readLine());
+                    assertTrue(ping.hasState(P2PPacket.STATE_HEARTBEAT_PING));
+                    probes.add(ping.timestamp());
+                    if (tick >= 3) {
+                        toServer.println(P2PPacket.heartbeatPong(probes.get(tick - 3)).serialize());
+                    }
+                    toServer.println("B1 input-" + tick);
+                    int expectedFrames = tick;
+                    waitUntil(() -> listener.matchFrames.size() == expectedFrames, server::poll);
+                }
+                assertEquals(List.of(1_000f, 1_000f), listener.rttUpdates);
+
+                // Delivery recovers and the remaining echoes arrive in TCP order.
+                clock.advanceMillis(25);
+                toServer.println(P2PPacket.heartbeatPong(probes.get(2)).serialize());
+                toServer.println(P2PPacket.heartbeatPong(probes.get(3)).serialize());
+                waitUntil(() -> listener.rttUpdates.size() == 4, server::poll);
+                assertEquals(25f, server.getRttMillis(), 0.01f);
+                assertTrue(server.isConnected());
+                assertTrue(listener.pauseSilences.isEmpty());
+            }
         }
     }
 

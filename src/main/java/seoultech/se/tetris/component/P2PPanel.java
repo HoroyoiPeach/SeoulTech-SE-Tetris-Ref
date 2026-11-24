@@ -13,7 +13,8 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -39,12 +40,20 @@ import seoultech.se.tetris.storage.LastPeerAddress;
 final class P2PPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     static final int PORT = 30000;
+    private static final Executor PEER_ADDRESS_IO = Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "tetris-peer-address");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private final P2PBattleSession session;
     private final Runnable back;
     private final int port;
     private final LocalBattleKeyBindings keys = LocalBattleKeyBindings.configured();
-    private final AtomicReference<String> joiningAddress = new AtomicReference<>();
+    private final Executor addressIo;
+    private String joiningAddress;
+    private long joinAttempt;
+    private boolean saveFailed;
     private final CardLayout layout = new CardLayout();
     private final JPanel cards = new JPanel(layout);
     private final JLabel title = label("P2P BATTLE");
@@ -65,9 +74,14 @@ final class P2PPanel extends JPanel {
     private volatile boolean closed;
 
     P2PPanel(Difficulty difficulty, int timeLimitSeconds, int port, Runnable back) {
+        this(difficulty, timeLimitSeconds, port, back, PEER_ADDRESS_IO);
+    }
+
+    P2PPanel(Difficulty difficulty, int timeLimitSeconds, int port, Runnable back, Executor addressIo) {
         super(new BorderLayout(4, 4));
         this.back = back;
         this.port = port;
+        this.addressIo = addressIo;
         setName("p2pPanel");
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
@@ -130,7 +144,7 @@ final class P2PPanel extends JPanel {
         CompletableFuture.supplyAsync(() -> {
             try { return LastPeerAddress.load(); }
             catch (IOException | IllegalStateException ignored) { return ""; }
-        }).thenAccept(saved -> SwingUtilities.invokeLater(() -> {
+        }, addressIo).thenAccept(saved -> SwingUtilities.invokeLater(() -> {
             if (!closed && address.getText().isEmpty()) address.setText(saved);
         }));
     }
@@ -172,7 +186,8 @@ final class P2PPanel extends JPanel {
             address.requestFocusInWindow();
             return;
         }
-        joiningAddress.set(host);
+        joiningAddress = host;
+        joinAttempt++;
         setSetupEnabled(false);
         session.join(host, port);
     }
@@ -184,28 +199,39 @@ final class P2PPanel extends JPanel {
     }
 
     private void receiveView(View view) {
-        if (closed) return;
-        String savedError = null;
-        if (view.phase() == Phase.LOBBY && !view.host()) {
-            String connected = joiningAddress.getAndSet(null);
-            if (connected != null) {
-                try { LastPeerAddress.save(connected); }
-                catch (IOException | IllegalStateException e) { savedError = "Could not save the server IP."; }
-            }
-        }
-        String storageNotice = savedError;
         SwingUtilities.invokeLater(() -> {
-            if (!closed) render(view, storageNotice);
+            if (!closed) render(view);
         });
     }
 
-    private void render(View view, String storageNotice) {
-        Phase previous = current == null ? null : current.phase();
-        current = view;
+    private void saveConnectedAddress(String host, long attempt) {
+        addressIo.execute(() -> {
+            try {
+                LastPeerAddress.save(host);
+            } catch (IOException | IllegalStateException e) {
+                SwingUtilities.invokeLater(() -> {
+                    if (!closed && attempt == joinAttempt && current.phase() == Phase.LOBBY && !current.host()) {
+                        saveFailed = true;
+                        showStatus(current);
+                    }
+                });
+            }
+        });
+    }
+
+    private void showStatus(View view) {
         String notice = view.notice() == null ? "" : view.notice();
         status.setText(view.delayed() ? "Network delay · waiting for peer" :
             view.highLatency() ? "Network delay · slow connection" :
-            storageNotice != null ? storageNotice : notice.isBlank() ? " " : notice);
+            saveFailed && view.phase() == Phase.LOBBY ? "Could not save the server IP." :
+            notice.isBlank() ? " " : notice);
+    }
+
+    private void render(View view) {
+        Phase previous = current == null ? null : current.phase();
+        current = view;
+        if (view.phase() == Phase.SETUP) saveFailed = false;
+        showStatus(view);
         switch (view.phase()) {
             case SETUP -> {
                 title.setText("P2P BATTLE");
@@ -219,7 +245,7 @@ final class P2PPanel extends JPanel {
                 if (previous == view.phase()) return;
                 boolean listening = view.phase() == Phase.LISTENING;
                 connection.setText(listening ? "Waiting for a player…" : "Connecting to server…");
-                localAddress.setText(listening ? "Checking local IP…" : joiningAddress.get());
+                localAddress.setText(listening ? "Checking local IP…" : joiningAddress);
                 if (listening) {
                     CompletableFuture.supplyAsync(P2PNetworkManager::resolveLocalInternalIp)
                         .thenAccept(ip -> SwingUtilities.invokeLater(() -> {
@@ -230,6 +256,10 @@ final class P2PPanel extends JPanel {
                 cards.transferFocus();
             }
             case LOBBY -> {
+                if (!view.host() && joiningAddress != null) {
+                    saveConnectedAddress(joiningAddress, joinAttempt);
+                    joiningAddress = null;
+                }
                 title.setText(view.host() ? "LOBBY · HOST" : "LOBBY · CLIENT");
                 outcome.setText(winner(view));
                 mode.setSelectedItem(view.mode().displayName());

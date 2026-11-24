@@ -8,7 +8,9 @@ import java.awt.event.KeyEvent;
 import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import javax.swing.JButton;
@@ -32,8 +34,12 @@ class P2PPanelTest {
         int port;
         try (ServerSocket available = new ServerSocket(0)) { port = available.getLocalPort(); }
         P2PPanel host = edt(() -> panel(port));
-        P2PPanel client = edt(() -> panel(port));
+        BlockingQueue<Runnable> addressTasks = new LinkedBlockingQueue<>();
+        P2PPanel client = edt(() -> new P2PPanel(Difficulty.NORMAL, 180, port, () -> {}, addressTasks::add));
         try {
+            Runnable loadAddress = addressTasks.poll(2, TimeUnit.SECONDS);
+            assertNotNull(loadAddress);
+            loadAddress.run();
             edt(() -> { address(client).setText("127.0.0.2"); click(client, "JOIN GAME"); return null; });
             await(() -> button(client, "JOIN GAME") != null && button(client, "JOIN GAME").isEnabled()
                 && text(client, "p2pStatus").contains("Could not connect"));
@@ -43,7 +49,8 @@ class P2PPanelTest {
             await(() -> button(host, "CANCEL") != null);
             edt(() -> { address(client).setText("127.0.0.1"); click(client, "JOIN GAME"); return null; });
             await(() -> button(host, "START") != null && button(client, "START") != null);
-            assertEquals("127.0.0.1", LastPeerAddress.load());
+            Runnable saveAddress = addressTasks.poll(2, TimeUnit.SECONDS);
+            assertNotNull(saveAddress);
             edt(() -> {
                 mode(host).setSelectedItem("Item");
                 assertFalse(mode(client).isEnabled());
@@ -62,6 +69,10 @@ class P2PPanelTest {
             await(() -> board(client, "ownBoard").snapshot().x() == clientX - 1
                 && board(host, "opponentBoard").snapshot().x() == clientX - 1);
             assertEquals(hostX, edt(() -> board(host, "ownBoard").snapshot().x()));
+            // The lobby, both START buttons and the first move work while the disk write is pending.
+            assertEquals("", LastPeerAddress.load());
+            saveAddress.run();
+            assertEquals("127.0.0.1", LastPeerAddress.load());
             edt(() -> {
                 for (int i = 0; i < 32; i++) key(client, Maincontainer.HARD_DROP);
                 return null;
