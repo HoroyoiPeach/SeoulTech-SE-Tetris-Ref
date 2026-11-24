@@ -68,12 +68,9 @@ class P2PPanelTest {
             });
             await(() -> "YOU WIN".equals(text(host, "matchOutcome"))
                 && "YOU LOSE".equals(text(client, "matchOutcome")));
-            edt(() -> {
-                click(client, "RETURN TO LOBBY");
-                if (button(host, "RETURN TO LOBBY") != null) click(host, "RETURN TO LOBBY");
-                return null;
-            });
             await(() -> button(host, "START") != null && button(client, "START") != null);
+            assertEquals("YOU WIN", edt(() -> text(host, "matchOutcome")));
+            assertEquals("YOU LOSE", edt(() -> text(client, "matchOutcome")));
             edt(() -> { click(host, "START"); click(client, "START"); return null; });
             await(() -> "SCORE 0".equals(text(client, "ownScore")) && "SCORE 0".equals(text(host, "ownScore")));
             edt(() -> { click(host, "DISCONNECT"); return null; });

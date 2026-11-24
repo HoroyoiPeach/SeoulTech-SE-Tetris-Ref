@@ -185,7 +185,10 @@ public final class P2PBattleSession implements AutoCloseable {
         if (update.snapshot().equals(state)) return;
         state = update.snapshot();
         phase = state.decision().isPresent() ? Phase.RESULT : Phase.PLAYING;
-        if (send(new BattleMessage.State(round, state))) publish();
+        if (send(new BattleMessage.State(round, state))) {
+            if (phase == Phase.RESULT) openLobby();
+            else publish();
+        }
     }
 
     private void openLobby() {
@@ -193,7 +196,6 @@ public final class P2PBattleSession implements AutoCloseable {
         pendingDelayAcks = 0;
         hostReady = false;
         guestReady = false;
-        state = null;
         engine = null;
         phase = Phase.LOBBY;
         notice = "";
@@ -249,7 +251,6 @@ public final class P2PBattleSession implements AutoCloseable {
             phase = Phase.LOBBY;
             hostReady = lobby.hostReady();
             guestReady = lobby.guestReady();
-            state = null;
             notice = "";
             publish();
         } else if (message instanceof BattleMessage.State frame) {
@@ -262,7 +263,8 @@ public final class P2PBattleSession implements AutoCloseable {
             guestReady = true;
             state = next;
             phase = state.decision().isPresent() ? Phase.RESULT : Phase.PLAYING;
-            publish();
+            if (phase == Phase.RESULT) send(new BattleMessage.Rematch(round));
+            else publish();
         } else {
             throw new IllegalArgumentException("Client expects authoritative lobby or state");
         }

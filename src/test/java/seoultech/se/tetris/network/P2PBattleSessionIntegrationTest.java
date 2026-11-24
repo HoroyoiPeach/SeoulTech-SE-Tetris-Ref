@@ -112,7 +112,10 @@ class P2PBattleSessionIntegrationTest {
             } else {
                 for (int i = 0; i < 30; i++) guest.session.input(GameCommand.HARD_DROP);
             }
-            await("both screens show the final result", () -> host.in(Phase.RESULT) && guest.in(Phase.RESULT));
+            await("both lobbies retain the final result without an extra click", () ->
+                host.in(Phase.LOBBY) && guest.in(Phase.LOBBY)
+                    && host.match() != null && guest.match() != null
+                    && host.match().decision().isPresent() && guest.match().decision().isPresent());
             assertEquals(host.match(), guest.match());
             var result = host.match().decision().orElseThrow();
             assertEquals(mode == GameMode.TIME_LIMIT ? MatchEndReason.TIME_EXPIRED : MatchEndReason.REMOTE_TOP_OUT,
@@ -120,7 +123,6 @@ class P2PBattleSessionIntegrationTest {
             assertEquals(mode == GameMode.TIME_LIMIT ? MatchOutcome.REMOTE_WIN : MatchOutcome.LOCAL_WIN,
                 result.outcome());
 
-            guest.session.rematch();
             await("original connection returns to lobby", () -> host.in(Phase.LOBBY) && guest.in(Phase.LOBBY));
             assertFalse(host.current.get().hostReady() || host.current.get().guestReady());
             host.session.ready();

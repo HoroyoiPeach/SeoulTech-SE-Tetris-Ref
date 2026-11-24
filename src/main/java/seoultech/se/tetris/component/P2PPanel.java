@@ -61,7 +61,6 @@ final class P2PPanel extends JPanel {
     private final JButton hostButton;
     private final JButton joinButton;
     private final JButton readyButton;
-    private final JButton returnToLobby;
     private View current;
     private volatile boolean closed;
 
@@ -102,7 +101,8 @@ final class P2PPanel extends JPanel {
             }
         });
         readyButton = button("START", session::ready);
-        cards.add(centered(rows(label("Battle mode"), mode, readiness, readyButton,
+        outcome.setName("matchOutcome");
+        cards.add(centered(rows(outcome, label("Battle mode"), mode, readiness, readyButton,
             button("DISCONNECT", session::leave))), "lobby");
 
         JPanel match = new JPanel(new BorderLayout(4, 4));
@@ -113,12 +113,9 @@ final class P2PPanel extends JPanel {
         players.add(opponent);
         match.add(players, BorderLayout.CENTER);
         clock.setName("matchClock");
-        outcome.setName("matchOutcome");
-        match.add(rows(clock, outcome), BorderLayout.NORTH);
-        returnToLobby = button("RETURN TO LOBBY", session::rematch);
+        match.add(clock, BorderLayout.NORTH);
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER));
         actions.setOpaque(false);
-        actions.add(returnToLobby);
         JButton leaveMatch = button("DISCONNECT", session::leave);
         leaveMatch.setFocusable(false);
         actions.add(leaveMatch);
@@ -233,10 +230,11 @@ final class P2PPanel extends JPanel {
             }
             case LOBBY -> {
                 title.setText(view.host() ? "LOBBY · HOST" : "LOBBY · CLIENT");
+                outcome.setText(winner(view));
                 mode.setSelectedItem(view.mode().displayName());
-                mode.setEnabled(view.host() && !view.hostReady());
+                mode.setEnabled(view.host() && !view.hostReady() && !view.delayed());
                 readiness.setText("Host " + readyState(view.hostReady()) + "   ·   Client " + readyState(view.guestReady()));
-                readyButton.setEnabled(view.host() ? !view.hostReady() : !view.guestReady());
+                readyButton.setEnabled(!view.delayed() && !(view.host() ? view.hostReady() : view.guestReady()));
                 if (previous != Phase.LOBBY) {
                     layout.show(cards, "lobby");
                     readyButton.requestFocusInWindow();
@@ -247,8 +245,7 @@ final class P2PPanel extends JPanel {
                 showMatch(view);
                 if (previous != view.phase()) {
                     layout.show(cards, "match");
-                    if (view.phase() == Phase.RESULT) returnToLobby.requestFocusInWindow();
-                    else requestFocusInWindow();
+                    requestFocusInWindow();
                 }
             }
         }
@@ -270,12 +267,14 @@ final class P2PPanel extends JPanel {
             ? String.format("TIME %02d:%02d", match.remainingSeconds() / 60, match.remainingSeconds() % 60) : "";
         if (!match.stopped() && match.first().paused()) time += "  PAUSED · ENTER TO DISCONNECT";
         clock.setText(time);
-        outcome.setText(match.decision().map(decision -> {
-            MatchOutcome winner = decision.outcome();
-            if (winner == MatchOutcome.DRAW) return "DRAW";
-            return (winner == MatchOutcome.LOCAL_WIN) == host ? "YOU WIN" : "YOU LOSE";
-        }).orElse(" "));
-        returnToLobby.setVisible(view.phase() == Phase.RESULT);
+    }
+
+    private static String winner(View view) {
+        if (view.match() == null) return " ";
+        return view.match().decision().map(decision -> {
+            if (decision.outcome() == MatchOutcome.DRAW) return "DRAW";
+            return (decision.outcome() == MatchOutcome.LOCAL_WIN) == view.host() ? "YOU WIN" : "YOU LOSE";
+        }).orElse(" ");
     }
 
     private void handleKey(int key) {
