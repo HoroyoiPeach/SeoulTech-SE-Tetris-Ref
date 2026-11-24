@@ -139,12 +139,17 @@ class P2PBattleSessionIntegrationTest {
         final P2PNetworkManager transport = new P2PNetworkManager(P2PConfig.defaults(), this);
         final List<BattleMessage.Lobby> lobbies = new ArrayList<>();
         BattleMatchSnapshot lastState;
+        final List<Boolean> linkChanges = new ArrayList<>();
         int pongs;
 
         @Override public void onMatchFrame(String payload) {
             switch (BattleMessageCodec.decode(payload)) {
                 case BattleMessage.Lobby lobby -> lobbies.add(lobby);
                 case BattleMessage.State state -> lastState = state.snapshot();
+                case BattleMessage.Link link -> {
+                    linkChanges.add(link.delayed());
+                    if (link.delayed()) send(new BattleMessage.LinkAck(link.round()));
+                }
                 default -> throw new AssertionError("Unexpected server message");
             }
         }
@@ -230,7 +235,8 @@ class P2PBattleSessionIntegrationTest {
             await("host displays delay in the match", () ->
                 host.in(Phase.PLAYING) && host.current.get().delayed());
             assertTrue(client.transport.sendHeartbeatPing());
-            client.awaitWire("host recovers from delay", () -> !host.current.get().delayed());
+            client.awaitWire("both peers observe delay and recovery", () ->
+                !host.current.get().delayed() && client.linkChanges.equals(List.of(true, false)));
             await("silent peer times out", () -> host.in(Phase.SETUP), () -> {}, Duration.ofSeconds(13));
             assertFalse(host.current.get().notice().isBlank());
         }
