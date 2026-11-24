@@ -4,7 +4,7 @@
 
 ## 1. 실행 파일 준비
 
-1. 평가할 후보의 macOS 실행용 ZIP 전체를 풀고 `SeoulTech Tetris.app`을 더블클릭한다. Java 21 런타임이 앱에 포함되어 있다.
+1. 후보 묶음을 풀어 `app/` 안의 macOS 실행용 ZIP을 찾는다. 해당 ZIP 전체를 풀고 `SeoulTech Tetris.app`을 더블클릭한다. 실행용 ZIP을 직접 받은 경우 그 파일만 풀면 된다. Java 21 런타임이 앱에 포함되어 있다.
 2. `TETRIS` 시작 메뉴에 `LOCAL BATTLE`과 `P2P BATTLE`이 보이는지 확인한다. 두 PC 대전은 양쪽에서 같은 후보 ZIP을 사용한다.
 
 소스만 있다면 Apple Silicon Mac에 JDK 21을 준비하고 저장소 루트에서 `./gradlew packageRelease`를 실행한다. ZIP과 체크섬은 `build/distributions/`에서 찾을 수 있다.
