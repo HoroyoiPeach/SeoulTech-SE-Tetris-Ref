@@ -317,7 +317,6 @@ public final class LocalBattlePanel extends JPanel {
 
             JPanel information = new JPanel(new GridLayout(1, 2, 3, 0));
             information.setOpaque(false);
-            information.setPreferredSize(new Dimension(200, 125));
             next.setName(componentPrefix + "Next");
             JPanel nextArea = new JPanel(new BorderLayout());
             nextArea.setOpaque(false);

@@ -16,6 +16,8 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import seoultech.se.tetris.Difficulty;
 import seoultech.se.tetris.GameMode;
 import seoultech.se.tetris.attack.AttackRow;
@@ -60,8 +62,9 @@ class LocalBattlePanelTest {
         }
     }
 
-    @Test
-    void smallestWindowKeepsBoardsScoresAndAllTenIncomingRowsVisible() throws Exception {
+    @ParameterizedTest
+    @ValueSource(ints = {0, 4})
+    void smallestWindowKeepsBoardsScoresAndAllTenIncomingRowsVisible(int extraFontPoints) throws Exception {
         ExistingFeatureFixture.onEdt(() -> {
             LocalBattlePanel panel = new LocalBattlePanel(Difficulty.NORMAL, 180,
                 GameMode.CLASSIC, () -> {}, System::nanoTime);
@@ -75,6 +78,10 @@ class LocalBattlePanelTest {
 
             JTextArea rows = (JTextArea) findNamed(panel, "player1IncomingRows");
             assertNotNull(rows);
+            // A larger font also exercises platforms whose logical font maps to taller line metrics.
+            rows.setFont(rows.getFont().deriveFont(rows.getFont().getSize2D() + extraFontPoints));
+            layoutTree(panel);
+            int emptyHeight = rows.getHeight();
             IncomingAttackPanel incoming = (IncomingAttackPanel) rows.getParent();
             incoming.showRows(java.util.stream.IntStream.range(0, 10)
                 .mapToObj(row -> new AttackRow(new boolean[] {
@@ -82,7 +89,9 @@ class LocalBattlePanelTest {
                 })).toList());
             layoutTree(panel);
             FontMetrics metrics = rows.getFontMetrics(rows.getFont());
-            assertTrue(metrics.getHeight() * 10 <= rows.getHeight(),
+            assertEquals(emptyHeight, rows.getHeight(), "receiving attacks must not resize the game board");
+            var padding = rows.getInsets();
+            assertTrue(metrics.getHeight() * 10 + padding.top + padding.bottom <= rows.getHeight(),
                 "the default 500x600 layout must have room for all ten attack rows");
             assertTrue(incoming.title().getPreferredSize().width <= incoming.getWidth(),
                 "the incoming count must remain readable at the minimum width");
