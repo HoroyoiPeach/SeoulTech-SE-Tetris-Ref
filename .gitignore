@@ -2,3 +2,5 @@
 build/
 *.class
 .DS_Store
+.tetris-last-peer
+.tetris-last-peer*.tmp

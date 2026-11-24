@@ -41,7 +41,7 @@ public class Startpanel extends JPanel{
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridBagLayout());
         buttonPanel.setOpaque(false); // 투명 배경
-        buttonPanel.setPreferredSize(new Dimension(200, 250)); // 컴포넌트 사이즈 지정
+        buttonPanel.setPreferredSize(new Dimension(200, 300)); // 컴포넌트 사이즈 지정
 
         Button startButton = new Button("CLASSIC") {
             @Override
@@ -64,6 +64,13 @@ public class Startpanel extends JPanel{
             }
         };
         menu.add(buttonPanel, localBattleButton);
+        Button p2pButton = new Button("P2P BATTLE") {
+            @Override
+            protected void isPressed() {
+                Startpanel.this.maincontainer.enterP2PBattle();
+            }
+        };
+        menu.add(buttonPanel, p2pButton);
         Button menuButton = new Button("MENU") {
             @Override
             protected void isPressed() {
