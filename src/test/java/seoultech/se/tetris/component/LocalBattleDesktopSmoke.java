@@ -121,6 +121,54 @@ public final class LocalBattleDesktopSmoke {
         });
     }
 
+    static void verifyDisplay(Maincontainer frame, String size, String palette) throws Exception {
+        LocalBattlePanel battle = enter(frame, GameMode.CLASSIC);
+        frame.validate();
+        Board first = (Board) named(battle, "player1Board");
+        Board second = (Board) named(battle, "player2Board");
+        String label = size + "/" + palette;
+        check(first != null && second != null && first.isShowing() && second.isShowing()
+                && first.getWidth() > 0 && first.getHeight() > 0
+                && first.getSize().equals(second.getSize()),
+            label + " must show two equally sized usable boards");
+        java.awt.Rectangle firstBounds = SwingUtilities.convertRectangle(
+            first.getParent(), first.getBounds(), battle);
+        java.awt.Rectangle secondBounds = SwingUtilities.convertRectangle(
+            second.getParent(), second.getBounds(), battle);
+        check(!firstBounds.intersects(secondBounds)
+                && new java.awt.Rectangle(battle.getSize()).contains(firstBounds)
+                && new java.awt.Rectangle(battle.getSize()).contains(secondBounds),
+            label + " boards must not overlap or leave the configured canvas");
+        check(usesCurrentPieceColor(first) && usesCurrentPieceColor(second),
+            label + " must paint both active pieces with the selected palette");
+
+        button(battle, "MENU").doClick();
+        check(!battle.isRunning(), label + " display check must stop the match on exit");
+    }
+
+    private static boolean usesCurrentPieceColor(Board board) {
+        var sample = board.snapshot().current().cells().stream()
+            .flatMap(java.util.List::stream)
+            .filter(java.util.Objects::nonNull)
+            .findFirst()
+            .orElseThrow();
+        int expected = Maincontainer.changeColor(new java.awt.Color(sample.argb(), true)).getRGB();
+        BufferedImage image = new BufferedImage(board.getWidth(), board.getHeight(),
+            BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = image.createGraphics();
+        try {
+            board.paint(graphics);
+        } finally {
+            graphics.dispose();
+        }
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                if (image.getRGB(x, y) == expected) return true;
+            }
+        }
+        return false;
+    }
+
     private static void verifyStructureAndIndependentInput(LocalBattlePanel battle,
             GameMode mode) throws Exception {
         onEdt(() -> {
