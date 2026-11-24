@@ -128,7 +128,7 @@ flowchart LR
 
 [BattleMatch](../../src/main/java/seoultech/se/tetris/game/BattleMatch.java)는 로컬 대전의 두 `GameEngine`을 소유한다. 입력에는 플레이어와 `GameCommand`를 함께 전달한다. 경기 객체가 상대에게 공격을 전달하고, 두 점수와 종료 원인을 모아 `MatchJudge`로 결과를 확정한다. [경기 규칙](game-engine-contract.md)에서 제한시간·일시정지·동점·동시 패배 정책을 확인할 수 있다.
 
-P2P를 연결할 때도 호스트가 이 경기 객체를 실행한다. 클라이언트의 입력을 호스트에 전달하고, 호스트가 계산한 두 보드와 공격 대기열·시간·결과를 양쪽 화면에 표시하는 연결 작업은 후속 브랜치에서 진행한다.
+P2P에서는 `P2PBattleSession`의 호스트가 같은 경기 객체를 실행한다. 클라이언트가 보낸 게임 명령을 적용한 뒤 두 보드·공격 대기열·시간·결과를 양쪽 화면에 표시한다. [로비와 통신 메시지](../p2p-network-gui-specification.md)에서 세션의 상태 전이를 확인한다.
 
 ## 참고 자료
 

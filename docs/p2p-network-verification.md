@@ -6,6 +6,8 @@ Requirement 3(P2P 네트워크 대전)의 통신 기반을 기존 게임 로직(
 
 ---
 
+현재 게임 화면과 메시지 흐름은 [P2P 대전 연결과 경기 동기화](p2p-network-gui-specification.md)에 정리했다. 아래는 11월 23일 통신 모듈 단독 검증 기록이다.
+
 ## 1. 구현 구성 (`seoultech.se.tetris.network`)
 
 기존 게임 파일은 수정하지 않았으며, 실제 게임 화면(`Networkpanel`, `Multigamepanel`)에서는 `P2PNetworkManager` 객체를 통해 통신 상태 판별과 게임 데이터 송수신을 수행한다.
