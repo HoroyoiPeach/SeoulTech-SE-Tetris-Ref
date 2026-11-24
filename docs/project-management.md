@@ -6,7 +6,7 @@
 - 진척 관리: [GitHub Project](https://github.com/users/HoroyoiPeach/projects/3/views/1)
 - 중간평가 공개 릴리스: [`v0.1.0-req2.3`](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)
 - 중간평가 제출 소스: `10d7b78` · 제품 코드 `154fd09`
-- 제출 대상: macOS 26 이상 Apple Silicon
+- 기말 제출 대상: macOS 26 이상 Apple Silicon. 후보 증빙과 공개 배포 상태는 [기말 인수 기록](final-acceptance.md)에서 확인한다.
 
 ## 기말 개발과 리뷰
 
@@ -82,8 +82,7 @@ P의 행·열 삭제와 점수·누계 정책은 유지했다.
 GitHub Project에는 요구사항별 작업과 진척을 관리한다.<br>
 PR에는 카드·선행 작업·검증 결과를 연결한다.
 
-2026-10-26 기준 Issue 7개에 증상·수정·검증 결과를 연결했다.<br>
-해결된 6개는 Closed, 별도 CI 추적 1개는 Open 상태다.
+아래 표는 2026-10-26 중간평가 당시 Issue 7개의 상태를 기록한 것이다. 당시 열려 있던 #29의 후속 수정은 [기말 개발과 리뷰](#기말-개발과-리뷰)에 있다.
 
 | Issue | 결함 | 해결 PR | 상태 |
 |---|---|---|---|
