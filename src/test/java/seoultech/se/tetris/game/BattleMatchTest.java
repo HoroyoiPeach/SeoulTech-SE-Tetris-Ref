@@ -12,7 +12,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import seoultech.se.tetris.Difficulty;
 import seoultech.se.tetris.GameMode;
+import seoultech.se.tetris.blocks.Block;
 import seoultech.se.tetris.blocks.CrossBlock;
+import seoultech.se.tetris.blocks.IBlock;
+import seoultech.se.tetris.blocks.LBlock;
 import seoultech.se.tetris.blocks.OBlock;
 
 class BattleMatchTest {
@@ -93,6 +96,46 @@ class BattleMatchTest {
         assertEquals(GamePhase.GAME_OVER, ended.first().phase());
         assertEquals(GamePhase.GAME_OVER, ended.second().phase());
         assertEquals(ended, match.advance(Duration.ofSeconds(1).toNanos()).snapshot());
+    }
+
+    @Test
+    void simultaneousThreeAndFourLineClearsReachBothOpponentsWithTheirOwnHolePatterns() {
+        GameEngineFixture first = readyToClearWithRotatedPiece(new LBlock(), 3);
+        GameEngineFixture second = readyToClearWithRotatedPiece(new IBlock(), 6);
+        BattleMatch match = match(first, second, GameMode.CLASSIC, new AtomicLong());
+        match.start();
+
+        BattleMatchSnapshot result = match.advance(Duration.ofSeconds(1).toNanos()).snapshot();
+
+        assertEquals(3, result.first().clearedLines());
+        assertEquals(4, result.second().clearedLines());
+        assertTrue(result.firstPendingAttackRows().isEmpty());
+        assertTrue(result.secondPendingAttackRows().isEmpty());
+        for (int column = 0; column < 10; column++) {
+            for (int row = 16; row < 20; row++) {
+                assertEquals(column == 6 ? null : "G", first.cellText(column, row));
+            }
+            for (int row = 17; row < 20; row++) {
+                boolean hole = column == 4 || (row == 17 && column == 3);
+                assertEquals(hole ? null : "G", second.cellText(column, row));
+            }
+        }
+    }
+
+    private static GameEngineFixture readyToClearWithRotatedPiece(Block block, int x) {
+        block.rotate();
+        GameEngineFixture fixture = new GameEngineFixture(config(GameMode.CLASSIC), new OBlock());
+        int y = 20 - block.height();
+        fixture.seed(block, new OBlock(), x, y);
+        for (int row = 0; row < block.height(); row++) {
+            for (int column = 0; column < 10; column++) {
+                int relative = column - x;
+                if (relative < 0 || relative >= block.width() || block.getShape(relative, row) == 0) {
+                    fixture.fixed(column, y + row);
+                }
+            }
+        }
+        return fixture;
     }
 
     @Test

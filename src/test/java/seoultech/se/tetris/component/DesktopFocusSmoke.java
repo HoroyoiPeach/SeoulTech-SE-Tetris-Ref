@@ -287,6 +287,70 @@ public final class DesktopFocusSmoke {
         });
     }
 
+    private static void checkLocalBattle(Robot robot, Maincontainer frame) throws Exception {
+        Startpanel start = onEdt(() -> get(frame, "startPanel", Startpanel.class));
+        focus(start);
+        await(robot, start::isFocusOwner,
+            "Local Battle: Start panel must own focus before keyboard navigation");
+        key(robot, KeyEvent.VK_DOWN);
+        key(robot, KeyEvent.VK_DOWN);
+        await(robot, () -> get(start, "menu", MenuButtons.class).selectedIndex() == 2,
+            "Local Battle: keyboard navigation must select LOCAL BATTLE");
+        key(robot, KeyEvent.VK_ENTER);
+
+        await(robot, () -> find(frame.getContentPane(),
+            LocalBattleModePanel.class, Component::isShowing) != null,
+            "Local Battle: Enter must open the mode selector");
+        await(robot, () -> {
+            Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            return owner instanceof JButton button && "CLASSIC".equals(button.getText());
+        }, "Local Battle: first mode button must own focus");
+
+        key(robot, KeyEvent.VK_DOWN);
+        await(robot, () -> {
+            Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            return owner instanceof JButton button && "ITEM".equals(button.getText());
+        }, "Local Battle: Down must move actual focus to ITEM");
+        key(robot, KeyEvent.VK_UP);
+        await(robot, () -> {
+            Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            return owner instanceof JButton button && "CLASSIC".equals(button.getText());
+        }, "Local Battle: Up must restore actual focus to CLASSIC");
+        key(robot, KeyEvent.VK_ENTER);
+
+        await(robot, () -> {
+            LocalBattlePanel current = find(frame.getContentPane(),
+                LocalBattlePanel.class, Component::isShowing);
+            return current != null && current.isFocusOwner();
+        },
+            "Local Battle: selected match must own keyboard focus");
+        LocalBattlePanel battle = onEdt(() -> find(frame.getContentPane(),
+            LocalBattlePanel.class, Component::isShowing));
+        int firstX = onEdt(() -> battle.snapshot().first().x());
+        int secondX = onEdt(() -> battle.snapshot().second().x());
+        key(robot, Maincontainer.LEFT);
+        await(robot, () -> battle.snapshot().first().x() == firstX - 1
+                && battle.snapshot().second().x() == secondX,
+            "Local Battle: configured P1 key must move only Player 1 through focused input");
+
+        LocalBattleKeyBindings bindings = onEdt(LocalBattleKeyBindings::configured);
+        int secondLeft = onEdt(() -> bindings.second().entrySet().stream()
+            .filter(entry -> entry.getValue() == seoultech.se.tetris.game.GameCommand.LEFT)
+            .map(java.util.Map.Entry::getKey).findFirst().orElseThrow());
+        key(robot, secondLeft);
+        await(robot, () -> battle.snapshot().first().x() == firstX - 1
+                && battle.snapshot().second().x() == secondX - 1,
+            "Local Battle: displayed P2 key must move only Player 2 through focused input");
+
+        key(robot, KeyEvent.VK_ESCAPE);
+        await(robot, () -> {
+            Startpanel current = get(frame, "startPanel", Startpanel.class);
+            return current != null && current.isShowing() && current.isFocusOwner()
+                && !battle.isRunning();
+        }, "Local Battle: Escape must stop the match and restore Start focus");
+        System.out.println("PASS Local Battle mode selection, dual input and return focus paths");
+    }
+
     private static void checkGame(Robot robot, Maincontainer frame, String mode) throws Exception {
         Gamepanel game = preparedGame(frame, mode);
         Board board = onEdt(() -> get(game, "board", Board.class));
@@ -482,9 +546,9 @@ public final class DesktopFocusSmoke {
         Set<String> groups = Set.copyOf(Arrays.stream(args).filter(arg -> !arg.equals("swing")).toList());
         boolean all = groups.isEmpty() || groups.contains("all");
         for (String group : groups) {
-            if (!Set.of("all", "start", "game", "scoreboard").contains(group)) {
+            if (!Set.of("all", "start", "game", "local-battle", "scoreboard").contains(group)) {
                 throw new IllegalArgumentException("Unknown group: " + group
-                    + " (expected start, game, scoreboard or all)");
+                    + " (expected start, game, local-battle, scoreboard or all)");
             }
         }
         Path data = Files.createTempDirectory("tetris-focus-data-");
@@ -527,12 +591,15 @@ public final class DesktopFocusSmoke {
                 checkGame(robot, frame, "Classic");
                 checkGame(robot, frame, "Item");
             }
+            if (all || groups.contains("local-battle")) {
+                checkLocalBattle(robot, frame);
+            }
             if (all || groups.contains("scoreboard")) {
                 checkScoreboard(robot, frame, checkNameEntry(robot, frame));
             }
             String report = "PASS " + (swingInput ? "synthetic Swing events with real focus routing" : "native AWT Robot events")
                 + " click/focus groups "
-                + (all ? "[start, game, scoreboard]" : groups) + ".\n"
+                + (all ? "[start, game, local-battle, scoreboard]" : groups) + ".\n"
                 + "OS=" + System.getProperty("os.name") + " " + System.getProperty("os.version")
                 + " Java=" + System.getProperty("java.version")
                 + " LookAndFeel=" + UIManager.getLookAndFeel().getName() + "\n";
@@ -553,6 +620,9 @@ public final class DesktopFocusSmoke {
                     Board board = get(game, "board", Board.class);
                     game.stopGame();
                 }
+                LocalBattlePanel battle = find(frame.getContentPane(),
+                    LocalBattlePanel.class, candidate -> true);
+                if (battle != null) battle.stopMatch();
                 frame.dispose();
                 return null;
             });
