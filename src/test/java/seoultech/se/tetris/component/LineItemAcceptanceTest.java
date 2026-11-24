@@ -1,6 +1,7 @@
 package seoultech.se.tetris.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -83,6 +84,32 @@ class LineItemAcceptanceTest {
         for (int row = 0; row < 3; row++) {
             assertTrue(result.fixedCells().get(row).stream().allMatch(java.util.Objects::isNull));
         }
+    }
+
+    @Test
+    @DisplayName("R3: L 배치가 함께 완성한 일반 행도 아이템 효과로 묶어 공격하지 않음")
+    void lineItemPlacementDoesNotAttackWithOrdinaryRowsCompletedByTheSameBlock() throws Exception {
+        GameEngineFixture fixture = new GameEngineFixture(ITEM);
+        RowBlock item = rowItem(0);
+        item.rotate();
+        fixture.seed(item, new OBlock(), 4, 16);
+        fixture.fixed(9, 16);
+        for (int row : new int[] {17, 18}) {
+            for (int column = 0; column < 10; column++) {
+                if (column != 4) fixture.fixed(column, row);
+            }
+        }
+
+        GameUpdate committed = resolve(fixture);
+        var resolution = committed.lockResolution().orElseThrow();
+
+        assertEquals(java.util.List.of(16, 17, 18), resolution.clearBatches().get(0).rows());
+        assertEquals(seoultech.se.tetris.game.ClearBatch.Cause.ROW_ITEM,
+            resolution.clearBatches().get(0).cause());
+        assertEquals(600, committed.snapshot().score());
+        assertEquals(3, committed.snapshot().clearedLines());
+        assertFalse(resolution.attack().isPresent(),
+            "one L-item placement must not split ordinary completed rows into an attack");
     }
 
     @Test
