@@ -8,7 +8,9 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.StandardSocketOptions;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +49,8 @@ public final class P2PNetworkManager implements AutoCloseable {
     private final P2PConfig config;
     private final P2PListener listener;
     private final LongSupplier nanoClock;
+    private final AddressResolver addressResolver;
+    private final ChannelConnector channelConnector;
 
     private final ByteBuffer readBuffer = ByteBuffer.allocate(READ_BUFFER_CAPACITY);
     private final ByteArrayOutputStream lineBuffer = new ByteArrayOutputStream(256);
@@ -56,6 +60,7 @@ public final class P2PNetworkManager implements AutoCloseable {
 
     private ServerSocketChannel serverChannel;
     private SocketChannel peerChannel;
+    private ConnectAttempt pendingConnect;
     private P2PConnectionState connectionState = P2PConnectionState.DISCONNECTED;
     private P2PDisconnectReason lastDisconnectReason;
 
@@ -82,9 +87,80 @@ public final class P2PNetworkManager implements AutoCloseable {
     }
 
     public P2PNetworkManager(P2PConfig config, P2PListener listener, LongSupplier nanoClock) {
+        this(config, listener, nanoClock, InetAddress::getAllByName,
+            (channel, address, timeoutMillis) -> channel.socket().connect(address, timeoutMillis));
+    }
+
+    P2PNetworkManager(P2PConfig config, P2PListener listener, LongSupplier nanoClock,
+            AddressResolver addressResolver) {
+        this(config, listener, nanoClock, addressResolver,
+            (channel, address, timeoutMillis) -> channel.socket().connect(address, timeoutMillis));
+    }
+
+    P2PNetworkManager(P2PConfig config, P2PListener listener, LongSupplier nanoClock,
+            AddressResolver addressResolver, ChannelConnector channelConnector) {
         this.config = Objects.requireNonNull(config, "config");
         this.listener = listener == null ? P2PListener.NONE : listener;
         this.nanoClock = Objects.requireNonNull(nanoClock, "nanoClock");
+        this.addressResolver = Objects.requireNonNull(addressResolver, "addressResolver");
+        this.channelConnector = Objects.requireNonNull(channelConnector, "channelConnector");
+    }
+
+    @FunctionalInterface
+    interface AddressResolver {
+        InetAddress[] resolve(String host) throws UnknownHostException;
+    }
+
+    @FunctionalInterface
+    interface ChannelConnector {
+        void connect(SocketChannel channel, InetSocketAddress address, int timeoutMillis) throws IOException;
+    }
+
+    final class ConnectAttempt {
+        private final String host;
+        private final int port;
+        private final int timeoutMillis;
+        private SocketChannel channel;
+        private boolean cancelled;
+
+        private ConnectAttempt(String host, int port, int timeoutMillis) {
+            this.host = host;
+            this.port = port;
+            this.timeoutMillis = timeoutMillis;
+        }
+
+        void dial() throws IOException {
+            InetAddress[] addresses = addressResolver.resolve(host);
+            if (addresses == null || addresses.length == 0) throw new UnknownHostException(host);
+            SocketChannel opened = SocketChannel.open();
+            synchronized (this) {
+                if (cancelled) {
+                    closeChannelQuietly(opened);
+                    throw new ClosedChannelException();
+                }
+                channel = opened;
+            }
+            try {
+                opened.setOption(StandardSocketOptions.TCP_NODELAY, true);
+                channelConnector.connect(opened, new InetSocketAddress(addresses[0], port), timeoutMillis);
+            } catch (IOException failure) {
+                cancel();
+                throw failure;
+            }
+        }
+
+        synchronized void cancel() {
+            cancelled = true;
+            closeChannelQuietly(channel);
+            channel = null;
+        }
+
+        private synchronized SocketChannel takeConnectedChannel() throws ClosedChannelException {
+            if (cancelled || channel == null || !channel.isConnected()) throw new ClosedChannelException();
+            SocketChannel connected = channel;
+            channel = null;
+            return connected;
+        }
     }
 
     /**
@@ -157,6 +233,21 @@ public final class P2PNetworkManager implements AutoCloseable {
      * Connects to a remote server peer over TCP with a custom connect timeout.
      */
     public void connect(String host, int port, int connectTimeoutMs) throws IOException {
+        ConnectAttempt attempt = prepareConnect(host, port, connectTimeoutMs);
+        try {
+            attempt.dial();
+            completeConnect(attempt);
+        } catch (IOException failure) {
+            cancelConnect(attempt);
+            throw failure;
+        }
+    }
+
+    ConnectAttempt prepareConnect(String host, int port) {
+        return prepareConnect(host, port, DEFAULT_CONNECT_TIMEOUT_MS);
+    }
+
+    private synchronized ConnectAttempt prepareConnect(String host, int port, int connectTimeoutMs) {
         if (host == null || host.isBlank()) {
             throw new IllegalArgumentException("host must not be blank");
         }
@@ -167,16 +258,31 @@ public final class P2PNetworkManager implements AutoCloseable {
             throw new IllegalArgumentException("connectTimeoutMs must be non-negative");
         }
         closeQuietly();
+        connectionState = P2PConnectionState.DISCONNECTED;
+        pendingConnect = new ConnectAttempt(host, port, connectTimeoutMs);
+        return pendingConnect;
+    }
 
-        SocketChannel channel = SocketChannel.open();
-        try {
-            channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
-            channel.socket().connect(new InetSocketAddress(host, port), connectTimeoutMs);
-            establishChannel(channel);
-        } catch (IOException e) {
-            closeChannelQuietly(channel);
-            throw e;
+    synchronized void completeConnect(ConnectAttempt attempt) throws IOException {
+        Objects.requireNonNull(attempt, "attempt");
+        if (pendingConnect != attempt) {
+            attempt.cancel();
+            throw new ClosedChannelException();
         }
+        SocketChannel channel = attempt.takeConnectedChannel();
+        pendingConnect = null;
+        try {
+            establishChannel(channel);
+        } catch (IOException failure) {
+            closeChannelQuietly(channel);
+            throw failure;
+        }
+    }
+
+    synchronized void cancelConnect(ConnectAttempt attempt) {
+        if (attempt == null) return;
+        attempt.cancel();
+        if (pendingConnect == attempt) pendingConnect = null;
     }
 
     /**
@@ -484,12 +590,7 @@ public final class P2PNetworkManager implements AutoCloseable {
      * Gracefully disconnects from the peer and releases all socket resources.
      */
     @Override
-    public void close() {
-        if (connectionState == P2PConnectionState.DISCONNECTED
-                && serverChannel == null
-                && peerChannel == null) {
-            return;
-        }
+    public synchronized void close() {
         disconnectInternal(P2PDisconnectReason.LOCAL_CLOSED, isActive());
     }
 
@@ -525,7 +626,6 @@ public final class P2PNetworkManager implements AutoCloseable {
         this.lastSendTimeMs = nowMs;
         this.lastRttProbeTimeMs = nowMs;
         this.connectionState = P2PConnectionState.CONNECTED;
-
         listener.onConnected();
     }
 
@@ -686,6 +786,7 @@ public final class P2PNetworkManager implements AutoCloseable {
     }
 
     private void closeQuietly() {
+        cancelConnect(pendingConnect);
         closeChannelQuietly(peerChannel);
         peerChannel = null;
         closeChannelQuietly(serverChannel);

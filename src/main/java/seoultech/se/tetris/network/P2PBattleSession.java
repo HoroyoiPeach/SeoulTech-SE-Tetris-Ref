@@ -3,6 +3,8 @@ package seoultech.se.tetris.network;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -26,7 +28,9 @@ public final class P2PBattleSession implements AutoCloseable {
     private final Duration limit;
     private final Consumer<View> render;
     private final ScheduledThreadPoolExecutor loop;
+    private final ExecutorService dialWorkers;
     private final P2PNetworkManager network;
+    private volatile P2PNetworkManager.ConnectAttempt pendingDial;
     private volatile boolean closed;
     private volatile int listeningPort;
     private Phase phase = Phase.SETUP;
@@ -50,11 +54,22 @@ public final class P2PBattleSession implements AutoCloseable {
     private long nextWakeup;
 
     public P2PBattleSession(Difficulty difficulty, int limitSeconds, Consumer<View> render) {
+        this(difficulty, limitSeconds, render, java.net.InetAddress::getAllByName);
+    }
+
+    P2PBattleSession(Difficulty difficulty, int limitSeconds, Consumer<View> render,
+            P2PNetworkManager.AddressResolver addressResolver) {
         this.difficulty = Objects.requireNonNull(difficulty);
         if (limitSeconds <= 0) throw new IllegalArgumentException("Time limit must be positive");
         limit = Duration.ofSeconds(limitSeconds);
         this.render = Objects.requireNonNull(render);
-        network = new P2PNetworkManager(P2PConfig.defaults(), new ConnectionEvents());
+        network = new P2PNetworkManager(P2PConfig.defaults(), new ConnectionEvents(),
+            System::nanoTime, addressResolver);
+        dialWorkers = Executors.newCachedThreadPool(task -> {
+            Thread thread = new Thread(task, "tetris-p2p-dial");
+            thread.setDaemon(true);
+            return thread;
+        });
         loop = new ScheduledThreadPoolExecutor(1, task -> {
             Thread thread = new Thread(task, "tetris-p2p-session");
             thread.setDaemon(true);
@@ -90,11 +105,43 @@ public final class P2PBattleSession implements AutoCloseable {
             notice = "Connecting";
             publish();
             try {
-                network.connect(ip, port);
-            } catch (IOException | IllegalArgumentException ex) {
+                P2PNetworkManager.ConnectAttempt attempt = network.prepareConnect(ip, port);
+                pendingDial = attempt;
+                dialWorkers.execute(() -> dial(attempt));
+            } catch (IllegalArgumentException ex) {
                 reset("Could not connect: " + ex.getMessage());
             }
         });
+    }
+
+    private void dial(P2PNetworkManager.ConnectAttempt attempt) {
+        IOException failure = null;
+        try {
+            attempt.dial();
+        } catch (IOException ex) {
+            failure = ex;
+        }
+        IOException result = failure;
+        submit(() -> finishDial(attempt, result));
+    }
+
+    private void finishDial(P2PNetworkManager.ConnectAttempt attempt, IOException failure) {
+        if (pendingDial != attempt || phase != Phase.CONNECTING) {
+            network.cancelConnect(attempt);
+            return;
+        }
+        pendingDial = null;
+        if (failure == null) {
+            try {
+                network.completeConnect(attempt);
+                return;
+            } catch (IOException ex) {
+                failure = ex;
+            }
+        } else {
+            network.cancelConnect(attempt);
+        }
+        reset("Could not connect: " + failure.getMessage());
     }
 
     public void selectMode(GameMode selected) {
@@ -149,7 +196,16 @@ public final class P2PBattleSession implements AutoCloseable {
         });
     }
 
-    public void leave() { submit(network::close); }
+    public void leave() {
+        P2PNetworkManager.ConnectAttempt attempt = pendingDial;
+        if (attempt != null) attempt.cancel();
+        submit(() -> {
+            network.cancelConnect(attempt);
+            if (pendingDial == attempt) pendingDial = null;
+            network.close();
+            if (phase != Phase.SETUP) reset("");
+        });
+    }
 
     private synchronized void submit(Runnable action) {
         if (!closed) loop.execute(action);
@@ -158,7 +214,13 @@ public final class P2PBattleSession implements AutoCloseable {
     @Override public synchronized void close() {
         if (closed) return;
         closed = true;
-        loop.execute(network::close);
+        P2PNetworkManager.ConnectAttempt attempt = pendingDial;
+        if (attempt != null) attempt.cancel();
+        loop.execute(() -> {
+            network.cancelConnect(attempt);
+            network.close();
+            dialWorkers.shutdownNow();
+        });
         loop.shutdown();
     }
 
