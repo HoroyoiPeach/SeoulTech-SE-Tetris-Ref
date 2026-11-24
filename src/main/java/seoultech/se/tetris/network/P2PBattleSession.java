@@ -20,7 +20,7 @@ public final class P2PBattleSession implements AutoCloseable {
     public enum Phase { SETUP, LISTENING, CONNECTING, LOBBY, PLAYING, RESULT }
 
     public record View(Phase phase, boolean host, GameMode mode, boolean hostReady,
-            boolean guestReady, BattleMatchSnapshot match, boolean delayed, String notice) { }
+            boolean guestReady, BattleMatchSnapshot match, boolean delayed, boolean highLatency, String notice) { }
 
     private final Difficulty difficulty;
     private final Duration limit;
@@ -36,6 +36,7 @@ public final class P2PBattleSession implements AutoCloseable {
     private boolean localDelay;
     private boolean peerDelay;
     private boolean delayed;
+    private boolean highLatency;
     private int pendingDelayAcks;
     private String notice = "";
     private GameMode mode = GameMode.CLASSIC;
@@ -299,6 +300,7 @@ public final class P2PBattleSession implements AutoCloseable {
         localDelay = false;
         peerDelay = false;
         delayed = false;
+        highLatency = false;
         pendingDelayAcks = 0;
         mode = GameMode.CLASSIC;
         listeningPort = 0;
@@ -309,7 +311,8 @@ public final class P2PBattleSession implements AutoCloseable {
     }
 
     private void publish() {
-        if (!closed) render.accept(new View(phase, host, mode, hostReady, guestReady, state, delayed, notice));
+        if (!closed) render.accept(new View(phase, host, mode, hostReady, guestReady, state,
+            delayed, highLatency, notice));
     }
 
     private final class ConnectionEvents implements P2PListener {
@@ -324,6 +327,14 @@ public final class P2PBattleSession implements AutoCloseable {
 
         @Override public void onPauseRequested(long silenceMillis) { localLinkChanged(true); }
         @Override public void onResumeRequested() { localLinkChanged(false); }
+
+        @Override public void onRttUpdated(float millis) {
+            boolean slow = millis >= network.getConfig().pauseThresholdMs();
+            if (highLatency != slow) {
+                highLatency = slow;
+                publish();
+            }
+        }
 
         @Override public void onDisconnectRequested(P2PDisconnectReason reason) {
             reset(switch (reason) {

@@ -204,6 +204,7 @@ final class P2PPanel extends JPanel {
         current = view;
         String notice = view.notice() == null ? "" : view.notice();
         status.setText(view.delayed() ? "Network delay · waiting for peer" :
+            view.highLatency() ? "Network delay · slow connection" :
             storageNotice != null ? storageNotice : notice.isBlank() ? " " : notice);
         switch (view.phase()) {
             case SETUP -> {
