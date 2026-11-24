@@ -19,7 +19,7 @@ import seoultech.se.tetris.game.PlayerSide;
 public final class P2PBattleSession implements AutoCloseable {
     public enum Phase { SETUP, LISTENING, CONNECTING, LOBBY, PLAYING, RESULT }
 
-    public record View(Phase phase, boolean host, GameMode mode, boolean hostReady,
+    public record View(Phase phase, long round, boolean host, GameMode mode, boolean hostReady,
             boolean guestReady, BattleMatchSnapshot match, boolean delayed, boolean highLatency, String notice) { }
 
     private final Difficulty difficulty;
@@ -98,9 +98,13 @@ public final class P2PBattleSession implements AutoCloseable {
     }
 
     public void selectMode(GameMode selected) {
+        selectMode(selected, round);
+    }
+
+    public void selectMode(GameMode selected, long visibleRound) {
         Objects.requireNonNull(selected);
         submit(() -> {
-            if (host && phase == Phase.LOBBY && !delayed && mode != selected) {
+            if (host && phase == Phase.LOBBY && !hostReady && !delayed && visibleRound == round && mode != selected) {
                 mode = selected;
                 openLobby();
             }
@@ -108,7 +112,10 @@ public final class P2PBattleSession implements AutoCloseable {
     }
 
     public void ready() {
-        long requestedRound = round;
+        ready(round);
+    }
+
+    public void ready(long requestedRound) {
         submit(() -> {
             if (phase != Phase.LOBBY || delayed || requestedRound != round) return;
             if (host) {
@@ -121,8 +128,11 @@ public final class P2PBattleSession implements AutoCloseable {
     }
 
     public void input(GameCommand command) {
+        input(command, round);
+    }
+
+    public void input(GameCommand command, long requestedRound) {
         Objects.requireNonNull(command);
-        long requestedRound = round;
         submit(() -> {
             if (phase != Phase.PLAYING || delayed || requestedRound != round) return;
             if (host) play(PlayerSide.FIRST, command);
@@ -311,7 +321,7 @@ public final class P2PBattleSession implements AutoCloseable {
     }
 
     private void publish() {
-        if (!closed) render.accept(new View(phase, host, mode, hostReady, guestReady, state,
+        if (!closed) render.accept(new View(phase, round, host, mode, hostReady, guestReady, state,
             delayed, highLatency, notice));
     }
 

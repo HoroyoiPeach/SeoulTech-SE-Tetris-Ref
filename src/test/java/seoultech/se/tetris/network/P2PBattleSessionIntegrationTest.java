@@ -169,6 +169,29 @@ class P2PBattleSessionIntegrationTest {
     }
 
     @Test
+    void lateUserActionsBelongToTheRoundShownOnTheirScreen() throws Exception {
+        try (Peer host = new Peer(); Peer guest = new Peer()) {
+            connect(host, guest);
+            long oldLobby = guest.current.get().round();
+            host.session.selectMode(GameMode.ITEM);
+            await("new lobby delivered", () -> guest.current.get().mode() == GameMode.ITEM);
+            guest.session.ready(oldLobby);
+            host.session.ready();
+            await("host readiness returned to guest", () -> guest.current.get().hostReady());
+            assertTrue(guest.in(Phase.LOBBY));
+            assertFalse(guest.current.get().guestReady());
+
+            guest.session.ready(guest.current.get().round());
+            await("new round started", () -> guest.in(Phase.PLAYING) && host.in(Phase.PLAYING));
+            int x = guest.match().second().x();
+            guest.session.input(GameCommand.HARD_DROP, oldLobby);
+            guest.session.input(GameCommand.RIGHT, guest.current.get().round());
+            await("current move processed", () -> host.match().second().x() == x + 1);
+            assertTrue(host.match().second().fixedCells().stream().flatMap(List::stream).allMatch(Objects::isNull));
+        }
+    }
+
+    @Test
     void modeChangeDropsPreviouslyQueuedReadinessAndCommands() throws Exception {
         try (Peer host = new Peer(); RawPeer client = new RawPeer()) {
             client.transport.connect(LOOPBACK, host.listen());

@@ -111,10 +111,10 @@ final class P2PPanel extends JPanel {
         mode.addActionListener(event -> {
             GameMode choice = GameMode.values()[mode.getSelectedIndex()];
             if (current != null && current.phase() == Phase.LOBBY && current.host() && choice != current.mode()) {
-                session.selectMode(choice);
+                session.selectMode(choice, current.round());
             }
         });
-        readyButton = button("START", session::ready);
+        readyButton = button("START", () -> session.ready(current.round()));
         outcome.setName("matchOutcome");
         cards.add(centered(rows(outcome, label("Battle mode"), mode, readiness, readyButton,
             button("DISCONNECT", session::leave))), "lobby");
@@ -313,12 +313,16 @@ final class P2PPanel extends JPanel {
         if (key == KeyEvent.VK_ENTER && current.match() != null && current.match().first().paused()) {
             session.leave();
         } else if (keys.isPause(key)) {
-            session.input(GameCommand.TOGGLE_PAUSE);
+            sendVisibleInput(GameCommand.TOGGLE_PAUSE);
         } else {
-            keys.firstCommand(key).ifPresentOrElse(session::input, () -> {
+            keys.firstCommand(key).ifPresentOrElse(this::sendVisibleInput, () -> {
                 if (key == KeyEvent.VK_ESCAPE) session.leave();
             });
         }
+    }
+
+    private void sendVisibleInput(GameCommand command) {
+        if (!current.delayed()) session.input(command, current.round());
     }
 
     void focusSetup() {
