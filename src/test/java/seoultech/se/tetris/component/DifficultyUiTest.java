@@ -40,7 +40,7 @@ class DifficultyUiTest {
         Startpanel start = new Startpanel(owner);
 
         assertEquals(6, menuSize(start));
-        for (String action : List.of("CLASSIC", "ITEM", "TIME LIMIT (TEMP)", "MENU", "SCORE", "EXIT")) {
+        for (String action : List.of("CLASSIC", "ITEM", "LOCAL BATTLE", "MENU", "SCORE", "EXIT")) {
             assertEquals(action, label(start, action).getText());
         }
 

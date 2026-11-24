@@ -43,7 +43,6 @@ public class Startpanel extends JPanel{
         buttonPanel.setOpaque(false); // 투명 배경
         buttonPanel.setPreferredSize(new Dimension(200, 250)); // 컴포넌트 사이즈 지정
 
-        // Button 4개 추가하기
         Button startButton = new Button("CLASSIC") {
             @Override
             protected void isPressed() {
@@ -58,13 +57,13 @@ public class Startpanel extends JPanel{
             }
         };
         menu.add(buttonPanel, itemButton);
-        Button timeLimitButton = new Button("TIME LIMIT (TEMP)") {
+        Button localBattleButton = new Button("LOCAL BATTLE") {
             @Override
             protected void isPressed() {
-                Startpanel.this.maincontainer.exitStartEnterGame("Time Limit");
+                Startpanel.this.maincontainer.enterLocalBattleModes();
             }
         };
-        menu.add(buttonPanel, timeLimitButton);
+        menu.add(buttonPanel, localBattleButton);
         Button menuButton = new Button("MENU") {
             @Override
             protected void isPressed() {
