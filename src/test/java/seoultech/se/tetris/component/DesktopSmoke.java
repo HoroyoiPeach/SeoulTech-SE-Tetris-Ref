@@ -410,5 +410,6 @@ public final class DesktopSmoke {
             }
         });
         if (failure.get() != null) throw new AssertionError("Desktop smoke failed", failure.get());
+        LocalBattleDesktopSmoke.main(args);
     }
 }
