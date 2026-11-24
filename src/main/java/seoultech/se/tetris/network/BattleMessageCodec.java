@@ -44,6 +44,11 @@ public final class BattleMessageCodec {
                     out.writeBoolean(lobby.guestReady());
                 }
                 case BattleMessage.Ready ignored -> out.writeByte('R');
+                case BattleMessage.Link link -> {
+                    out.writeByte('D');
+                    out.writeBoolean(link.delayed());
+                }
+                case BattleMessage.LinkAck ignored -> out.writeByte('A');
                 case BattleMessage.Input input -> {
                     out.writeByte('I');
                     out.writeUTF(input.command().name());
@@ -72,6 +77,8 @@ public final class BattleMessageCodec {
             BattleMessage message = switch (in.readUnsignedByte()) {
                 case 'L' -> new BattleMessage.Lobby(round, GameMode.valueOf(in.readUTF()), flag(in), flag(in));
                 case 'R' -> new BattleMessage.Ready(round);
+                case 'D' -> new BattleMessage.Link(round, flag(in));
+                case 'A' -> new BattleMessage.LinkAck(round);
                 case 'I' -> new BattleMessage.Input(round, GameCommand.valueOf(in.readUTF()));
                 case 'S' -> new BattleMessage.State(round, readMatch(in));
                 case 'N' -> new BattleMessage.Rematch(round);

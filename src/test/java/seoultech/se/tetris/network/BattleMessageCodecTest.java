@@ -34,6 +34,9 @@ class BattleMessageCodecTest {
             roundTrip(new BattleMessage.Lobby(5, mode, true, false));
         }
         roundTrip(new BattleMessage.Ready(6));
+        roundTrip(new BattleMessage.Link(6, true));
+        roundTrip(new BattleMessage.Link(6, false));
+        roundTrip(new BattleMessage.LinkAck(6));
         roundTrip(new BattleMessage.Rematch(8));
         for (GameCommand command : GameCommand.values()) {
             roundTrip(new BattleMessage.Input(70_000, command));

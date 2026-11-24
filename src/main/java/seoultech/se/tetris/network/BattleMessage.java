@@ -20,6 +20,16 @@ public sealed interface BattleMessage {
         public Ready { requireRound(round); }
     }
 
+    /** Whether the sender is waiting for incoming data on this round. */
+    record Link(long round, boolean delayed) implements BattleMessage {
+        public Link { requireRound(round); }
+    }
+
+    /** All earlier commands from the sender precede this acknowledgement in its TCP stream. */
+    record LinkAck(long round) implements BattleMessage {
+        public LinkAck { requireRound(round); }
+    }
+
     record Input(long round, GameCommand command) implements BattleMessage {
         public Input {
             requireRound(round);
