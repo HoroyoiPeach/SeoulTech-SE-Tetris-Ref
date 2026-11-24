@@ -154,15 +154,14 @@ factor: Easy 0.8, Normal 1.0, Hard 1.2
 ### 3.3 일시정지·종료
 
 - Pause 키는 진행 중 게임을 정지하고 같은 키로 재개한다.
-- 일시정지 중 Enter는 현재 게임을 종료하고 시작 화면으로 돌아간다.
-- 진행 중 Esc 또는 화면의 `MENU` 버튼도 현재 게임을 종료한다.
-  단, Esc가 사용자가 변경한 게임 조작키와 겹치면 해당 조작이 우선한다.
-- 자발적으로 종료한 게임의 점수는 저장하지 않는다.
-- 게임오버 뒤 현재 모드의 순위 진입 대상일 때만 이름을 입력하고 기록을 저장한다.
+- 1인·로컬 대전은 일시정지 중 Enter, 진행 중 Esc, 또는 화면의 `MENU` 버튼으로 시작 화면에 돌아간다.
+- P2P 대전은 일시정지 중 Enter, 진행 중 Esc, 또는 `DISCONNECT` 버튼으로 접속을 끊고 P2P 접속 화면으로 돌아간다. 여기서 `MAIN MENU`를 누르면 시작 화면이 열린다.
+- 진행 중 Esc를 게임 조작키로 지정했다면 해당 조작이 우선한다.
+- 1인 게임은 게임오버 뒤 해당 모드의 순위에 들면 이름과 점수를 저장한다. 도중에 끝낸 판과 대전 점수는 순위에 기록하지 않는다.
 - 아이템 애니메이션 도중 정지하면 애니메이션 종료 후에도 정지 상태를 유지한다.
   게임 종료는 진행 중 애니메이션과 공급 대기를 취소한다.
 
-[정지·종료 처리](../src/main/java/seoultech/se/tetris/component/GameController.java) · [아이템 애니메이션 상태](../src/main/java/seoultech/se/tetris/game/ItemEffectState.java)
+[1인 종료](../src/main/java/seoultech/se/tetris/component/GameController.java) · [로컬 대전 종료](../src/main/java/seoultech/se/tetris/component/LocalBattlePanel.java) · [P2P 대전 종료](../src/main/java/seoultech/se/tetris/component/P2PPanel.java) · [아이템 애니메이션 상태](../src/main/java/seoultech/se/tetris/game/ItemEffectState.java)
 
 ## 4. 점수·줄·레벨
 
@@ -194,11 +193,8 @@ factor: Easy 0.8, Normal 1.0, Hard 1.2
 
 ### 4.3 삭제 표현
 
-- 일반 완성 행은 반투명 흰색으로 약 210ms 강조한다.
-- L·C·P 효과는 50ms 단위 프레임으로 중앙에서 바깥쪽으로 지워지는 문자 애니메이션을 사용한다.
-- 애니메이션 중 자동 낙하와 블록 조작을 차단한다.
-
-이 시간은 Swing 타이머 설정값이며 실제 화면의 정확한 벽시계 시간 보증은 아니다.
+- 일반 완성 행은 반투명 흰색으로 약 210ms 강조한다. 다음 블록은 강조 표시 중에도 조작할 수 있다.
+- L·C·P 아이템은 중앙에서 바깥쪽으로 지워지는 효과를 50ms 간격으로 진행한다. 효과가 끝날 때까지 자동 낙하와 블록 조작이 멈춘다.
 
 ## 5. 설정·색상·저장
 
@@ -334,8 +330,8 @@ C가 지운 열은 빈 상태로 남으므로 C 효과와 정착만으로는 새
 예:
 
 ```text
-OOLO   OOO   OO    ...
-       O      LO
+OOLO   OLO   OO
+       O     LO
 ```
 
 실제 형태와 표시 위치는 생성 때 무작위로 결정된다.
@@ -380,8 +376,8 @@ OOOO
 예:
 
 ```text
-OOCO   OOO   OO    ...
-       O      CO
+OOCO   OCO   OO
+       O     CO
 ```
 
 근거: [ColumnBlock](../src/main/java/seoultech/se/tetris/blocks/ColumnBlock.java#L10), [C 효과·정착 구현](../src/main/java/seoultech/se/tetris/game/GameEngine.java#L351), [C/B 정착 인수 테스트](../src/test/java/seoultech/se/tetris/component/ColumnBombAcceptanceTest.java#L200).

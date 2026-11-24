@@ -1,10 +1,12 @@
 # SeoulTech SE Tetris
 
-Java Swing으로 만든 테트리스다. 혼자 플레이하거나 한 키보드 또는 같은 네트워크의 두 PC에서 일반·아이템·시간제한 대전을 할 수 있다.
+Java Swing으로 만든 테트리스다. 혼자서는 일반·아이템 모드를 즐길 수 있다. 두 사람은 한 키보드 또는 같은 네트워크의 두 PC에서 일반·아이템·시간제한 대전을 할 수 있다.
 
 ## 평가용 앱 실행
 
-**macOS 26 이상 · Apple Silicon**에서 후보 묶음을 풀고 `app/` 안의 실행용 ZIP을 한 번 더 푼 다음 `SeoulTech Tetris.app`을 더블클릭한다. 실행용 ZIP만 받았다면 그 파일만 풀면 된다. 앱에 Java 21이 들어 있다. 두 PC에서 평가할 때는 같은 후보를 사용한다. 커밋·패키지·검증 상태는 [최종 인수 기록](docs/final-acceptance.md)에서 확인한다.
+평가 환경은 **macOS 26 이상 · Apple Silicon**이다. 현재 검토용 앱은 로컬에서 실행됐지만 다운로드한 앱에 적용되는 macOS 배포 검사는 공증 티켓 누락으로 거부됐다. 공개 제출 전 확인 항목은 [최종 인수 기록](docs/final-acceptance.md)에 있다.
+
+공개용 후보 묶음은 압축을 풀고 `app/` 안의 실행용 ZIP을 한 번 더 푼 다음 `SeoulTech Tetris.app`을 더블클릭한다. 실행용 ZIP만 받았다면 그 파일만 풀면 된다. 앱에 Java 21이 들어 있다. 두 PC는 같은 커밋에서 빌드한 각 운영체제용 앱을 사용한다.
 
 소스에서 직접 실행하려면 JDK 21로 저장소 루트에서 `./gradlew run`을 실행한다. Apple Silicon Mac에서 `./gradlew packageRelease`를 실행하면 `build/distributions/seoultech-tetris-0.1.0-macos-aarch64.zip`과 SHA-256 파일이 생긴다.
 

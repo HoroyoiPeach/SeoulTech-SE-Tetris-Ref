@@ -4,8 +4,10 @@
 
 ## 1. 실행 파일 준비
 
+현재 검토용 macOS 앱은 다운로드 배포 검사에서 공증 티켓 누락으로 거부됐다. 아래는 서명·공증을 마친 공개용 패키지의 실행 순서다. [검토용 앱의 검사 결과](final-acceptance.md)
+
 1. 후보 묶음을 풀어 `app/` 안의 macOS 실행용 ZIP을 찾는다. 해당 ZIP 전체를 풀고 `SeoulTech Tetris.app`을 더블클릭한다. 실행용 ZIP을 직접 받은 경우 그 파일만 풀면 된다. Java 21 런타임이 앱에 포함되어 있다.
-2. `TETRIS` 시작 메뉴에 `LOCAL BATTLE`과 `P2P BATTLE`이 보이는지 확인한다. 두 PC 대전은 양쪽에서 같은 후보 ZIP을 사용한다.
+2. `TETRIS` 시작 메뉴에 `LOCAL BATTLE`과 `P2P BATTLE`이 보이는지 확인한다. 두 PC 대전에는 같은 후보 커밋의 운영체제별 앱을 사용한다. Windows PC로 참가할 때는 같은 Java CI 실행의 `package-windows-2025`에서 Windows용 ZIP을 받아 푼다.
 
 소스만 있다면 Apple Silicon Mac에 JDK 21을 준비하고 저장소 루트에서 `./gradlew packageRelease`를 실행한다. ZIP과 체크섬은 `build/distributions/`에서 찾을 수 있다.
 
@@ -195,7 +197,7 @@ P는 기존처럼 두 행을 삭제하며 위의 블록을 행 단위로 내린�
 
 순위를 초기화하려면 게임의 `Reset Scoreboard`를 사용한다.
 
-`tetris_score.txt`를 직접 삭제하거나 이동하면 기존 기록은 복구되지 않으므로 백업 후 처리한다.
+기존 순위를 복원하려면 앱을 종료하고 백업해 둔 `tetris_score.txt`를 같은 폴더에 넣은 뒤 다시 실행한다.
 
 ## 관련 문서
 
