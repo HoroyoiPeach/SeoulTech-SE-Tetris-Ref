@@ -1,14 +1,24 @@
 # 프로젝트 관리 기록
 
-이 문서는 요구사항 1·2의 업무 분담, 작업 규칙, PR, Issue와 주요 결정을 한곳에서 관리한다.
+기말의 구현·검토 이력은 아래 표에, 요구사항별 기능·검사 결과는 [기말 요구사항 대조표](requirements-3-checklist.md)에 정리했다.
 
 - 저장소: [HoroyoiPeach/SeoulTech-SE-Tetris-Ref](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref)
 - 진척 관리: [GitHub Project](https://github.com/users/HoroyoiPeach/projects/3/views/1)
-- 공개 릴리스: [`v0.1.0-req2.3`](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)
-- 제출 소스: `10d7b78` · 제품 코드 `154fd09`
+- 중간평가 공개 릴리스: [`v0.1.0-req2.3`](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)
+- 중간평가 제출 소스: `10d7b78` · 제품 코드 `154fd09`
 - 제출 대상: macOS 26 이상 Apple Silicon
 
-## 1. 팀원별 수행 내역
+## 기말 개발과 리뷰
+
+| 팀원 | 직접 확인한 작업 | 근거 |
+|---|---|---|
+| 최지원 | 공격 행 생성·10줄 대기열, 시간제한·승패 판정, Windows의 창 크기 수정 PR을 작성했다. 리뷰 후 아이템 모드의 일반 줄 공격과 마감 직후 점수 변경을 고치고 검사 결과를 남겼다. | [공격 수정·테스트](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/34#issuecomment-6970547258) · [마감 경계 수정](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/35#issuecomment-6978122233) · [창 크기 PR #37](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/37) |
+| 최승빈 | 게임 엔진과 독립된 TCP 통신 모듈, 하트비트·지연 감지, 내부 IP 소켓 검사와 GUI 연동 명세를 제출했다. | [통신 기반 PR #38](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/38) |
+| 길민규 | 리팩터링 결과를 `main`에 통합하고 공통 대전 엔진·로컬 두 보드·P2P 세션과 로비를 연결했다. #34·#35에서 공격·마감 경계를 검토했고, #38에서 발견한 10초 단절 뒤 패킷 수신 문제를 대전 통합 시 보완했다. | [리팩터링 통합 #36](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/36) · [통신 리뷰와 후속 작업](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/38#issuecomment-7119355159) · [로컬 #39](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/39) · [P2P #40](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/40) |
+
+Windows 창 크기 문제는 [이슈 #29](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/issues/29)와 [해결 PR #37](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/pull/37)에서 추적한다. 이전 검토의 수정 내역은 #34·#35에 남아 있다. 2026-11-24 기준 #39·#40의 작성자 외 팀원 리뷰와 최종 실기 인수는 대기 중이다. [기말 통합 카드 R3-07](https://github.com/users/HoroyoiPeach/projects/3/views/1?pane=issue&itemId=285513780)
+
+## 1. 중간평가 팀원별 수행 내역
 
 역할은 Git 커밋과 PR에서 직접 확인되는 결과물만 정리했다.
 
@@ -117,10 +127,10 @@ PR에는 카드·선행 작업·검증 결과를 연결한다.
 릴리스에는 tag, 소스 커밋, 빌드 기준, 대상 OS, 실행 파일명과 SHA-256, 검증 결과와 정본 문서 링크를 기록한다.
 제품 코드나 배포 ZIP이 바뀌면 변경된 파일로 자동검사와 수동 인수를 다시 수행한다.
 
-현재 공개 제출본은 `v0.1.0-req2.3`이다.
+중간평가 공개 제출본은 `v0.1.0-req2.3`이다.
 병합 PR은 #30, 제출 소스는 `10d7b78`, 제품 코드는 `154fd09`다.
 
-현재 안내는 README와 `docs/`의 정본 7개만 유지한다.
+중간평가 당시의 안내는 README와 `docs/`의 정본 7개로 정리했다.
 완료된 계획·임시 점검표·과거 논의는 Git 이력에서 확인하며 현재 기준으로 사용하지 않는다.
 자동검증 원본과 평가 증빙은 `docs/evidence/`에 유지한다.
 
@@ -137,6 +147,7 @@ PR에는 카드·선행 작업·검증 결과를 연결한다.
 
 - [요구사항 1 체크리스트](requirements-1-checklist.md)
 - [요구사항 2 체크리스트](requirements-2-checklist.md)
+- [기말 요구사항 대조표](requirements-3-checklist.md)
 - [게임 명세서](specification.md)
 - [사용자 안내서](user-guide.md)
 - [개발 안내서](development.md)
