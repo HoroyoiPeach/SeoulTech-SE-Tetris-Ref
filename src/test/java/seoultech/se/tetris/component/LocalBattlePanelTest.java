@@ -49,7 +49,10 @@ class LocalBattlePanelTest {
                 panel.dispatchKey(KeyEvent.VK_ENTER);
                 assertTrue(panel.snapshot().first().score() > 0,
                     "configured Enter must hard-drop instead of restarting the live match");
-                panel.stopMatch();
+                panel.dispatchKey(Maincontainer.PAUSE);
+                panel.dispatchKey(KeyEvent.VK_ENTER);
+                assertTrue(menu.get(), "paused players must be able to leave with the keyboard even when Escape and Enter are rebound");
+                assertFalse(panel.isRunning());
                 return null;
             });
         } finally {
@@ -127,6 +130,24 @@ class LocalBattlePanelTest {
             assertEquals(1, panel.snapshot().remainingSeconds(),
                 "the rematch deadline must start from the current monotonic time");
             panel.stopMatch();
+            return null;
+        });
+    }
+
+    @Test
+    void deadlineDuringPauseShowsAFinalResultWithoutAPausePrompt() throws Exception {
+        AtomicLong clock = new AtomicLong();
+        ExistingFeatureFixture.onEdt(() -> {
+            LocalBattlePanel panel = new LocalBattlePanel(Difficulty.NORMAL, 1,
+                GameMode.TIME_LIMIT, () -> {}, clock::get);
+            panel.startMatch();
+            panel.dispatchKey(Maincontainer.PAUSE);
+            JLabel time = (JLabel) findNamed(panel, "matchTime");
+            assertTrue(time.getText().contains("PAUSED"));
+            clock.set(1_000_000_000L);
+            panel.dispatchKey(Maincontainer.PAUSE);
+            assertEquals(MatchOutcome.DRAW, panel.snapshot().decision().orElseThrow().outcome());
+            assertEquals("TIME 00:00", time.getText());
             return null;
         });
     }

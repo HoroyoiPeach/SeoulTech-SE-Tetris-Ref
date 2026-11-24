@@ -157,7 +157,8 @@ public final class LocalBattlePanel extends JPanel {
     }
 
     void dispatchKey(int keyCode) {
-        if (match.snapshot().decision().isPresent()) {
+        BattleMatchSnapshot current = match.snapshot();
+        if (current.decision().isPresent()) {
             if (keyCode == KeyEvent.VK_ENTER) restartMatch();
             else if (keyCode == KeyEvent.VK_ESCAPE) returnToMenu();
             return;
@@ -165,6 +166,10 @@ public final class LocalBattlePanel extends JPanel {
         if (!running) return;
         advanceToNow();
         if (!running) return;
+        if (current.first().paused() && keyCode == KeyEvent.VK_ENTER) {
+            returnToMenu();
+            return;
+        }
         if (keys.isPause(keyCode)) {
             consume(match.handle(PlayerSide.FIRST, GameCommand.TOGGLE_PAUSE));
             return;
@@ -239,14 +244,13 @@ public final class LocalBattlePanel extends JPanel {
     private void publish(BattleMatchSnapshot snapshot) {
         firstView.show(snapshot.first(), snapshot.firstPendingAttackRows());
         secondView.show(snapshot.second(), snapshot.secondPendingAttackRows());
+        String pauseHint = !snapshot.stopped() && snapshot.first().paused() ? "PAUSED · ENTER FOR MENU" : "";
         if (snapshot.first().mode() == GameMode.TIME_LIMIT) {
             time.setText(String.format("TIME %02d:%02d%s",
                 snapshot.remainingSeconds() / 60, snapshot.remainingSeconds() % 60,
-                snapshot.first().paused() ? " · PAUSED" : ""));
-        } else if (snapshot.first().paused()) {
-            time.setText("PAUSED");
+                pauseHint.isEmpty() ? "" : " · " + pauseHint));
         } else {
-            time.setText(" ");
+            time.setText(pauseHint);
         }
         snapshot.decision().ifPresent(this::showDecision);
         revalidate();
