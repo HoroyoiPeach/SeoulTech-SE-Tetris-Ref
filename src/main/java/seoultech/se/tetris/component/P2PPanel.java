@@ -11,10 +11,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.function.IntFunction;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -22,6 +25,8 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -33,7 +38,7 @@ import seoultech.se.tetris.game.MatchOutcome;
 import seoultech.se.tetris.network.P2PBattleSession;
 import seoultech.se.tetris.network.P2PBattleSession.Phase;
 import seoultech.se.tetris.network.P2PBattleSession.View;
-import seoultech.se.tetris.network.P2PNetworkManager;
+import seoultech.se.tetris.network.LocalNetworkAddresses;
 import seoultech.se.tetris.storage.LastPeerAddress;
 
 /** All screens for a single network connection. Only the session thread touches the transport. */
@@ -51,6 +56,8 @@ final class P2PPanel extends JPanel {
     private final int port;
     private final LocalBattleKeyBindings keys = LocalBattleKeyBindings.configured();
     private final Executor addressIo;
+    private final Executor networkAddressIo;
+    private final IntFunction<String> hostAddressProvider;
     private String joiningAddress;
     private long joinAttempt;
     private boolean saveFailed;
@@ -60,7 +67,7 @@ final class P2PPanel extends JPanel {
     private final JLabel status = label(" ");
     private final JTextField address = new JTextField(18);
     private final JLabel connection = label(" ");
-    private final JLabel localAddress = label(" ");
+    private final JTextArea localAddress = new JTextArea(5, 36);
     private final JLabel readiness = label(" ");
     private final JComboBox<String> mode = new JComboBox<>();
     private final BattlePlayerView own = new BattlePlayerView("YOU", "own");
@@ -71,6 +78,7 @@ final class P2PPanel extends JPanel {
     private final JButton joinButton;
     private final JButton readyButton;
     private View current;
+    private long addressLookupGeneration;
     private volatile boolean closed;
 
     P2PPanel(Difficulty difficulty, int timeLimitSeconds, int port, Runnable back) {
@@ -78,10 +86,17 @@ final class P2PPanel extends JPanel {
     }
 
     P2PPanel(Difficulty difficulty, int timeLimitSeconds, int port, Runnable back, Executor addressIo) {
+        this(difficulty, timeLimitSeconds, port, back, addressIo, ForkJoinPool.commonPool(), P2PPanel::hostAddressText);
+    }
+
+    P2PPanel(Difficulty difficulty, int timeLimitSeconds, int port, Runnable back, Executor addressIo,
+            Executor networkAddressIo, IntFunction<String> hostAddressProvider) {
         super(new BorderLayout(4, 4));
         this.back = back;
         this.port = port;
         this.addressIo = addressIo;
+        this.networkAddressIo = networkAddressIo;
+        this.hostAddressProvider = hostAddressProvider;
         setName("p2pPanel");
         setFocusable(true);
         setFocusTraversalKeysEnabled(false);
@@ -104,7 +119,15 @@ final class P2PPanel extends JPanel {
         address.addActionListener(event -> joinButton.doClick());
         cards.add(centered(rows(hostButton, label("Server IP"), address,
             joinButton, button("MAIN MENU", this::exit))), "setup");
-        cards.add(centered(rows(connection, localAddress, button("CANCEL", session::leave))), "wait");
+        localAddress.setName("hostAddresses");
+        localAddress.setEditable(false);
+        localAddress.setFocusable(false);
+        localAddress.setOpaque(false);
+        localAddress.setForeground(Maincontainer.changeColor(Color.DARK_GRAY));
+        JScrollPane addressScroll = new JScrollPane(localAddress);
+        addressScroll.setOpaque(false);
+        addressScroll.getViewport().setOpaque(false);
+        cards.add(centered(rows(connection, addressScroll, button("CANCEL", session::leave))), "wait");
 
         for (GameMode choice : GameMode.values()) mode.addItem(choice.displayName());
         mode.setName("battleMode");
@@ -230,6 +253,7 @@ final class P2PPanel extends JPanel {
     private void render(View view) {
         Phase previous = current == null ? null : current.phase();
         current = view;
+        if (previous == Phase.LISTENING && view.phase() != Phase.LISTENING) addressLookupGeneration++;
         if (view.phase() == Phase.SETUP) saveFailed = false;
         showStatus(view);
         switch (view.phase()) {
@@ -245,12 +269,17 @@ final class P2PPanel extends JPanel {
                 if (previous == view.phase()) return;
                 boolean listening = view.phase() == Phase.LISTENING;
                 connection.setText(listening ? "Waiting for a player…" : "Connecting to server…");
-                localAddress.setText(listening ? "Checking local IP…" : joiningAddress);
+                localAddress.setText(listening ? "Checking local network addresses…" : joiningAddress);
                 if (listening) {
-                    CompletableFuture.supplyAsync(P2PNetworkManager::resolveLocalInternalIp)
-                        .thenAccept(ip -> SwingUtilities.invokeLater(() -> {
-                            if (!closed && current.phase() == Phase.LISTENING) localAddress.setText(ip + " : " + port);
-                        }));
+                    long lookup = ++addressLookupGeneration;
+                    CompletableFuture.supplyAsync(() -> hostAddressProvider.apply(port), networkAddressIo)
+                            .thenAccept(text -> SwingUtilities.invokeLater(() -> {
+                                if (!closed && current != null && current.phase() == Phase.LISTENING
+                                        && lookup == addressLookupGeneration) {
+                                    localAddress.setText(text);
+                                    localAddress.setCaretPosition(0);
+                                }
+                            }));
                 }
                 layout.show(cards, "wait");
                 cards.transferFocus();
@@ -279,6 +308,14 @@ final class P2PPanel extends JPanel {
                     requestFocusInWindow();
                 }
             }
+        }
+    }
+
+    private static String hostAddressText(int port) {
+        try {
+            return LocalNetworkAddresses.discoverConnectionText(port);
+        } catch (IOException | RuntimeException ignored) {
+            return LocalNetworkAddresses.connectionText(List.of(), port);
         }
     }
 

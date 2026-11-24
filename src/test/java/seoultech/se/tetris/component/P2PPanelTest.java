@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
@@ -100,6 +101,38 @@ class P2PPanelTest {
         }
     }
 
+    @Test @Timeout(10)
+    void hostAddressLookupRunsOffTheEdtAndShowsEveryProvidedEndpoint() throws Exception {
+        int port;
+        try (ServerSocket available = new ServerSocket(0)) { port = available.getLocalPort(); }
+        BlockingQueue<Runnable> addressTasks = new LinkedBlockingQueue<>();
+        BlockingQueue<Runnable> networkTasks = new LinkedBlockingQueue<>();
+        String endpoints = "Enter one server address on the other computer:\n"
+                + "Wi-Fi  ·  192.168.1.40\n"
+                + "Ethernet  ·  fd00:0:0:0:0:0:0:40\n"
+                + "Port: " + port + " (configured automatically)";
+        P2PPanel host = edt(() -> new P2PPanel(
+                Difficulty.NORMAL, 180, port, () -> {}, addressTasks::add, networkTasks::add, ignored -> endpoints));
+        try {
+            Runnable loadSavedAddress = addressTasks.poll(2, TimeUnit.SECONDS);
+            assertNotNull(loadSavedAddress);
+            loadSavedAddress.run();
+
+            edt(() -> { click(host, "HOST GAME"); return null; });
+            await(() -> button(host, "CANCEL") != null);
+            Runnable lookupAddresses = networkTasks.poll(2, TimeUnit.SECONDS);
+            assertNotNull(lookupAddresses);
+            assertNull(addressTasks.poll(), "NIC lookup must not use the recent-address file executor");
+            assertEquals("Checking local network addresses…", edt(() -> hostAddresses(host).getText()));
+
+            lookupAddresses.run();
+            await(() -> endpoints.equals(hostAddresses(host).getText()));
+            assertFalse(edt(() -> hostAddresses(host).isEditable()));
+        } finally {
+            edt(() -> { host.shutdown(); return null; });
+        }
+    }
+
     private static P2PPanel panel(int port) {
         return new P2PPanel(Difficulty.NORMAL, 180, port, () -> {});
     }
@@ -115,6 +148,9 @@ class P2PPanelTest {
     }
     private static JTextField address(P2PPanel panel) {
         return find(panel, JTextField.class, c -> "peerAddress".equals(c.getName()));
+    }
+    private static JTextArea hostAddresses(P2PPanel panel) {
+        return find(panel, JTextArea.class, c -> "hostAddresses".equals(c.getName()));
     }
     private static JComboBox<?> mode(P2PPanel panel) {
         return find(panel, JComboBox.class, c -> "battleMode".equals(c.getName()));
