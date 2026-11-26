@@ -50,7 +50,7 @@ public final class RefactoringRegressionTest {
     private static final String MARKER = ".refactoring-test-sandbox";
     private static final String DEFAULT_KEYS = "ROTATE=38,DOWN=40,LEFT=37,RIGHT=39,PAUSE=80,HARD_DROP=32";
     private static final String CUSTOM_KEYS = "ROTATE=87,DOWN=40,LEFT=37,RIGHT=39,PAUSE=80,HARD_DROP=32";
-    private static final String[] START_LABELS = {"CLASSIC", "ITEM", "TIME LIMIT (TEMP)", "MENU", "SCORE", "EXIT"};
+    private static final String[] START_LABELS = {"CLASSIC", "ITEM", "LOCAL BATTLE", "MENU", "SCORE", "EXIT"};
     private static final String[] SETTING_LABELS = {"Window Option: ", "Change Keys", "Reset Scoreboard", "Color Option: ", "Difficulty: ", "Time Limit (sec): ", "Reset setting", "Save and Exit"};
     private static final String[] KEY_LABELS = {"Rotate: ", "Down: ", "Left: ", "Right: ", "Pause: ", "Hard Drop: ", "Save and Exit"};
 

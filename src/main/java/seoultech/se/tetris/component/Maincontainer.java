@@ -35,6 +35,7 @@ public class Maincontainer extends JFrame{
     private CardLayout cardLayout; // mainPanel에 등록한 화면 사이의 전환을 담당한다.
     private Startpanel startPanel; // 시작 시 보여질 화면 panel입니다.
     private Gamepanel gamePanel; // 게임 화면 panel입니다.
+    private LocalBattlePanel localBattlePanel;
     private Settingpanel settingPanel;
     private Scoreboardpanel scoreboardPanel;
 
@@ -78,6 +79,37 @@ public class Maincontainer extends JFrame{
         if (gamePanel != null && gamePanel.getParent() != null) mainPanel.remove(gamePanel);
         enterStart();
     }
+
+    void enterLocalBattleModes() {
+        LocalBattleModePanel modes = new LocalBattleModePanel(this::enterLocalBattle, this::returnFromLocalBattle);
+        showLocalBattleCard(modes, "LocalBattleModes");
+        modes.focusChoice(0);
+    }
+
+    private void enterLocalBattle(GameMode mode) {
+        localBattlePanel = new LocalBattlePanel(this, mode, this::returnFromLocalBattle);
+        showLocalBattleCard(localBattlePanel, "LocalBattle");
+        localBattlePanel.startMatch();
+        localBattlePanel.requestFocusInWindow();
+    }
+
+    private void showLocalBattleCard(JPanel screen, String name) {
+        mainPanel.removeAll();
+        mainPanel.add(screen, name);
+        cardLayout.show(mainPanel, name);
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
+    private void returnFromLocalBattle() {
+        if (localBattlePanel != null) {
+            localBattlePanel.stopMatch();
+            localBattlePanel = null;
+        }
+        mainPanel.removeAll();
+        enterStart();
+    }
+
     protected void exitGameEnterScoreboard(String name, int score, seoultech.se.tetris.Difficulty difficulty) {
         exitGameEnterScoreboard(name, score, difficulty, null);
     }

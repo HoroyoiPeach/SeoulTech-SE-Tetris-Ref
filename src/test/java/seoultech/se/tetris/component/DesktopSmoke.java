@@ -134,6 +134,24 @@ public final class DesktopSmoke {
 
     private static void configureAndRender(Maincontainer frame, Path evidence,
             String size, String palette, String mode, String screenshot) throws Exception {
+        applyDisplaySetting(frame, size, palette);
+
+        frame.exitStartEnterGame(mode);
+        Gamepanel game = (Gamepanel) field(frame, "gamePanel");
+        GameController controller = game.controller();
+        controller.timer().stop();
+        int originalY = controller.snapshot().y();
+        key(game, Maincontainer.DOWN);
+        check(controller.snapshot().y() == originalY + 1 && controller.snapshot().score() == 1,
+            palette + " representative game must accept synthetic movement");
+        capture(frame, evidence.resolve(screenshot));
+        key(game, KeyEvent.VK_ESCAPE);
+        check(game.getParent() == null && !controller.timer().isRunning(),
+            palette + " representative game must cleanly return to the menu");
+    }
+
+    private static void applyDisplaySetting(Maincontainer frame, String size, String palette)
+            throws Exception {
         frame.exitStartEnterSetting();
         for (int attempt = 0; attempt < 3 && !frame.setting.getWindowSize().equals(size); attempt++) {
             frame.setting.nextWindowSize();
@@ -155,19 +173,6 @@ public final class DesktopSmoke {
         check(frame.setting.getColorPalette().equals(palette)
                 && Maincontainer.colorPalette.equals(palette),
             "actual frame must apply configured palette " + palette);
-
-        frame.exitStartEnterGame(mode);
-        Gamepanel game = (Gamepanel) field(frame, "gamePanel");
-        GameController controller = game.controller();
-        controller.timer().stop();
-        int originalY = controller.snapshot().y();
-        key(game, Maincontainer.DOWN);
-        check(controller.snapshot().y() == originalY + 1 && controller.snapshot().score() == 1,
-            palette + " representative game must accept synthetic movement");
-        capture(frame, evidence.resolve(screenshot));
-        key(game, KeyEvent.VK_ESCAPE);
-        check(game.getParent() == null && !controller.timer().isRunning(),
-            palette + " representative game must cleanly return to the menu");
     }
 
     private static void verifyConfiguredCanvas(JFrame frame, java.awt.Dimension expected) throws Exception {
@@ -377,6 +382,13 @@ public final class DesktopSmoke {
                     "final-900x750-deuteranopia-classic.png");
                 configureAndRender(frame, evidence, "600X500", "Tritanopia", "Item",
                     "final-600x500-tritanopia-item.png");
+                for (String size : java.util.List.of("600X500", "750X625", "900X750")) {
+                    for (String palette : java.util.List.of(
+                            "Normal", "Protanopia", "Deuteranopia", "Tritanopia")) {
+                        applyDisplaySetting(frame, size, palette);
+                        LocalBattleDesktopSmoke.verifyDisplay(frame, size, palette);
+                    }
+                }
 
                 frame.exitStartEnterSetting();
                 frame.setting.clearSetting();
@@ -390,7 +402,7 @@ public final class DesktopSmoke {
                         && frame.getConfiguredHeight() == 600,
                     "desktop smoke must restore global settings before exit");
                 Files.writeString(evidence.resolve("result.txt"),
-                    "PASS real JFrame, menu loop, repeated input, pause/resume, active exit, P item/preview/300-point lock/ten-row supply, settings save/reload, ranking/reset, game-over to scoreboard, mode filters and mode-specific qualification/save/reload; saved B hard-drop applied after frame recreation; Hard Item P lock/game-over/metadata/menu return; all 3 configured sizes and all 4 palettes rendered across representative Classic/Item games with synthetic movement\n"
+                    "PASS real JFrame, menu loop, repeated input, pause/resume, active exit, P item/preview/300-point lock/ten-row supply, settings save/reload, ranking/reset, game-over to scoreboard, mode filters and mode-specific qualification/save/reload; saved B hard-drop applied after frame recreation; Hard Item P lock/game-over/metadata/menu return; all 3 configured sizes and all 4 palettes rendered across representative Classic/Item games and the complete local-battle 3x4 display matrix\n"
                     + "OS=" + System.getProperty("os.name") + " " + System.getProperty("os.version")
                     + " arch=" + System.getProperty("os.arch") + " Java=" + System.getProperty("java.version") + "\n"
                     + "Input=synthetic KeyListener events; physical keyboard and clean target installation remain separate\n");
@@ -410,5 +422,6 @@ public final class DesktopSmoke {
             }
         });
         if (failure.get() != null) throw new AssertionError("Desktop smoke failed", failure.get());
+        LocalBattleDesktopSmoke.main(args);
     }
 }

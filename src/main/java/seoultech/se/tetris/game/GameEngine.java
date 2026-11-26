@@ -157,6 +157,11 @@ public final class GameEngine {
             snapshotEffect());
     }
 
+    /** Scheduling metadata for a coordinator that already owns this engine. */
+    OptionalLong nextWakeupNanos() {
+        return nextWakeup();
+    }
+
     private GameUpdate dropOne() {
         if (canDown()) {
             state.y++;
