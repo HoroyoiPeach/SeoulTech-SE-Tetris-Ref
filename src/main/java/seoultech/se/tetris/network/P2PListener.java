@@ -13,6 +13,9 @@ public interface P2PListener {
 
     default void onPacketReceived(P2PPacket packet) {}
 
+    /** Receives a version 1 match frame. Throw IllegalArgumentException for an invalid payload. */
+    default void onMatchFrame(String payload) {}
+
     default void onSeedReceived(long seed) {}
 
     default void onModeProposed(String mode) {}

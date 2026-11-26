@@ -55,7 +55,7 @@ public final class LocalBattleDesktopSmoke {
         return find(root, Component.class, component -> name.equals(component.getName()));
     }
 
-    private static JButton button(Component root, String text) {
+    static JButton button(Component root, String text) {
         return find(root, JButton.class, candidate -> text.equals(candidate.getText()));
     }
 

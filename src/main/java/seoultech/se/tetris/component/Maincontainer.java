@@ -80,20 +80,29 @@ public class Maincontainer extends JFrame{
         enterStart();
     }
 
+    void enterP2PBattle() {
+        P2PPanel panel = new P2PPanel(getDifficulty(), getTimeLimitSeconds(), P2PPanel.PORT, () -> {
+            mainPanel.removeAll();
+            enterStart();
+        });
+        showBattleCard(panel, "P2P");
+        panel.focusSetup();
+    }
+
     void enterLocalBattleModes() {
         LocalBattleModePanel modes = new LocalBattleModePanel(this::enterLocalBattle, this::returnFromLocalBattle);
-        showLocalBattleCard(modes, "LocalBattleModes");
+        showBattleCard(modes, "LocalBattleModes");
         modes.focusChoice(0);
     }
 
     private void enterLocalBattle(GameMode mode) {
         localBattlePanel = new LocalBattlePanel(this, mode, this::returnFromLocalBattle);
-        showLocalBattleCard(localBattlePanel, "LocalBattle");
+        showBattleCard(localBattlePanel, "LocalBattle");
         localBattlePanel.startMatch();
         localBattlePanel.requestFocusInWindow();
     }
 
-    private void showLocalBattleCard(JPanel screen, String name) {
+    private void showBattleCard(JPanel screen, String name) {
         mainPanel.removeAll();
         mainPanel.add(screen, name);
         cardLayout.show(mainPanel, name);

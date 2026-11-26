@@ -50,7 +50,7 @@ public final class RefactoringRegressionTest {
     private static final String MARKER = ".refactoring-test-sandbox";
     private static final String DEFAULT_KEYS = "ROTATE=38,DOWN=40,LEFT=37,RIGHT=39,PAUSE=80,HARD_DROP=32";
     private static final String CUSTOM_KEYS = "ROTATE=87,DOWN=40,LEFT=37,RIGHT=39,PAUSE=80,HARD_DROP=32";
-    private static final String[] START_LABELS = {"CLASSIC", "ITEM", "LOCAL BATTLE", "MENU", "SCORE", "EXIT"};
+    private static final String[] START_LABELS = {"CLASSIC", "ITEM", "LOCAL BATTLE", "P2P BATTLE", "MENU", "SCORE", "EXIT"};
     private static final String[] SETTING_LABELS = {"Window Option: ", "Change Keys", "Reset Scoreboard", "Color Option: ", "Difficulty: ", "Time Limit (sec): ", "Reset setting", "Save and Exit"};
     private static final String[] KEY_LABELS = {"Rotate: ", "Down: ", "Left: ", "Right: ", "Pause: ", "Hard Drop: ", "Save and Exit"};
 
@@ -247,10 +247,12 @@ public final class RefactoringRegressionTest {
         press(start, KeyEvent.VK_DOWN);
         press(start, KeyEvent.VK_DOWN);
         press(start, KeyEvent.VK_DOWN);
+        press(start, KeyEvent.VK_DOWN);
         press(start, KeyEvent.VK_ENTER);
         require(((JPanel) get(owner, "scoreboardPanel")).getParent() == root, "SCORE에서 Enter를 누르면 점수판이 열려야 합니다.");
         owner.exitScoreboardEnterStart();
         start = (Startpanel) get(owner, "startPanel");
+        press(start, KeyEvent.VK_DOWN);
         press(start, KeyEvent.VK_DOWN);
         press(start, KeyEvent.VK_DOWN);
         press(start, KeyEvent.VK_DOWN);
@@ -341,7 +343,8 @@ public final class RefactoringRegressionTest {
         press(first, KeyEvent.VK_DOWN);
         press(first, KeyEvent.VK_DOWN);
         press(first, KeyEvent.VK_DOWN);
-        assertSelection(firstButtons, 4);
+        press(first, KeyEvent.VK_DOWN);
+        assertSelection(firstButtons, 5);
         assertSelection(secondButtons, 0);
         press(first, KeyEvent.VK_ENTER);
         require(((JPanel) get(owner, "scoreboardPanel")).getParent() == root, "첫 화면의 Enter가 첫 화면에서 선택한 SCORE를 실행해야 합니다.");

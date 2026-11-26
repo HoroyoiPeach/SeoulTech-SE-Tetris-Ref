@@ -1,279 +1,31 @@
-# `P2PNetworkManager` 그래픽 인터페이스(GUI) 연동 명세서
+# P2P 대전 연결과 경기 동기화
 
-작성: 2026-11-23 · 대상 모듈: `seoultech.se.tetris.network`
+두 PC에서 같은 버전을 실행한다. 호스트가 두 보드의 이동·공격·시간·승패를 계산한다. 클라이언트는 자기 PC의 키 설정을 게임 명령으로 바꿔 보내고, 호스트가 보낸 결과를 그린다. 두 사람 모두 화면 왼쪽에서 자기 보드를 본다.
 
-이 문서는 Java Swing 기반 게임 화면(`Startpanel`, `Networkpanel`, `Multigamepanel`)에서 [P2PNetworkManager](../src/main/java/seoultech/se/tetris/network/P2PNetworkManager.java)를 연결해 사용하기 위한 **화면 흐름, 상태 전이, UI 배치, 이벤트 매핑 및 Swing EDT 연동 규칙**을 정의한다.
+## 접속부터 재대전까지
 
----
+1. 시작 메뉴에서 양쪽 모두 `P2P BATTLE`을 선택한다. 한쪽이 `HOST GAME`을 누르면 대기 화면에 네트워크별 접속 주소와 TCP 포트 30000이 표시된다. 두 PC가 함께 연결된 Wi-Fi 또는 유선망의 IP를 사용한다.
+2. 상대는 이 IP를 입력하고 `JOIN GAME`을 누른다. 접속에 성공해 로비가 열렸을 때 주소를 저장한다. 다음 실행 때 해당 주소가 입력란에 나타난다.
+3. 호스트가 Classic·Item·Time Limit 중 하나를 고른다. 모드를 변경하면 양쪽의 준비가 초기화된다. 둘 다 `START`를 눌러야 첫 블록이 떨어진다.
+4. 경기가 끝나면 두 사람 모두 연결된 로비에서 자기 승패를 확인한다. 결과는 다음 경기를 시작할 때까지 표시된다. 두 사람이 다시 `START`를 누르면 새 판이 열린다. 연결을 종료하면 상대 화면에도 종료 사유가 표시된다.
 
-## 1. 전체 GUI–네트워크 연동 아키텍처
+## 코드에서 따라가기
 
-`P2PNetworkManager`는 Swing 컴포넌트나 `GameEngine`을 직접 참조하지 않는다. 모든 연동은 **Swing EDT(Event Dispatch Thread)** 상에서 `javax.swing.Timer(17ms)`의 `poll()` 호출과 `P2PListener` 콜백으로만 이루어진다.
-
-```mermaid
-flowchart LR
-    Start["Startpanel (Network 버튼)"] --> Net["Networkpanel (서버/클라이언트 로비)"]
-    Net -->|"연결 완료 + 모드 합의 + 시드 교환"| Multi["Multigamepanel (대전 화면)"]
-
-    subgraph EDT["Swing EDT (단일 스레드, 17ms / 60Hz)"]
-        LocalInput["로컬 키 입력 · 중력 틱"] --> LocalBoard["로컬 Board / GameEngine"]
-        LocalInput -->|"sendGameplayInput(keyCode, state)"| P2P["P2PNetworkManager"]
-        PollTimer["Swing Timer (17ms)"] -->|"poll()"| P2P
-        P2P -->|"P2PListener 콜백"| Multi
-        Multi -->|"원격 입력 전달"| RemoteBoard["원격 Board / GameEngine"]
-        P2P -->|"RTT · 연결상태"| StatusHUD["상단 상태 배지 · 일시정지 오버레이"]
-    end
-
-    P2P <-->|"TCP (Non-blocking, JSON)"| Peer["상대방 P2PNetworkManager"]
-```
-
----
-
-## 2. 연결 상태 머신 (`P2PConnectionState`) 및 Exception Flow
-
-GUI는 `P2PNetworkManager.getConnectionState()`와 `P2PListener` 콜백을 기준으로 화면 오버레이와 게임 진행 상태를 제어한다.
-
-```mermaid
-stateDiagram-v2
-    [*] --> DISCONNECTED
-    DISCONNECTED --> LISTENING : "startServer(bindHost, port)"
-    DISCONNECTED --> CONNECTED : "connect(host, port)"
-    LISTENING --> CONNECTED : "poll() -> accept 성공 / onConnected()"
-
-    CONNECTED --> PAUSED : "무응답 >= 999ms / onPauseRequested()"
-    PAUSED --> CONNECTED : "10,000ms 이내 패킷 수신 / onResumeRequested()"
-    PAUSED --> DISCONNECTED : "무응답 >= 10,000ms / onDisconnectRequested(TIMEOUT)"
-
-    CONNECTED --> DISCONNECTED : "close() 또는 상대 종료 / onDisconnectRequested()"
-    LISTENING --> DISCONNECTED : "대기 취소 close()"
-```
-
-| 상태 / 콜백 | GUI 화면 동작 |
+| 책임 | 구현 |
 |---|---|
-| `LISTENING` | 서버 대기 화면 표시 (`내부 IP : 30000` 표시, 취소 버튼 활성화) |
-| `onConnected()` | 로비 모드 선택 화면으로 전환 |
-| `CONNECTED` | 정상 게임 진행, 상단 배지에 `CONNECTED` 및 `RTT (ms)` 표시 |
-| `onPauseRequested(silenceMs)` | **즉시 로컬/원격 게임 타이머 정지**, 반투명 오버레이 `"상대방 응답 대기 중... (재연결 대기)"` 표시 |
-| `onResumeRequested()` | 일시정지 오버레이 제거, **게임 타이머 재개** |
-| `onDisconnectRequested(reason)` | 폴링 타이머 및 게임 중지, 사유별 안내 다이얼로그(`TIMEOUT` / `PEER_DISCONNECTED` / `IO_ERROR`) 표시 후 `Networkpanel` 또는 `Startpanel`로 복귀 |
+| 화면·키 입력 | `P2PPanel`이 역할 선택·로비·경기·결과를 표시한다. `BattlePlayerView`가 보드·다음 블록·공격 예고·점수를 그린다. Swing 화면 갱신은 EDT에서 처리한다. |
+| 경기 진행 | `P2PBattleSession`은 전용 스레드에서 연결 상태·수신 메시지·게임 명령을 순서대로 처리한다. 주소 조회와 접속 시도는 별도로 실행해 연결 대기 중에도 취소할 수 있다. 호스트만 `BattleMatch`를 실행한다. |
+| 통신 | `P2PNetworkManager`가 하나의 TCP 연결에서 기존 JSON 하트비트와 버전 1 경기 프레임을 처리한다. `BattleMessageCodec`은 경기 메시지를 길이가 제한된 이진 형식으로 기록하고 Base64로 인코딩한다. |
 
----
-
-## 3. Normal Flow 시퀀스 (로비 → 게임 진행 → 종료)
-
-```mermaid
-sequenceDiagram
-    participant S_UI as "Server GUI"
-    participant S_NET as "Server P2PNetworkManager"
-    participant C_NET as "Client P2PNetworkManager"
-    participant C_UI as "Client GUI"
-
-    S_UI->>S_NET: startServer(ip, 30000)
-    Note over S_UI: 대기 화면 표시 (LISTENING)
-    C_UI->>C_NET: connect(serverIp, 30000)
-    S_NET-->>S_UI: onConnected()
-    C_NET-->>C_UI: onConnected()
-
-    Note over S_UI,C_UI: 모드 선택 및 상대방 동의 단계
-    S_UI->>S_NET: sendModeProposal("Classic")
-    S_NET->>C_NET: TCP JSON (STATE_MODE_PROPOSE)
-    C_NET-->>C_UI: onModeProposed("Classic")
-    C_UI->>C_NET: sendModeAgreement(true)
-    C_NET->>S_NET: TCP JSON (STATE_MODE_AGREE)
-    S_NET-->>S_UI: onModeAgreed(true)
-
-    Note over S_UI,C_UI: 랜덤 블록 시드 공유
-    S_UI->>S_NET: sendSeed(serverSeed)
-    C_UI->>C_NET: sendSeed(clientSeed)
-    C_NET-->>C_UI: onSeedReceived(serverSeed)
-    S_NET-->>S_UI: onSeedReceived(clientSeed)
-
-    Note over S_UI,C_UI: Multigamepanel 시작 (17ms 주기 poll)
-    loop 매 17ms (60Hz)
-        S_UI->>S_NET: sendGameplayInput(keyCode, stateFlags)
-        S_NET->>C_NET: TCP JSON (KeyCode, State, Client/Server_time)
-        C_NET-->>C_UI: onPacketReceived(packet)
-        Note over C_UI: 원격 보드에 keyCode / state 반영
-    end
-
-    Note over S_NET,C_NET: 500ms 유휴 시 자동 Ping/Pong -> 양측 onRttUpdated(rttMs)
-    S_UI->>S_NET: close()
-    S_NET->>C_NET: TCP JSON (STATE_DISCONNECT)
-    C_NET-->>C_UI: onDisconnectRequested(PEER_DISCONNECTED)
-```
-
----
-
-## 4. 화면별 그래픽 인터페이스 명세
-
-### 4.1 `Startpanel` 진입점
-
-- 기존 메뉴 버튼(`CLASSIC`, `ITEM`, `SCORE`, `MENU` 등)에 **`NETWORK`** 버튼을 추가한다.
-- 클릭/Enter 시 `Maincontainer`에 `Networkpanel` 전환을 요청한다.
-
-### 4.2 `Networkpanel` (로비 화면)
-
-#### (1) 역할 선택 및 연결 화면
-
-```text
-+------------------------------------------------------+
-|                 P2P NETWORK BATTLE                   |
-|                                                      |
-|   [  SERVER (방 만들기)  ]   [  CLIENT (접속하기)  ]   |
-|                                                      |
-|  --- SERVER 선택 시 ---       --- CLIENT 선택 시 ---   |
-|  내 내부 IP: 192.168.x.x      서버 IP: [ 192.168.__ ] |
-|  포트 번호 : 30000            포트   : [ 30000      ] |
-|  상태      : 접속 대기 중...   최근 IP: [192.168.0.5 ] |
-|  [ 대기 취소 ]                [ 접속 ]  [ 뒤로 ]      |
-+------------------------------------------------------+
-```
-
-| UI 요소 | 호출 메서드 / 데이터 출처 | 비고 |
-|---|---|---|
-| `내 내부 IP` 라벨 | `P2PNetworkManager.resolveLocalInternalIp()` | 서버가 상대에게 공유할 내부 IP 표시 |
-| `SERVER` 시작 버튼 | `p2p.startServer(30000)` 또는 `startServer(bindIp, 30000)` | 17ms `Swing Timer`로 `p2p.poll()` 시작 |
-| `CLIENT` 접속 버튼 | `p2p.connect(host, port)` | 실패(`IOException`) 시 오류 메시지 라벨 표시 |
-| `대기 취소` / `뒤로` | `pollTimer.stop(); p2p.close();` | 소켓 및 타이머 즉시 해제 |
-
-#### (2) 모드 선택 및 상대방 동의 대기 화면
-
-```text
-+------------------------------------------------------+
-|            CONNECTED (RTT: 4.2 ms)                   |
-|                                                      |
-|   모드 선택 (서버): (o) Classic  ( ) Item  ( ) Time   |
-|   상대방 상태     : [ 동의 대기 중 / 동의 완료 ]       |
-|                                                      |
-|   (클라이언트 측 표시)                                 |
-|   제안된 모드: Classic        [ 동의 ]   [ 거절 ]     |
-+------------------------------------------------------+
-```
-
-| 동작 | 호출 메서드 | 수신 콜백 |
-|---|---|---|
-| 서버가 모드 확정 | `p2p.sendModeProposal(modeName)` | 클라이언트: `onModeProposed(mode)` |
-| 클라이언트가 동의/거절 | `p2p.sendModeAgreement(true / false)` | 서버: `onModeAgreed(agreed)` |
-| 양측 합의 완료 시 | 양측 모두 `p2p.sendSeed(mySeed)` 호출 | 상대방: `onSeedReceived(peerSeed)` |
-| 시드 수신 완료 시 | `Multigamepanel` 생성 (내 시드 + 상대 시드 전달) | 게임 루프 시작 |
-
----
-
-### 4.3 `Multigamepanel` (대전 게임 화면)
-
-```text
-+-------------------------------------------------------------------+
-|  MODE: Classic   |   NET: CONNECTED   |   RTT: 6.4 ms   | [MENU]  |
-+-------------------------------------------------------------------+
-|  +------------------+   +----+   +------------------+             |
-|  |                  |   |공격|   |                  |  [NEXT]     |
-|  |   LOCAL BOARD    |   |대기|   |   REMOTE BOARD   |  +------+   |
-|  |  (내 키 입력)     |   |10줄|   | (소켓 패킷 입력)  |  |      |   |
-|  |                  |   |스택|   |                  |  +------+   |
-|  |                  |   |    |   |                  |  SCORE:     |
-|  +------------------+   +----+   +------------------+  001200     |
-+-------------------------------------------------------------------+
-|  [예외 발생 시 중앙 반투명 오버레이]                                  |
-|   PAUSED: 상대방 응답 없음 (999ms 초과) — 최대 10초 대기 중...        |
-+-------------------------------------------------------------------+
-```
-
-#### 데이터 송신 규칙 (로컬 → 소켓)
-
-로컬 플레이어의 키 입력 또는 중력 낙하로 블록 동작이 발생할 때마다 즉시 패킷을 전송한다.
-
-| 로컬 이벤트 | 전송 코드 |
+| 메시지 | 방향과 의미 |
 |---|---|
-| 좌/우/하/회전/하드드롭 이동 | `p2p.sendGameplayInput(keyCode, P2PPacket.STATE_NONE)` |
-| 블록 고정 및 다음 블록 전환 | `p2p.sendGameplayInput(keyCode, P2PPacket.STATE_CURR_CHANGED)` |
-| 블록 고정 + 레벨업 동시 발생 | `p2p.sendGameplayInput(keyCode, P2PPacket.STATE_CURR_CHANGED \| P2PPacket.STATE_LEVEL_UP)` |
-| 로컬 게임오버 발생 | `p2p.sendGameplayInput(0, P2PPacket.STATE_GAME_OVER)` |
+| `Lobby`, `Ready` | 호스트가 판 번호·모드·양쪽 준비 상태를 알린다. 준비 버튼과 게임 키는 화면에 보이는 판 번호를 사용한다. 호스트가 모드를 변경하면 이전 화면에서 누른 준비는 무효가 된다. |
+| `Input`, `State` | 게스트가 현재 판의 이동·회전·낙하·일시정지 명령을 보낸다. 호스트는 상태가 바뀔 때 양쪽 보드·공격 예고·남은 시간·결과를 보낸다. 지난 판 입력은 버린다. |
+| `Rematch` | 게스트가 최종 상태 수신을 알린다. 호스트는 승패가 결정될 때 다음 판의 로비를 열며, 지난 판의 복귀 요청은 무시한다. |
+| `Link`, `LinkAck` | 한쪽에서 감지한 지연을 상대에게도 알린다. 호스트는 게스트가 경고를 수신했음을 확인한 뒤 새 입력을 받으므로, 지연 전에 밀려 있던 키가 복구 직후 한꺼번에 적용되지 않는다. |
 
-> **참고**: `sendGameplayInput(...)`을 호출하면 500ms 유휴 하트비트 타이머가 자동으로 초기화된다. 별도로 빈 패킷을 수동 전송할 필요가 없다.
+## 지연·단절 판정
 
-#### 데이터 수신 규칙 (소켓 → 원격 보드)
+패킷을 계속 받더라도 측정한 왕복시간이 999ms 이상이면 지연 안내를 띄우면서 경기를 계속한다. 왕복시간이 기준 아래로 회복되면 안내가 사라진다. 마지막 정상 수신 후 999ms가 지나면 양쪽에 지연을 알리고 경기 진행을 멈춘다. 호스트의 경기 시계도 그동안 멈춘다. 어느 한 방향만 느릴 때는 살아 있는 방향으로 경고를 전달한다. 양방향 통신이 회복되면 같은 판을 이어 간다. 10,000ms 이상이면 늦게 도착한 입력을 적용하기 전에 연결을 닫고 처음 접속 화면으로 돌아간다.
 
-매 17ms(60Hz)마다 `p2p.poll()`을 호출하면 수신된 유효 게임 패킷이 FIFO 순서로 `onPacketReceived(P2PPacket packet)` 및 `poll()` 반환 리스트로 전달된다.
-
-- `packet.keyCode()`: 원격 보드에 전달할 키코드 (`VK_LEFT`, `VK_RIGHT`, `VK_UP`, `VK_DOWN`, `VK_SPACE` 등)
-- `packet.hasState(P2PPacket.STATE_CURR_CHANGED)`: 상대 블록 고정/전환 동기화 확인
-- `packet.hasState(P2PPacket.STATE_LEVEL_UP)`: 상대 레벨업 상태 확인
-- `packet.hasState(P2PPacket.STATE_GAME_OVER)`: 상대 게임오버 판정 트리거
-- `packet.timestamp()`: 상대 세션 기준 경과 시간(ms, `float`)
-
----
-
-## 5. Swing EDT 연동 코드 예시
-
-```java
-P2PConfig config = P2PConfig.defaults(); // 17ms poll, 500ms heartbeat, 999ms pause, 10000ms disconnect
-
-P2PListener listener = new P2PListener() {
-    @Override
-    public void onConnected() {
-        showModeSelectionScreen();
-    }
-
-    @Override
-    public void onModeProposed(String mode) {
-        updateProposedModeLabel(mode);
-    }
-
-    @Override
-    public void onModeAgreed(boolean agreed) {
-        if (agreed) {
-            p2p.sendSeed(localSeed);
-        }
-    }
-
-    @Override
-    public void onSeedReceived(long peerSeed) {
-        startMultiGameIfReady(localSeed, peerSeed);
-    }
-
-    @Override
-    public void onPacketReceived(P2PPacket packet) {
-        remoteBoard.applyRemoteInput(packet.keyCode(), packet.state());
-    }
-
-    @Override
-    public void onRttUpdated(float rttMillis) {
-        rttLabel.setText(String.format("RTT: %.1f ms", rttMillis));
-    }
-
-    @Override
-    public void onPauseRequested(long silenceMillis) {
-        pauseLocalAndRemoteTimers();
-        showNetworkPauseOverlay("상대방 응답 대기 중...");
-    }
-
-    @Override
-    public void onResumeRequested() {
-        hideNetworkPauseOverlay();
-        resumeLocalAndRemoteTimers();
-    }
-
-    @Override
-    public void onDisconnectRequested(P2PDisconnectReason reason) {
-        pollTimer.stop();
-        stopGameAndShowDisconnectDialog(reason);
-    }
-};
-
-P2PNetworkManager p2p = new P2PNetworkManager(config, listener);
-
-// 60Hz (17ms) 단일 스레드 폴링 타이머 — Swing EDT에서 실행
-javax.swing.Timer pollTimer = new javax.swing.Timer((int) config.pollIntervalMs(), e -> {
-    p2p.poll();
-});
-pollTimer.start();
-```
-
----
-
-## 6. 구현 시 필수 준수 사항
-
-1. **단일 스레드(EDT) 호출 원칙**: `P2PNetworkManager`의 `poll()`, `send*()`, `close()`는 모두 Swing EDT에서 직렬 호출한다. 별도 수신 스레드를 만들지 않는다.
-2. **화면 이탈 시 리소스 정리**: `Multigamepanel`이나 `Networkpanel`에서 메뉴로 돌아가거나 창을 닫을 때 반드시 `pollTimer.stop()` 후 `p2p.close()`를 호출하여 포트(`30000`)와 소켓을 즉시 반환한다.
-3. **종료 후 재사용 금지**: `DISCONNECTED` 상태가 된 연결을 다시 시작할 때는 새 `P2PNetworkManager`를 생성하거나 `startServer()` / `connect()`를 새로 호출한다.
-4. **클라이언트 접속 블로킹 주의**: `connect(host, port, connectTimeoutMs)`는 최초 TCP 핸드셰이크 동안 최대 `connectTimeoutMs`만큼 대기할 수 있으므로, 외부 IP(NAT) 접속 시 UI 프리징을 피하려면 접속 시도 단계만 `SwingWorker`로 실행하고 연결 완료(`onConnected`) 이후의 모든 `poll()`/`send*()`는 EDT에서 수행하는 것을 권장한다.
+`P2PBattleSessionIntegrationTest`는 실제 TCP 소켓으로 접속부터 재대전·재접속까지 검증한다. `P2PPanelTest`는 두 화면의 버튼과 키 입력을 통해 같은 흐름을 검사한다. 최종 LAN 200ms 검증은 서로 다른 두 PC에서 각 방향의 **입력부터 상대 화면 표시까지** 측정한다. 이전 통신 기반 검증 결과는 [통신 검증 기록](p2p-network-verification.md)에 있다.

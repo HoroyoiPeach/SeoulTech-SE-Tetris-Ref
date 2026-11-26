@@ -34,13 +34,13 @@ class DifficultyUiTest {
     }
 
     @Test
-    void startMenuKeepsSixActionsAndSavedDifficultyRoundTrips() throws Exception {
+    void startMenuKeepsSevenActionsAndSavedDifficultyRoundTrips() throws Exception {
         System.setProperty("tetris.dataDir", temporary.toString());
         TestMaincontainer owner = owner();
         Startpanel start = new Startpanel(owner);
 
-        assertEquals(6, menuSize(start));
-        for (String action : List.of("CLASSIC", "ITEM", "LOCAL BATTLE", "MENU", "SCORE", "EXIT")) {
+        assertEquals(7, menuSize(start));
+        for (String action : List.of("CLASSIC", "ITEM", "LOCAL BATTLE", "P2P BATTLE", "MENU", "SCORE", "EXIT")) {
             assertEquals(action, label(start, action).getText());
         }
 
