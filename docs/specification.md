@@ -1,18 +1,6 @@
 # 게임 동작 및 아이템 명세
 
-이 문서는 평가자가 게임의 예상 동작을 코드와 대조할 수 있도록 현재 구현 정책을 정리한다.
-
-- 현재 구현 기준 커밋: `154fd097deff2675e7030f607b0ceeb35b9e69c5`
-- 제품 동작의 근거: 현재 소스와 자동 테스트
-- 사용자와 별도로 확정한 정책: P 아이템의 형태·발동·점수, 5종 균등 선택, 10줄 공급권 누적
-- 최종 제출 OS: macOS 26 이상
-- 공개 제출 버전: [`v0.1.0-req2.3`](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)
-
-이 문서는 게임이 어떻게 동작하는지를 정의한다.
-
-자동·수동 검증 결과는 검증 보고서에서 다룬다.
-
-팀의 결정 과정은 프로젝트 관리 기록에서 다룬다.
+이 문서는 1인 게임과 대전에서 기대할 동작을 정리한다. 평가할 버전과 검사 결과는 [최종 인수 기록](final-acceptance.md), 요구사항별 코드와 테스트는 [3차 체크리스트](requirements-3-checklist.md)에서 확인한다.
 
 ## 1. 화면과 게임 흐름
 
@@ -24,6 +12,8 @@
 |---|---|
 | `CLASSIC` | 일반 블록만 사용하는 Classic 게임 시작 |
 | `ITEM` | 줄 누계에 따라 아이템을 공급하는 Item 게임 시작 |
+| `LOCAL BATTLE` | 한 PC에서 2인 대전 모드 선택 |
+| `P2P BATTLE` | 두 PC 대전을 위한 호스트·클라이언트 접속 화면 |
 | `MENU` | 설정 화면 열기 |
 | `SCORE` | 전체·Classic·Item 순위 화면 열기 |
 | `EXIT` | 프로그램 종료 |
@@ -31,7 +21,7 @@
 메뉴는 위·아래 방향키로 이동하고 Enter로 선택한다.
 근거는 [Startpanel](../src/main/java/seoultech/se/tetris/component/Startpanel.java#L28)이다.
 
-### 1.2 게임 화면
+### 1.2 1인 게임 화면
 
 - 보드는 20행 × 10열이다.
 - 보드와 다음 블록은 고정폭 문자 기반으로 표현한다.
@@ -40,7 +30,7 @@
 - 다음 미리보기의 객체가 다음 고정 이후 현재 블록으로 그대로 승계된다.
 - 새 블록을 생성 위치에 놓을 수 없으면 게임오버가 된다.
 
-근거: [Board](../src/main/java/seoultech/se/tetris/component/Board.java#L43), [Gamepanel](../src/main/java/seoultech/se/tetris/component/Gamepanel.java#L109), [Nextblockpanel](../src/main/java/seoultech/se/tetris/component/Nextblockpanel.java#L88).
+[보드 렌더링](../src/main/java/seoultech/se/tetris/component/Board.java) · [게임 화면](../src/main/java/seoultech/se/tetris/component/Gamepanel.java) · [다음 블록 미리보기](../src/main/java/seoultech/se/tetris/component/Nextblockpanel.java)
 
 ### 1.3 화면 크기
 
@@ -55,11 +45,11 @@
 
 설정 저장 후 설정 화면에서 나올 때 새 크기를 적용한다.
 게임 패널은 선택한 너비와 높이를 유지한다. 제목 표시줄과 작업 표시줄을 제외한 공간에 패널이 들어가지 않으면, 창을 해당 모니터의 작업 영역 안에 배치하고 스크롤로 패널 끝까지 이동할 수 있게 한다.
-근거: [Maincontainer 설정 적용](../src/main/java/seoultech/se/tetris/component/Maincontainer.java#L124), [설정 후보](../src/main/java/seoultech/se/tetris/component/Maincontainer.java#L211).
+[창 크기와 설정 적용](../src/main/java/seoultech/se/tetris/component/Maincontainer.java)
 
 ## 2. 모드와 난이도
 
-### 2.1 게임 모드
+### 2.1 1인 게임 모드
 
 | 모드 | 블록 구성 | 순위 |
 |---|---|---|
@@ -69,6 +59,19 @@
 두 모드 모두 설정에서 선택한 Easy·Normal·Hard 난이도를 사용한다.
 난이도는 낙하 속도와 일반 블록 생성 확률에 적용된다.
 아이템 5종의 선택 확률에는 난이도를 적용하지 않는다.
+
+### 대전 모드
+
+로컬과 P2P 대전 모두 일반·아이템·시간제한 중 하나를 고른다. 두 보드는 각각 점수, 다음 블록, 받을 공격을 보여 준다. 대전 점수는 1인 순위표에 기록되지 않는다.
+
+| 상황 | 판정 |
+|---|---|
+| 일반 블록 하나로 2줄 이상 완성 | 삭제 직전 행에서 마지막 블록이 채운 칸을 구멍으로 남겨 상대에게 보낸다. 받은 공격은 대기열 아래에 붙고 10줄을 넘는 부분은 버린다. 상대의 현재 블록 처리가 끝나고 다음 블록을 만들기 직전에 보드 아래에 적용한다. |
+| 아이템 블록 배치 | 같은 배치에서 완성된 일반 행까지 점수·줄 누계에는 반영한다. 이 배치에서 보내는 공격은 0줄이다. |
+| 새 블록을 쌓을 수 없음 | 상대가 승리한다. 같은 판정 시점에 둘 다 쌓을 수 없으면 무승부다. |
+| 시간제한 만료 | 높은 점수가 승리하고 동점이면 무승부다. 사용자가 일시정지해도 시계는 흐른다. P2P에서 통신이 멎어 양쪽 경기를 일시 중단한 시간은 제외한다. |
+
+세 모드의 공통 판정은 [BattleMatch 테스트](../src/test/java/seoultech/se/tetris/game/BattleMatchTest.java), 양쪽 준비·재대전·지연과 복구는 [P2P 동작 명세](p2p-network-gui-specification.md)에 정리돼 있다.
 
 ### 2.2 일반 블록 생성 확률
 
@@ -114,7 +117,7 @@ factor: Easy 0.8, Normal 1.0, Hard 1.2
 ```
 
 예를 들어 레벨 2/3의 간격은 Easy 827/669ms, Normal 793/618ms, Hard 761/574ms다.
-근거: [Difficulty](../src/main/java/seoultech/se/tetris/Difficulty.java#L6), [속도 회귀 테스트](../src/test/java/seoultech/se/tetris/component/Pr15BoardRegressionTest.java#L344).
+근거: [Difficulty](../src/main/java/seoultech/se/tetris/Difficulty.java#L6), [속도 회귀 테스트](../src/test/java/seoultech/se/tetris/DifficultyAcceptanceTest.java#L21).
 
 현재 코드의 설정 초기값은 **Easy**다.
 설정 파일이 없거나 난이도 값이 유효하지 않으면 이 초기값을 유지한다.
@@ -139,7 +142,7 @@ factor: Easy 0.8, Normal 1.0, Hard 1.2
 - 벽·바닥·고정 블록과 충돌하는 이동이나 회전은 적용하지 않는다.
   일반 블록 회전은 가능한 위치 보정을 거친다.
 
-근거: [기본 키](../src/main/java/seoultech/se/tetris/component/Maincontainer.java#L22), [키 변경 제약](../src/main/java/seoultech/se/tetris/component/Settingpanel.java#L307), [게임 입력](../src/main/java/seoultech/se/tetris/component/Gamepanel.java#L240).
+[기본 키](../src/main/java/seoultech/se/tetris/component/Maincontainer.java) · [키 변경 화면](../src/main/java/seoultech/se/tetris/component/Settingpanel.java) · [1인 게임 입력 처리](../src/main/java/seoultech/se/tetris/component/GameController.java#L74)
 
 ### 3.2 낙하와 고정
 
@@ -151,15 +154,14 @@ factor: Easy 0.8, Normal 1.0, Hard 1.2
 ### 3.3 일시정지·종료
 
 - Pause 키는 진행 중 게임을 정지하고 같은 키로 재개한다.
-- 일시정지 중 Enter는 현재 게임을 종료하고 시작 화면으로 돌아간다.
-- 진행 중 Esc 또는 화면의 `MENU` 버튼도 현재 게임을 종료한다.
-  단, Esc가 사용자가 변경한 게임 조작키와 겹치면 해당 조작이 우선한다.
-- 자발적으로 종료한 게임의 점수는 저장하지 않는다.
-- 게임오버 뒤 현재 모드의 순위 진입 대상일 때만 이름을 입력하고 기록을 저장한다.
+- 1인·로컬 대전은 일시정지 중 Enter, 진행 중 Esc, 또는 화면의 `MENU` 버튼으로 시작 화면에 돌아간다.
+- P2P 대전은 일시정지 중 Enter, 진행 중 Esc, 또는 `DISCONNECT` 버튼으로 접속을 끊고 P2P 접속 화면으로 돌아간다. 여기서 `MAIN MENU`를 누르면 시작 화면이 열린다.
+- 진행 중 Esc를 게임 조작키로 지정했다면 해당 조작이 우선한다.
+- 1인 게임은 게임오버 뒤 해당 모드의 순위에 들면 이름과 점수를 저장한다. 도중에 끝낸 판과 대전 점수는 순위에 기록하지 않는다.
 - 아이템 애니메이션 도중 정지하면 애니메이션 종료 후에도 정지 상태를 유지한다.
   게임 종료는 진행 중 애니메이션과 공급 대기를 취소한다.
 
-근거: [정지·종료 처리](../src/main/java/seoultech/se/tetris/component/Gamepanel.java#L186), [아이템 애니메이션 상태](../src/main/java/seoultech/se/tetris/component/Board.java#L487).
+[1인 종료](../src/main/java/seoultech/se/tetris/component/GameController.java) · [로컬 대전 종료](../src/main/java/seoultech/se/tetris/component/LocalBattlePanel.java) · [P2P 대전 종료](../src/main/java/seoultech/se/tetris/component/P2PPanel.java) · [아이템 애니메이션 상태](../src/main/java/seoultech/se/tetris/game/ItemEffectState.java)
 
 ## 4. 점수·줄·레벨
 
@@ -187,15 +189,12 @@ factor: Easy 0.8, Normal 1.0, Hard 1.2
 행 점수에는 레벨 배율을 적용하지 않는다.
 삭제한 각 행은 줄 누계에 1씩 더하고, 누계가 10의 배수가 될 때 레벨을 올린다.
 일반 완성 행과 아이템 지정 행이 겹치면 같은 행을 한 번만 계산한다.
-근거: [행 제거·점수](../src/main/java/seoultech/se/tetris/component/Board.java#L342).
+[행 제거·점수 계산](../src/main/java/seoultech/se/tetris/game/GameEngine.java#L320)
 
 ### 4.3 삭제 표현
 
-- 일반 완성 행은 반투명 흰색으로 약 210ms 강조한다.
-- L·C·P 효과는 50ms 단위 프레임으로 중앙에서 바깥쪽으로 지워지는 문자 애니메이션을 사용한다.
-- 애니메이션 중 자동 낙하와 블록 조작을 차단한다.
-
-이 시간은 Swing 타이머 설정값이며 실제 화면의 정확한 벽시계 시간 보증은 아니다.
+- 일반 완성 행은 반투명 흰색으로 약 210ms 강조한다. 다음 블록은 강조 표시 중에도 조작할 수 있다.
+- L·C·P 아이템은 중앙에서 바깥쪽으로 지워지는 효과를 50ms 간격으로 진행한다. 효과가 끝날 때까지 자동 낙하와 블록 조작이 멈춘다.
 
 ## 5. 설정·색상·저장
 
@@ -207,10 +206,11 @@ factor: Easy 0.8, Normal 1.0, Hard 1.2
 | 조작키 | 회전·아래·왼쪽·오른쪽·정지·하드드롭 | ↑, ↓, ←, →, P, Space |
 | 색상 | Normal, Protanopia, Deuteranopia, Tritanopia | Normal |
 | 난이도 | Easy, Normal, Hard | Easy |
+| 시간제한 대전 길이 | 60초, 180초, 300초 | 60초 |
 
 `Save and Exit`를 선택하면 설정을 `setting.txt`에 저장한 뒤 시작 화면에 적용한다.
 
-`Reset setting`은 화면 크기·키·색상·난이도를 초기값으로 되돌린다.
+`Reset setting`은 화면 크기·키·색상·난이도·제한시간을 초기값으로 되돌린다.
 `Reset Scoreboard`는 모든 모드의 점수 파일을 비운다.
 두 초기화는 서로 독립적이다.
 
@@ -222,7 +222,7 @@ Protanopia, Deuteranopia와 Tritanopia는 블록과 주요 UI 색상에 각 모�
 
 네 팔레트의 렌더 변화와 아이템 문자 대비를 자동 테스트로 검사한다.
 색각 모드의 검증 결과는 검증 보고서에서 관리한다.
-색 변환 근거: [Maincontainer.changeColor](../src/main/java/seoultech/se/tetris/component/Maincontainer.java#L155).
+[화면 색상 변환](../src/main/java/seoultech/se/tetris/component/Maincontainer.java)
 
 ### 5.3 설정 파일 예외
 
@@ -232,11 +232,12 @@ Protanopia, Deuteranopia와 Tritanopia는 블록과 주요 UI 색상에 각 모�
 - 키 설정은 여섯 필드, 양의 키 코드, 중복 없음, Pause≠Enter 조건을 모두 만족할 때만 읽는다.
 - 설정 파일 읽기·쓰기 중 IOException은 표준 오류에 stack trace를 출력한다.
 
-근거: [설정 읽기·쓰기](../src/main/java/seoultech/se/tetris/component/Maincontainer.java#L281).
+근거: [설정 읽기·쓰기](../src/main/java/seoultech/se/tetris/component/Maincontainer.java).
 
 ### 5.4 데이터 위치
 
 - 패키지 실행은 사용자 홈의 `.seoultech-tetris` 폴더에 `setting.txt`와 `tetris_score.txt`를 둔다.
+- P2P 클라이언트가 마지막으로 접속에 성공한 주소는 같은 폴더의 `.tetris-last-peer`에 저장한다.
 - 개발 실행은 별도 `tetris.dataDir` 시스템 속성이 없으면 현재 작업 디렉터리를 사용한다.
 - 테스트나 관리 실행에서 `tetris.dataDir`을 지정하면 그 디렉터리를 우선한다.
 
@@ -256,7 +257,7 @@ Protanopia, Deuteranopia와 Tritanopia는 블록과 주요 UI 색상에 각 모�
   동점은 파일에 먼저 있던 기록의 순서를 유지한다.
 - 새로 저장한 기록과 이름·점수·난이도·모드가 모두 같은 항목이 여러 개면 가장 나중 항목을 강조한다.
 
-근거: [게임오버·이름 입력](../src/main/java/seoultech/se/tetris/component/Gamepanel.java#L121), [순위 표시](../src/main/java/seoultech/se/tetris/component/Scoreboardpanel.java#L102).
+근거: [게임오버·이름 입력](../src/main/java/seoultech/se/tetris/component/Gamepanel.java), [순위 표시](../src/main/java/seoultech/se/tetris/component/Scoreboardpanel.java#L102).
 
 ### 6.2 저장 형식과 구형 호환
 
@@ -305,7 +306,7 @@ C의 열 삭제와 B·O의 블록 제거 자체는 행 누계나 효과 보너�
 B·C 효과 후에는 모든 열의 남은 칸이 각 열 안에서 바닥까지 내려앉는다.
 B 정착으로 완성된 행은 기존 행 삭제 정책에 따라 점수·누계·아이템 공급에 반영한다.
 C가 지운 열은 빈 상태로 남으므로 C 효과와 정착만으로는 새 완성 행이 생기지 않는다.
-근거: [공급 처리](../src/main/java/seoultech/se/tetris/component/Board.java#L231), [공급 경계 테스트](../src/test/java/seoultech/se/tetris/component/ItemSupplyAcceptanceTest.java#L50), [아이템 분포 테스트](../src/test/java/seoultech/se/tetris/blocks/ItemDistributionTest.java#L15).
+근거: [공급 처리](../src/main/java/seoultech/se/tetris/game/GameEngine.java#L236), [공급 경계 테스트](../src/test/java/seoultech/se/tetris/component/ItemSupplyAcceptanceTest.java#L50), [아이템 분포 테스트](../src/test/java/seoultech/se/tetris/blocks/ItemDistributionTest.java#L15).
 
 ## 8. 아이템 5종 명세 — R2-P19·R2-P20
 
@@ -329,12 +330,12 @@ C가 지운 열은 빈 상태로 남으므로 C 효과와 정착만으로는 새
 예:
 
 ```text
-OOLO   OOO   OO    ...
-       O      LO
+OOLO   OLO   OO
+       O     LO
 ```
 
 실제 형태와 표시 위치는 생성 때 무작위로 결정된다.
-근거: [RowBlock](../src/main/java/seoultech/se/tetris/blocks/RowBlock.java#L10), [L 인수 테스트](../src/test/java/seoultech/se/tetris/component/LineItemAcceptanceTest.java#L48).
+근거: [RowBlock](../src/main/java/seoultech/se/tetris/blocks/RowBlock.java#L10), [L 인수 테스트](../src/test/java/seoultech/se/tetris/component/LineItemAcceptanceTest.java#L44).
 
 ### 8.2 O — 무게추 아이템
 
@@ -356,7 +357,7 @@ OOOO
 ```
 
 일반 O 테트로미노도 `O` 문자를 쓰지만 무게추는 4×2 고유 형상과 밝은 회색으로 구분한다.
-근거: [AnchorBlock 색상](../src/main/java/seoultech/se/tetris/blocks/AnchorBlock.java#L16), [무게추 인수 테스트](../src/test/java/seoultech/se/tetris/component/AnchorAcceptanceTest.java#L48).
+근거: [AnchorBlock 색상](../src/main/java/seoultech/se/tetris/blocks/AnchorBlock.java#L16), [무게추 인수 테스트](../src/test/java/seoultech/se/tetris/component/AnchorAcceptanceTest.java#L91).
 
 ### 8.3 C — 열 삭제 아이템
 
@@ -375,11 +376,11 @@ OOOO
 예:
 
 ```text
-OOCO   OOO   OO    ...
-       O      CO
+OOCO   OCO   OO
+       O     CO
 ```
 
-근거: [ColumnBlock](../src/main/java/seoultech/se/tetris/blocks/ColumnBlock.java#L10), [C 효과·정착 구현](../src/main/java/seoultech/se/tetris/component/Board.java#L456), [C/B 정착 인수 테스트](../src/test/java/seoultech/se/tetris/component/ColumnBombAcceptanceTest.java#L268).
+근거: [ColumnBlock](../src/main/java/seoultech/se/tetris/blocks/ColumnBlock.java#L10), [C 효과·정착 구현](../src/main/java/seoultech/se/tetris/game/GameEngine.java#L351), [C/B 정착 인수 테스트](../src/test/java/seoultech/se/tetris/component/ColumnBombAcceptanceTest.java#L200).
 
 ### 8.4 B — 폭발 아이템
 
@@ -403,7 +404,7 @@ OOO
 ```
 
 중앙 위치에서 효과 범위는 최대 7열 × 8행이며, 벽·바닥에서는 보드 경계에 맞춰 축소된다.
-근거: [BombBlock](../src/main/java/seoultech/se/tetris/blocks/BombBlock.java#L7), [폭발·정착 구현](../src/main/java/seoultech/se/tetris/component/Board.java#L269), [정착·점수·공급 인수 테스트](../src/test/java/seoultech/se/tetris/component/ColumnBombAcceptanceTest.java#L268).
+근거: [BombBlock](../src/main/java/seoultech/se/tetris/blocks/BombBlock.java#L7), [폭발·정착 구현](../src/main/java/seoultech/se/tetris/game/GameEngine.java#L385), [정착·점수·공급 인수 테스트](../src/test/java/seoultech/se/tetris/component/ColumnBombAcceptanceTest.java#L200).
 
 ### 8.5 P — 행·열 교차 삭제 아이템
 
@@ -425,7 +426,17 @@ PP
 ```
 
 P의 2×2 형태, 바닥·스택 어디서든 고정 발동, 두 행·두 열 삭제, 행 300점·세로 무점수, 실제 낙하 점수 유지와 두 행 누계는 사용자와 확정한 정책이다.
-근거: [CrossBlock](../src/main/java/seoultech/se/tetris/blocks/CrossBlock.java#L5), [P 효과 구현](../src/main/java/seoultech/se/tetris/component/Board.java#L406), [P 인수 테스트](../src/test/java/seoultech/se/tetris/component/CrossItemAcceptanceTest.java#L35).
+근거: [CrossBlock](../src/main/java/seoultech/se/tetris/blocks/CrossBlock.java#L5), [P 효과 구현](../src/main/java/seoultech/se/tetris/game/GameEngine.java#L351), [P 인수 테스트](../src/test/java/seoultech/se/tetris/component/CrossItemAcceptanceTest.java#L86).
+
+### 자동검사에서 확인하는 대표 장면
+
+| 아이템 | 준비한 보드와 기대 결과 |
+|---|---|
+| L | 미완성인 맨 아래 행에 L이 고정되면 해당 행 1줄을 지우고 100점을 얻는다. [행 삭제 검사](../src/test/java/seoultech/se/tetris/component/LineItemAcceptanceTest.java#L44) |
+| O | 무게추를 한쪽 벽에 붙여 떨어뜨리면 무게추 아래 폭 4칸만 비워지고 바로 옆 열은 남는다. [양쪽 벽 검사](../src/test/java/seoultech/se/tetris/component/AnchorAcceptanceTest.java#L91) |
+| C | 가장자리 열을 지우면 그 열은 비고 나머지 열의 블록은 원래의 세로 순서대로 바닥에 쌓인다. [열 정착 검사](../src/test/java/seoultech/se/tetris/component/ColumnBombAcceptanceTest.java) |
+| B | 레벨 1, 삭제 누계 8줄에서 다섯 칸 하드드롭한 뒤 정착으로 두 줄이 완성되면 305점(낙하 5 + 행 300)을 얻는다. 누계가 10줄에 도달해 다음 아이템도 한 개 공급된다. [정착 후 점수·공급 검사](../src/test/java/seoultech/se/tetris/component/ColumnBombAcceptanceTest.java#L220) |
+| P | 레벨 1에서 세 칸 하드드롭해 쌓인 블록 위에 고정하면 두 행·두 열이 지워지고 303점(낙하 3 + 행 300)과 2줄을 얻는다. [스택 위 교차 삭제 검사](../src/test/java/seoultech/se/tetris/component/CrossItemAcceptanceTest.java#L86) |
 
 ## 9. 아이템 효과의 공통 상태 규칙
 
@@ -439,12 +450,12 @@ P의 2×2 형태, 바닥·스택 어디서든 고정 발동, 두 행·두 열 �
 - 아이템 처리와 일반 완성 행 처리가 같은 고정에서 발생하면 효과 후 남은 완성 행을 포함하여 고유 행 집합으로 처리한다.
 - 줄 누계가 여러 공급 경계를 넘으면 공급권을 잃지 않고 이후 고정마다 하나씩 소비한다.
 
-관련 회귀 근거: [PR15 보드 회귀 테스트](../src/test/java/seoultech/se/tetris/component/Pr15BoardRegressionTest.java#L65), [공급 인수 테스트](../src/test/java/seoultech/se/tetris/component/ItemSupplyAcceptanceTest.java#L74).
+관련 회귀 검사 · [PR15 보드 회귀 테스트](../src/test/java/seoultech/se/tetris/component/Pr15BoardRegressionTest.java), [공급 인수 테스트](../src/test/java/seoultech/se/tetris/component/ItemSupplyAcceptanceTest.java).
 
 ## 10. 검증·배포 정책
 
 이 절은 Q12~Q14의 정책을 기록한다.
-실제 통과 결과는 검증 보고서가 정본이다.
+후보 버전의 통과 결과는 [최종 인수 기록](final-acceptance.md)에 모았다.
 
 | 주제 | 정책 |
 |---|---|
@@ -453,12 +464,9 @@ P의 2×2 형태, 바닥·스택 어디서든 고정 발동, 두 행·두 열 �
 | Java | 소스·테스트·패키징 toolchain Java 21 |
 | 패키징 | 실행 아이콘과 Java 21 runtime을 포함한 macOS app-image 생성 |
 
-근거: [Gradle 검증 설정](../build.gradle#L58), [성능 테스트](../src/test/java/seoultech/se/tetris/component/PerformanceRegressionTest.java#L20), [패키징 설정](../gradle/packaging.gradle#L42).
+근거: [Gradle 검증 설정](../build.gradle#L72), [성능 테스트](../src/test/java/seoultech/se/tetris/component/PerformanceRegressionTest.java#L20), [패키징 설정](../gradle/packaging.gradle#L42).
 
-최종 제출 대상은 macOS 26 이상이다.
-
-최종 tag와 두 ZIP은 [v0.1.0-req2.3 릴리스](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)에 공개했다.
-파일 무결성과 공개 앱의 실행 결과는 [검증 보고서](verification.md)에서 확인한다.
+최종 제출 대상은 macOS 26 이상 · Apple Silicon이다. 평가할 커밋, 실행 ZIP, 체크섬 및 검증 상태는 [최종 인수 기록](final-acceptance.md)에서 확인한다. 1·2차 중간 제출의 공개 파일은 [v0.1.0-req2.3 릴리스](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)에 보존했다.
 
 ## 11. 정책 근거
 

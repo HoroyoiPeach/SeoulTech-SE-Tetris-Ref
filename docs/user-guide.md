@@ -1,29 +1,15 @@
 # SeoulTech SE Tetris 사용자 안내서
 
-공식 제출 환경은 **macOS 26 이상 · Apple Silicon**이다.
-공개 제출 버전은 **`v0.1.0-req2.3`**이다.
-
-[릴리스 페이지](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)에서 실행 파일을 받는다.
-파일 무결성과 실행 검증 결과는 [검증 보고서](verification.md)에 정리했다.
+평가 환경은 **macOS 26 이상 · Apple Silicon**이다. 대전을 평가할 후보 커밋과 패키지는 [최종 인수 기록](final-acceptance.md)에서 확인한다. 1인 게임만 포함한 [중간 제출본 v0.1.0-req2.3](https://github.com/HoroyoiPeach/SeoulTech-SE-Tetris-Ref/releases/tag/v0.1.0-req2.3)도 별도로 보존했다.
 
 ## 1. 실행 파일 준비
 
-배포 ZIP에는 Java 21 런타임과 아이콘이 포함된 macOS 앱이 들어 있다.
+현재 검토용 macOS 앱은 다운로드 배포 검사에서 공증 티켓 누락으로 거부됐다. 아래는 서명·공증을 마친 공개용 패키지의 실행 순서다. [검토용 앱의 검사 결과](final-acceptance.md)
 
-별도의 Java 설치 없이 실행할 수 있다.
+1. 후보 묶음을 풀어 `app/` 안의 macOS 실행용 ZIP을 찾는다. 해당 ZIP 전체를 풀고 `SeoulTech Tetris.app`을 더블클릭한다. 실행용 ZIP을 직접 받은 경우 그 파일만 풀면 된다. Java 21 런타임이 앱에 포함되어 있다.
+2. `TETRIS` 시작 메뉴에 `LOCAL BATTLE`과 `P2P BATTLE`이 보이는지 확인한다. 두 PC 대전에는 같은 후보 커밋의 운영체제별 앱을 사용한다. Windows PC로 참가할 때는 같은 Java CI 실행의 `package-windows-2025`에서 Windows용 ZIP을 받아 푼다.
 
-| 실행용 ZIP | 압축 해제 후 실행 대상 |
-|---|---|
-| `seoultech-tetris-v0.1.0-req2.3-macos-aarch64.zip` | `SeoulTech Tetris.app` |
-
-소스·문서·증빙까지 필요한 평가자는 같은 릴리스의 `seoultech-tetris-v0.1.0-req2.3-submission.zip`을 받는다.
-
-실행 순서는 다음과 같다.
-
-1. 위 표의 macOS 실행용 ZIP을 받는다.
-2. ZIP 전체를 압축 해제한다.
-3. `SeoulTech Tetris.app`을 더블클릭한다.
-4. `TETRIS` 제목과 시작 메뉴가 표시되는지 확인한다.
+소스만 있다면 Apple Silicon Mac에 JDK 21을 준비하고 저장소 루트에서 `./gradlew packageRelease`를 실행한다. ZIP과 체크섬은 `build/distributions/`에서 찾을 수 있다.
 
 ## 2. 시작 메뉴
 
@@ -41,9 +27,9 @@
 
 난이도와 화면 크기, 키, 색상 모드는 설정에서 선택한 값을 Classic과 Item 게임에 공통 적용한다.
 
-### 로컬 2인 대전 (개발 브랜치)
+### 로컬 2인 대전
 
-소스에서 실행한 뒤 시작 메뉴의 `LOCAL BATTLE`을 선택한다. 한 PC에서 일반(`CLASSIC`), 아이템(`ITEM`), 시간제한(`TIME LIMIT`) 중 하나로 대전할 수 있다.
+시작 메뉴의 `LOCAL BATTLE`에서 일반(`CLASSIC`), 아이템(`ITEM`), 시간제한(`TIME LIMIT`) 중 하나를 선택한다. 왼쪽 보드가 1P, 오른쪽이 2P다.
 
 | 조작 | 1P 기본값 | 2P 기본값 |
 |---|---|---|
@@ -55,18 +41,20 @@
 
 일반 블록 하나로 2줄 이상을 완성하면 상대 보드 옆에 공격 예고가 쌓인다. 상대의 현재 블록 처리가 끝나면 예고한 모양이 아래에서 올라온다. 공격 줄은 `G`로 표시한다. 아이템 모드에서도 일반 블록은 같은 규칙으로 공격한다. 아이템 블록을 놓은 턴에는 일반 행도 함께 지워질 수 있으며, 그 턴의 줄 삭제에는 기존 점수·줄 누계 규칙을 적용하고 공격은 보내지 않는다.
 
-시간제한은 `MENU`에서 정한 초를 사용하며 일시정지 중에도 흐른다. 먼저 쌓을 수 없게 된 쪽이 패배하고, 시간 만료 시에는 점수가 높은 쪽이 승리한다. 만료 시 동점이거나 같은 틱에 두 사람 모두 쌓을 수 없게 되면 무승부다. 결과 화면에서 같은 모드로 새 판을 시작하거나 메뉴로 돌아갈 수 있다. 대전 점수는 1인 순위표에 저장하지 않는다.
+시간제한은 `MENU`에서 정한 초를 사용하며 일시정지 중에도 흐른다. 먼저 쌓을 수 없게 된 쪽이 패배하고, 시간 만료 시에는 점수가 높은 쪽이 승리한다. 만료 시 동점이거나 동시에 두 사람 모두 쌓을 수 없게 되면 무승부다. 결과에서 `NEW MATCH` 또는 Enter로 같은 모드를 다시 시작하고, `MENU` 또는 Esc로 시작 메뉴에 돌아간다. 순위표에는 1인 기록만 저장된다.
 
 ### 두 PC에서 P2P 대전
 
-두 PC에서 이 브랜치의 같은 버전을 열고 시작 메뉴에서 `P2P BATTLE`을 고른다.
+두 PC를 같은 네트워크에 연결하고 각각 시작 메뉴에서 `P2P BATTLE`을 고른다.
 
 1. 한 사람이 `HOST GAME`을 누른다. 주소가 여러 개면 두 PC가 함께 연결된 Wi-Fi 또는 유선망의 IP를 상대에게 알려 준다.
-2. 상대가 IP를 입력하고 `JOIN GAME`을 누른다. 마지막으로 접속에 성공한 IP는 다음 실행 때 자동 입력된다.
-3. 로비에서 호스트가 모드를 고른 뒤 양쪽 모두 `START`를 누른다. 왼쪽이 내 보드이고 각 PC의 저장된 키로 조작한다.
-4. 경기가 끝나면 양쪽 로비에 각각 승패가 표시된다. 연결을 유지한 채 두 사람이 다시 `START`를 누르면 새 판을 시작한다. 느린 연결에서는 지연 안내와 함께 플레이를 계속한다. 상대의 응답이 멎으면 양쪽 경기를 잠시 멈추고, 연결이 끊기면 접속 화면에서 다시 시도할 수 있다.
+2. 상대는 화면의 IP만 입력하고 `JOIN GAME`을 누른다. TCP 포트 30000은 자동 적용된다. 마지막으로 접속에 성공한 IP는 다음 실행 때 입력란에 나타난다.
+3. 양쪽이 로비에 들어오면 호스트가 모드를 고른다. 준비 버튼 `START`를 두 사람 모두 눌러야 게임이 시작된다. 각 PC의 왼쪽 `YOU`가 자기 보드, 오른쪽 `OPPONENT`가 상대 보드다. 자기 PC에 저장한 키로 조작한다.
+4. 승패가 정해지면 양쪽이 연결된 로비로 돌아간다. 각자 승패를 확인하고 다시 `START`를 누르면 새 판이 열린다. 대전을 마치려면 `DISCONNECT`로 접속을 종료하고 `MAIN MENU`를 누른다.
 
-## 3. 기본 조작
+느린 연결에서는 지연 안내와 함께 플레이가 계속된다. 응답이 멎으면 경기가 일시 중단되며, 통신이 회복되면 같은 판에서 이어진다. 단절 메시지와 함께 접속 화면으로 돌아온 경우 한쪽이 다시 `HOST GAME`을 열고 상대가 `JOIN GAME`으로 접속한다. 접속 대기 중에는 `CANCEL`로 취소할 수 있다.
+
+## 3. 1인 게임 기본 조작
 
 기본 키는 다음과 같다.
 
@@ -147,7 +135,8 @@ P는 기존처럼 두 행을 삭제하며 위의 블록을 행 단위로 내린�
 | `Reset Scoreboard` | 저장된 모든 순위 기록 즉시 삭제 |
 | `Color Option` | Normal, Protanopia, Deuteranopia, Tritanopia 순환 |
 | `Difficulty` | Easy, Normal, Hard 순환 |
-| `Reset setting` | 화면 크기·키·색상·난이도를 기본값으로 되돌림 |
+| `Time Limit (sec)` | 시간제한 대전 길이를 60·180·300초 중에서 선택. P2P는 호스트의 설정 사용 |
+| `Reset setting` | 화면 크기·키·색상·난이도·제한시간을 기본값으로 되돌림 |
 | `Save and Exit` | 현재 설정을 파일에 저장하고 시작 메뉴로 이동 |
 
 기본값은 `600X500`, 방향키/`P`/`Space`, `Normal` 색상 모드, `Easy` 난이도다.
@@ -193,6 +182,7 @@ P는 기존처럼 두 행을 삭제하며 위의 블록을 행 단위로 내린�
 ~/.seoultech-tetris/
   setting.txt
   tetris_score.txt
+  .tetris-last-peer
 ```
 
 `~`는 macOS 사용자 홈 디렉터리를 뜻한다.
@@ -207,12 +197,14 @@ P는 기존처럼 두 행을 삭제하며 위의 블록을 행 단위로 내린�
 
 순위를 초기화하려면 게임의 `Reset Scoreboard`를 사용한다.
 
-`tetris_score.txt`를 직접 삭제하거나 이동하면 기존 기록은 복구되지 않으므로 백업 후 처리한다.
+기존 순위를 복원하려면 앱을 종료하고 백업해 둔 `tetris_score.txt`를 같은 폴더에 넣은 뒤 다시 실행한다.
 
 ## 관련 문서
 
 - [제출 안내](../README.md)
 - [요구사항 1 체크리스트](requirements-1-checklist.md)
 - [요구사항 2 체크리스트](requirements-2-checklist.md)
+- [요구사항 3 체크리스트](requirements-3-checklist.md)
+- [최종 인수 기록](final-acceptance.md)
 - [게임 명세서](specification.md)
 - [개발 안내서](development.md)
