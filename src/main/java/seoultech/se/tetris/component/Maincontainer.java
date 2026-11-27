@@ -81,8 +81,10 @@ public class Maincontainer extends JFrame{
     }
 
     void enterP2PBattle() {
+        sizeWindowForGame(true);
         P2PPanel panel = new P2PPanel(getDifficulty(), getTimeLimitSeconds(), P2PPanel.PORT, () -> {
             mainPanel.removeAll();
+            sizeWindowForGame(false);
             enterStart();
         });
         showBattleCard(panel, "P2P");
@@ -180,14 +182,13 @@ public class Maincontainer extends JFrame{
         difficulty = Difficulty.parse(setting.getDifficulty()).orElse(Difficulty.NORMAL);
         timeLimitSeconds = Integer.parseInt(setting.getTimeLimitSeconds());
 
-        mainPanel.setPreferredSize(new Dimension(WIDTH, HEIGHT));
         mainPanel.setBackground(Color.BLACK);
         mainPanel.setOpaque(true);
-        sizeWindowForGame();
+        sizeWindowForGame(false);
         setVisible(true);
     }
 
-    private void sizeWindowForGame() {
+    private void sizeWindowForGame(boolean twoPlayerNetworkScreen) {
         if (!isDisplayable()) addNotify(); // Obtain native frame decorations before sizing.
         GraphicsConfiguration monitor = getGraphicsConfiguration();
         Rectangle workArea = new Rectangle(monitor.getBounds());
@@ -197,17 +198,21 @@ public class Maincontainer extends JFrame{
         Insets frame = getInsets();
         int availableWidth = Math.max(1, workArea.width - frame.left - frame.right);
         int availableHeight = Math.max(1, workArea.height - frame.top - frame.bottom);
-        if (WIDTH <= availableWidth && HEIGHT <= availableHeight) {
+        // Keep both network boards in view together on smaller displays.
+        int width = twoPlayerNetworkScreen ? Math.min(WIDTH * 2, availableWidth) : WIDTH;
+        int height = twoPlayerNetworkScreen ? Math.min(HEIGHT, availableHeight) : HEIGHT;
+        mainPanel.setPreferredSize(new Dimension(width, height));
+        if (width <= availableWidth && height <= availableHeight) {
             setContentPane(mainPanel);
         } else {
             JScrollPane scroll = new JScrollPane(mainPanel);
             scroll.setBorder(null);
             scroll.setViewportBorder(null);
             // Leave room for the scrollbar so it does not hide a column on a short display.
-            int barWidth = HEIGHT > availableHeight ? scroll.getVerticalScrollBar().getPreferredSize().width : 0;
-            int barHeight = WIDTH > availableWidth ? scroll.getHorizontalScrollBar().getPreferredSize().height : 0;
-            scroll.setPreferredSize(new Dimension(Math.min(availableWidth, WIDTH + barWidth),
-                Math.min(availableHeight, HEIGHT + barHeight)));
+            int barWidth = height > availableHeight ? scroll.getVerticalScrollBar().getPreferredSize().width : 0;
+            int barHeight = width > availableWidth ? scroll.getHorizontalScrollBar().getPreferredSize().height : 0;
+            scroll.setPreferredSize(new Dimension(Math.min(availableWidth, width + barWidth),
+                Math.min(availableHeight, height + barHeight)));
             setContentPane(scroll);
         }
         pack();
