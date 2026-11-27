@@ -82,9 +82,12 @@ class P2PBattleSessionIntegrationTest {
             throws Exception {
         try (Peer host = new Peer(); Peer guest = new Peer()) {
             connect(host, guest);
+            long selectionRound = host.current.get().round();
             host.session.selectMode(mode);
-            await("both peers show selected mode", () ->
-                host.current.get().mode() == mode && guest.current.get().mode() == mode);
+            await("both peers show a fresh selected mode", () ->
+                host.current.get().mode() == mode && guest.current.get().mode() == mode
+                    && host.current.get().round() > selectionRound
+                    && guest.current.get().round() > selectionRound);
 
             guest.session.ready();
             await("guest alone cannot start", () -> guest.current.get().guestReady()
@@ -235,6 +238,34 @@ class P2PBattleSessionIntegrationTest {
             client.awaitWire("current input applied", () -> client.lastState.second().x() == originalX + 1);
             assertTrue(client.lastState.second().fixedCells().stream()
                 .flatMap(List::stream).allMatch(Objects::isNull), "stale hard drop must not lock a block");
+        }
+    }
+
+    @Test
+    void explicitModeConfirmationsOpenFreshRoundsAndUseUpdatedHostSettings() throws Exception {
+        try (Peer host = new Peer(); Peer guest = new Peer()) {
+            connect(host, guest);
+            long initialRound = host.current.get().round();
+            guest.session.ready();
+            await("guest ready", () -> host.current.get().guestReady());
+
+            host.session.selectMode(GameMode.CLASSIC, initialRound);
+            await("same-mode confirmation opens a fresh unready round", () ->
+                host.current.get().round() > initialRound && guest.current.get().round() > initialRound);
+            assertFalse(host.current.get().hostReady() || host.current.get().guestReady());
+            long confirmedRound = host.current.get().round();
+
+            host.session.updateMatchSettings(Difficulty.HARD, 1);
+            host.session.selectMode(GameMode.CLASSIC, confirmedRound);
+            await("explicit confirmation after settings opens another fresh round", () ->
+                host.current.get().round() > confirmedRound && guest.current.get().round() > confirmedRound);
+            host.session.ready();
+            guest.session.ready();
+            await("new settings are used by the next match", () ->
+                host.in(Phase.PLAYING) && guest.in(Phase.PLAYING));
+            assertEquals(Difficulty.HARD, host.match().first().difficulty());
+            assertEquals(Difficulty.HARD, host.match().second().difficulty());
+            assertTrue(host.match().remainingSeconds() <= 1);
         }
     }
 

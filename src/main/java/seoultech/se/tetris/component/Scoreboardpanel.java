@@ -17,6 +17,7 @@ import seoultech.se.tetris.score.ScoreStore;
 
 public class Scoreboardpanel extends JPanel{
     private Maincontainer maincontainer;
+    private final Runnable onExit;
     private JTextPane scorepanel;
     private PlayerKeyListener playerKeyListener;
     private int HEIGHT;
@@ -27,14 +28,19 @@ public class Scoreboardpanel extends JPanel{
     private ScoreStore.Score highlightedScore;
 
     public Scoreboardpanel(Maincontainer maincontainer) {
-        this(maincontainer, null);
+        this(maincontainer, null, maincontainer::exitScoreboardEnterStart);
     }
 
     public Scoreboardpanel(Maincontainer maincontainer, GameMode mode) {
+        this(maincontainer, mode, maincontainer::exitScoreboardEnterStart);
+    }
+
+    Scoreboardpanel(Maincontainer maincontainer, GameMode mode, Runnable onExit) {
         setLayout(null);
         setBackground(changeColor(Color.LIGHT_GRAY));
         setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
         this.maincontainer = maincontainer;
+        this.onExit = onExit;
         selectedMode = mode;
 
         HEIGHT = maincontainer.getConfiguredHeight();
@@ -198,6 +204,6 @@ public class Scoreboardpanel extends JPanel{
 		}
 	}
     protected void selectEnter() {
-        this.maincontainer.exitScoreboardEnterStart();
+        onExit.run();
     }
 }

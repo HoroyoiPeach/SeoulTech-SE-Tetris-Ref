@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.List;
 import seoultech.se.tetris.Difficulty;
 import seoultech.se.tetris.GameMode;
+import seoultech.se.tetris.network.P2PBattleSession;
 
 // 창을 구성하는 클래스입니다.
 public class Maincontainer extends JFrame{
@@ -36,6 +37,8 @@ public class Maincontainer extends JFrame{
     private Startpanel startPanel; // 시작 시 보여질 화면 panel입니다.
     private Gamepanel gamePanel; // 게임 화면 panel입니다.
     private LocalBattlePanel localBattlePanel;
+    private P2PPanel p2pPanel;
+    private boolean p2pSubpageVisible;
     private Settingpanel settingPanel;
     private Scoreboardpanel scoreboardPanel;
 
@@ -81,14 +84,92 @@ public class Maincontainer extends JFrame{
     }
 
     void enterP2PBattle() {
-        sizeWindowForGame(true);
-        P2PPanel panel = new P2PPanel(getDifficulty(), getTimeLimitSeconds(), P2PPanel.PORT, () -> {
+        enterP2PBattle(P2PPanel.PORT);
+    }
+
+    void enterP2PBattle(int port) {
+        sizeWindowForGame(false);
+        p2pPanel = new P2PPanel(getDifficulty(), getTimeLimitSeconds(), port, () -> {
+            p2pPanel = null;
+            p2pSubpageVisible = false;
             mainPanel.removeAll();
             sizeWindowForGame(false);
             enterStart();
         });
-        showBattleCard(panel, "P2P");
-        panel.focusSetup();
+        installP2PViewport();
+        p2pPanel.setLobbyPageOpener(this::openP2PPage);
+        p2pPanel.setPhaseListener(this::handleP2PPhase);
+        showBattleCard(p2pPanel, "P2P");
+        sizeWindowForGame(false);
+        p2pPanel.focusSetup();
+    }
+
+    private void installP2PViewport() {
+        if (getContentPane() instanceof JScrollPane scroll
+                && scroll.getViewport().getView() == mainPanel) return;
+        JScrollPane scroll = new JScrollPane(mainPanel);
+        scroll.setBorder(null);
+        scroll.setViewportBorder(null);
+        setContentPane(scroll);
+    }
+
+    private void openP2PPage(String page, Runnable returnToConnection) {
+        if ("MENU".equals(page)) {
+            p2pSubpageVisible = true;
+            settingPanel = new Settingpanel(this, () -> returnFromP2PSettings(returnToConnection));
+            mainPanel.add(settingPanel, "P2PSettings");
+            cardLayout.show(mainPanel, "P2PSettings");
+            settingPanel.requestFocusInWindow();
+        } else if ("SCORE".equals(page)) {
+            p2pSubpageVisible = true;
+            scoreboardPanel = new Scoreboardpanel(this, null, () -> returnFromP2PScoreboard(returnToConnection));
+            mainPanel.add(scoreboardPanel, "P2PScoreboard");
+            cardLayout.show(mainPanel, "P2PScoreboard");
+            scoreboardPanel.requestFocusInWindow();
+        } else {
+            throw new IllegalArgumentException("Unknown P2P page: " + page);
+        }
+        sizeWindowForGame(false);
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
+    private void returnFromP2PSettings(Runnable returnToConnection) {
+        p2pSubpageVisible = false;
+        mainPanel.remove(settingPanel);
+        settingPanel = null;
+        applySetting();
+        if (p2pPanel != null) p2pPanel.applySettings(getDifficulty(), getTimeLimitSeconds());
+        showP2PConnection(returnToConnection);
+    }
+
+    private void returnFromP2PScoreboard(Runnable returnToConnection) {
+        p2pSubpageVisible = false;
+        mainPanel.remove(scoreboardPanel);
+        scoreboardPanel = null;
+        showP2PConnection(returnToConnection);
+    }
+
+    private void showP2PConnection(Runnable returnToConnection) {
+        cardLayout.show(mainPanel, "P2P");
+        sizeWindowForGame(false);
+        mainPanel.revalidate();
+        mainPanel.repaint();
+        returnToConnection.run();
+    }
+
+    private void handleP2PPhase(P2PBattleSession.Phase phase) {
+        sizeWindowForGame(phase == P2PBattleSession.Phase.PLAYING);
+        if (phase != P2PBattleSession.Phase.SETUP || !p2pSubpageVisible) return;
+        p2pSubpageVisible = false;
+        if (settingPanel != null) mainPanel.remove(settingPanel);
+        if (scoreboardPanel != null) mainPanel.remove(scoreboardPanel);
+        settingPanel = null;
+        scoreboardPanel = null;
+        cardLayout.show(mainPanel, "P2P");
+        mainPanel.revalidate();
+        mainPanel.repaint();
+        if (p2pPanel != null) p2pPanel.focusSetup();
     }
 
     void enterLocalBattleModes() {
@@ -202,9 +283,11 @@ public class Maincontainer extends JFrame{
         int width = twoPlayerNetworkScreen ? Math.min(WIDTH * 2, availableWidth) : WIDTH;
         int height = twoPlayerNetworkScreen ? Math.min(HEIGHT, availableHeight) : HEIGHT;
         mainPanel.setPreferredSize(new Dimension(width, height));
-        if (width <= availableWidth && height <= availableHeight) {
+        boolean keepConnectedContent = p2pPanel != null;
+        boolean contentInstalled = SwingUtilities.isDescendingFrom(mainPanel, this);
+        if ((!keepConnectedContent || !contentInstalled) && width <= availableWidth && height <= availableHeight) {
             setContentPane(mainPanel);
-        } else {
+        } else if (!keepConnectedContent || !contentInstalled) {
             JScrollPane scroll = new JScrollPane(mainPanel);
             scroll.setBorder(null);
             scroll.setViewportBorder(null);
@@ -214,6 +297,12 @@ public class Maincontainer extends JFrame{
             scroll.setPreferredSize(new Dimension(Math.min(availableWidth, width + barWidth),
                 Math.min(availableHeight, height + barHeight)));
             setContentPane(scroll);
+        } else if (getContentPane() instanceof JScrollPane scroll
+                && scroll.getViewport().getView() == mainPanel) {
+            int barWidth = height > availableHeight ? scroll.getVerticalScrollBar().getPreferredSize().width : 0;
+            int barHeight = width > availableWidth ? scroll.getHorizontalScrollBar().getPreferredSize().height : 0;
+            scroll.setPreferredSize(new Dimension(Math.min(availableWidth, width + barWidth),
+                Math.min(availableHeight, height + barHeight)));
         }
         pack();
         setLocation(Math.clamp(getX(), workArea.x, Math.max(workArea.x, workArea.x + workArea.width - getWidth())),

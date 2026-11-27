@@ -79,6 +79,14 @@ final class P2PResultView extends JPanel {
         continueButton.requestFocusInWindow();
     }
 
+    void refreshTheme() {
+        Color foreground = changeColor(Color.DARK_GRAY);
+        outcome.setForeground(foreground);
+        score.setForeground(foreground);
+        readiness.setForeground(foreground);
+        repaint();
+    }
+
     private static String outcomeText(MatchOutcome result, boolean host) {
         if (result == MatchOutcome.DRAW) return "DRAW";
         boolean hostWon = result == MatchOutcome.LOCAL_WIN;

@@ -24,8 +24,8 @@ public final class P2PBattleSession implements AutoCloseable {
     public record View(Phase phase, long round, boolean host, GameMode mode, boolean hostReady,
             boolean guestReady, BattleMatchSnapshot match, boolean delayed, boolean highLatency, String notice) { }
 
-    private final Difficulty difficulty;
-    private final Duration limit;
+    private Difficulty difficulty;
+    private Duration limit;
     private final Consumer<View> render;
     private final ScheduledThreadPoolExecutor loop;
     private final ExecutorService dialWorkers;
@@ -151,10 +151,20 @@ public final class P2PBattleSession implements AutoCloseable {
     public void selectMode(GameMode selected, long visibleRound) {
         Objects.requireNonNull(selected);
         submit(() -> {
-            if (host && phase == Phase.LOBBY && !hostReady && !delayed && visibleRound == round && mode != selected) {
+            if (host && phase == Phase.LOBBY && !hostReady && !delayed && visibleRound == round) {
                 mode = selected;
                 openLobby();
             }
+        });
+    }
+
+    public void updateMatchSettings(Difficulty selectedDifficulty, int limitSeconds) {
+        Objects.requireNonNull(selectedDifficulty);
+        if (limitSeconds <= 0) throw new IllegalArgumentException("Time limit must be positive");
+        Duration selectedLimit = Duration.ofSeconds(limitSeconds);
+        submit(() -> {
+            difficulty = selectedDifficulty;
+            limit = selectedLimit;
         });
     }
 
