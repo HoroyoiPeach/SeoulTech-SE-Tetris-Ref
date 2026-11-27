@@ -1,6 +1,7 @@
 package seoultech.se.tetris.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Component;
@@ -39,6 +40,28 @@ class BattlePlayerViewLayoutTest {
         assertTrue(board.getWidth() <= 160);
         assertTrue(board.getHeight() <= 360);
         assertEquals(33.0 / 58.0, (double) board.getWidth() / board.getHeight(), 0.01);
+    }
+
+    @Test
+    void localBattleKeepsItsOriginalBoardAndBottomInformationLayout() throws Exception {
+        BattlePlayerView view = BattlePlayerView.local("PLAYER 1", "player1");
+
+        SwingUtilities.invokeAndWait(() -> {
+            view.setSize(240, 520);
+            layoutTree(view);
+        });
+
+        Board board = find(view, Board.class);
+        Nextblockpanel preview = find(view, Nextblockpanel.class);
+        IncomingAttackPanel incoming = find(view, IncomingAttackPanel.class);
+        assertSame(view, board.getParent(), "local board must remain the direct center component");
+        assertEquals(180, board.getPreferredSize().width);
+        assertEquals(330, board.getPreferredSize().height);
+        Container information = incoming.getParent();
+        assertSame(view, information.getParent());
+        assertTrue(information.getY() >= board.getY() + board.getHeight(),
+            "local NEXT preview must remain below the board");
+        assertEquals(preview.getParent().getParent(), information);
     }
 
     private static void layoutTree(Container container) {

@@ -38,8 +38,8 @@ public final class LocalBattlePanel extends JPanel {
     private final LongSupplier nanoTime;
     private final Runnable onMenu;
     private final LocalBattleKeyBindings keys;
-    private final BattlePlayerView firstView = new BattlePlayerView("PLAYER 1", "player1");
-    private final BattlePlayerView secondView = new BattlePlayerView("PLAYER 2", "player2");
+    private final BattlePlayerView firstView = BattlePlayerView.local("PLAYER 1", "player1");
+    private final BattlePlayerView secondView = BattlePlayerView.local("PLAYER 2", "player2");
     private final JLabel time = new JLabel("", SwingConstants.CENTER);
     private final JLabel result = new JLabel("", SwingConstants.CENTER);
     private final JButton newMatch = new JButton("NEW MATCH");

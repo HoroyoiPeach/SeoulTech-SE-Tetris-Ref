@@ -6,6 +6,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -27,6 +28,14 @@ final class BattlePlayerView extends JPanel {
     private final IncomingAttackPanel incoming;
 
     BattlePlayerView(String titleText, String componentPrefix) {
+        this(titleText, componentPrefix, true);
+    }
+
+    static BattlePlayerView local(String titleText, String componentPrefix) {
+        return new BattlePlayerView(titleText, componentPrefix, false);
+    }
+
+    private BattlePlayerView(String titleText, String componentPrefix, boolean classicSidebar) {
         super(new BorderLayout(3, 3));
         setOpaque(false);
         setBorder(BorderFactory.createLineBorder(changeColor(Color.DARK_GRAY)));
@@ -39,9 +48,16 @@ final class BattlePlayerView extends JPanel {
         score.setName(componentPrefix + "Score");
         score.setFont(new Font(Font.MONOSPACED, Font.BOLD, 11));
         score.setForeground(changeColor(Color.RED));
+        if (!classicSidebar) heading.add(score, BorderLayout.EAST);
         add(heading, BorderLayout.NORTH);
         board.setName(componentPrefix + "Board");
-        board.setPreferredSize(BOARD_SIZE);
+        board.setPreferredSize(classicSidebar ? BOARD_SIZE : new Dimension(180, 330));
+
+        if (!classicSidebar) {
+            add(board, BorderLayout.CENTER);
+            incoming = originalInformation(componentPrefix);
+            return;
+        }
 
         JPanel information = new JPanel(new BorderLayout(0, 4));
         information.setOpaque(false);
@@ -60,6 +76,24 @@ final class BattlePlayerView extends JPanel {
         information.add(incoming, BorderLayout.CENTER);
         add(new BattleContentPanel(new AspectPanel(board, NORMAL_BOARD_RATIO), information),
             BorderLayout.CENTER);
+    }
+
+    private IncomingAttackPanel originalInformation(String componentPrefix) {
+        JPanel information = new JPanel(new GridLayout(1, 2, 3, 0));
+        information.setOpaque(false);
+        next.setName(componentPrefix + "Next");
+        JPanel nextArea = new JPanel(new BorderLayout());
+        nextArea.setOpaque(false);
+        JLabel nextTitle = new JLabel("NEXT", SwingConstants.CENTER);
+        nextTitle.setFont(new Font(Font.MONOSPACED, Font.BOLD, 11));
+        nextTitle.setForeground(changeColor(Color.DARK_GRAY));
+        nextArea.add(nextTitle, BorderLayout.NORTH);
+        nextArea.add(next, BorderLayout.CENTER);
+        IncomingAttackPanel originalIncoming = new IncomingAttackPanel(componentPrefix);
+        information.add(nextArea);
+        information.add(originalIncoming);
+        add(information, BorderLayout.SOUTH);
+        return originalIncoming;
     }
 
     void show(GameSnapshot snapshot,
