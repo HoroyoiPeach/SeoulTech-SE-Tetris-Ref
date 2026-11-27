@@ -112,8 +112,8 @@ class P2PBattleSessionIntegrationTest {
             } else {
                 for (int i = 0; i < 30; i++) guest.session.input(GameCommand.HARD_DROP);
             }
-            await("both lobbies retain the final result without an extra click", () ->
-                host.in(Phase.LOBBY) && guest.in(Phase.LOBBY)
+            await("both result screens retain the final result without an extra click", () ->
+                host.in(Phase.RESULT) && guest.in(Phase.RESULT)
                     && host.match() != null && guest.match() != null
                     && host.match().decision().isPresent() && guest.match().decision().isPresent());
             assertEquals(host.match(), guest.match());
@@ -123,7 +123,16 @@ class P2PBattleSessionIntegrationTest {
             assertEquals(mode == GameMode.TIME_LIMIT ? MatchOutcome.REMOTE_WIN : MatchOutcome.LOCAL_WIN,
                 result.outcome());
 
-            await("original connection returns to lobby", () -> host.in(Phase.LOBBY) && guest.in(Phase.LOBBY));
+            host.session.acknowledgeResult();
+            await("guest sees that host reviewed the result", () ->
+                host.in(Phase.RESULT) && guest.in(Phase.RESULT)
+                    && host.current.get().hostReady() && guest.current.get().hostReady());
+            assertFalse(host.current.get().guestReady() || guest.current.get().guestReady());
+            guest.session.acknowledgeResult();
+            await("both acknowledgements return the original connection to lobby", () ->
+                host.in(Phase.LOBBY) && guest.in(Phase.LOBBY));
+            assertNull(host.match());
+            assertNull(guest.match());
             assertFalse(host.current.get().hostReady() || host.current.get().guestReady());
             host.session.ready();
             await("host alone cannot restart", () -> guest.current.get().hostReady());
@@ -142,6 +151,7 @@ class P2PBattleSessionIntegrationTest {
         final List<BattleMessage.Lobby> lobbies = new ArrayList<>();
         BattleMatchSnapshot lastState;
         final List<Boolean> linkChanges = new ArrayList<>();
+        final List<BattleMessage.ResultReady> resultReadiness = new ArrayList<>();
         int pongs;
 
         @Override public void onMatchFrame(String payload) {
@@ -152,6 +162,7 @@ class P2PBattleSessionIntegrationTest {
                     linkChanges.add(link.delayed());
                     if (link.delayed()) send(new BattleMessage.LinkAck(link.round()));
                 }
+                case BattleMessage.ResultReady ready -> resultReadiness.add(ready);
                 default -> throw new AssertionError("Unexpected server message");
             }
         }
@@ -264,6 +275,35 @@ class P2PBattleSessionIntegrationTest {
                 !host.current.get().delayed() && client.linkChanges.equals(List.of(true, false)));
             await("silent peer times out", () -> host.in(Phase.SETUP), () -> {}, Duration.ofSeconds(13));
             assertFalse(host.current.get().notice().isBlank());
+        }
+    }
+
+    @Test
+    void resultAcknowledgementsMadeDuringDelayAreAppliedAfterRecovery() throws Exception {
+        try (Peer host = new Peer(); RawPeer client = new RawPeer()) {
+            client.transport.connect(LOOPBACK, host.listen());
+            client.awaitWire("lobby", () -> !client.lobbies.isEmpty());
+            long finishedRound = client.lobbies.getLast().round();
+            host.session.ready();
+            client.send(new BattleMessage.Ready(finishedRound));
+            client.awaitWire("match started", () -> client.lastState != null && client.lastState.started());
+            for (int i = 0; i < 32; i++) {
+                client.send(new BattleMessage.Input(finishedRound, GameCommand.HARD_DROP));
+            }
+            client.awaitWire("final result received", () ->
+                client.lastState != null && client.lastState.decision().isPresent());
+            await("host retains result while the client is silent", () ->
+                host.in(Phase.RESULT) && host.current.get().delayed());
+
+            host.session.acknowledgeResult();
+            await("host remembers its acknowledgement during the delay", () ->
+                host.in(Phase.RESULT) && host.current.get().hostReady());
+            client.send(new BattleMessage.Rematch(finishedRound));
+            client.awaitWire("recovery applies both acknowledgements and opens a clean lobby", () ->
+                !client.lobbies.isEmpty() && client.lobbies.getLast().round() > finishedRound);
+            await("host returned to lobby", () -> host.in(Phase.LOBBY));
+            assertNull(host.match());
+            assertFalse(host.current.get().hostReady() || host.current.get().guestReady());
         }
     }
 }
