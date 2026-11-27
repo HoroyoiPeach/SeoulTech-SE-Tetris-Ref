@@ -561,8 +561,8 @@ final class P2PPanel extends JPanel {
         controls.setForeground(text);
         connectedMenu.refreshTheme();
         result.refreshTheme();
-        own.repaint();
-        opponent.repaint();
+        own.refreshTheme();
+        opponent.refreshTheme();
         revalidate();
         repaint();
     }
