@@ -7,8 +7,10 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -18,6 +20,8 @@ import seoultech.se.tetris.game.GameSnapshot;
 /** One player's board, points, next piece and incoming rows on either battle screen. */
 final class BattlePlayerView extends JPanel {
     private static final long serialVersionUID = 1L;
+    private static final double NORMAL_BOARD_RATIO = 330.0 / 580.0;
+    private static final Dimension BOARD_SIZE = new Dimension(180, 316);
     private final Board board = new Board();
     private final Nextblockpanel next = new Nextblockpanel();
     private final JLabel score = new JLabel("SCORE 0", SwingConstants.CENTER);
@@ -36,14 +40,13 @@ final class BattlePlayerView extends JPanel {
         score.setName(componentPrefix + "Score");
         score.setFont(new Font(Font.MONOSPACED, Font.BOLD, 11));
         score.setForeground(changeColor(Color.RED));
-        heading.add(score, BorderLayout.EAST);
         add(heading, BorderLayout.NORTH);
         board.setName(componentPrefix + "Board");
-        board.setPreferredSize(new Dimension(180, 330));
-        add(board, BorderLayout.CENTER);
+        board.setPreferredSize(BOARD_SIZE);
 
-        JPanel information = new JPanel(new GridLayout(1, 2, 3, 0));
+        JPanel information = new JPanel(new BorderLayout(0, 4));
         information.setOpaque(false);
+        information.add(score, BorderLayout.NORTH);
         next.setName(componentPrefix + "Next");
         JPanel nextArea = new JPanel(new BorderLayout());
         nextArea.setOpaque(false);
@@ -53,9 +56,13 @@ final class BattlePlayerView extends JPanel {
         nextArea.add(nextTitle, BorderLayout.NORTH);
         nextArea.add(next, BorderLayout.CENTER);
         incoming = new IncomingAttackPanel(componentPrefix);
-        information.add(nextArea);
-        information.add(incoming);
-        add(information, BorderLayout.SOUTH);
+        JPanel previews = new JPanel(new GridLayout(2, 1, 0, 4));
+        previews.setOpaque(false);
+        previews.add(nextArea);
+        previews.add(incoming);
+        information.add(previews, BorderLayout.CENTER);
+        add(new BattleContentPanel(new AspectPanel(board, NORMAL_BOARD_RATIO), information),
+            BorderLayout.CENTER);
     }
 
     void show(GameSnapshot snapshot,
@@ -64,5 +71,74 @@ final class BattlePlayerView extends JPanel {
         next.drawNextBoard(snapshot.next());
         score.setText("SCORE " + snapshot.score());
         incoming.showRows(attacks);
+    }
+
+    /** Keeps the battle board at the same proportions as the normal game board. */
+    private static final class AspectPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private final JComponent content;
+        private final double ratio;
+
+        private AspectPanel(JComponent content, double ratio) {
+            this.content = content;
+            this.ratio = ratio;
+            setOpaque(false);
+            setLayout(null);
+            add(content);
+        }
+
+        @Override public Dimension getPreferredSize() {
+            Insets insets = getInsets();
+            Dimension preferred = content.getPreferredSize();
+            return new Dimension(preferred.width + insets.left + insets.right,
+                preferred.height + insets.top + insets.bottom);
+        }
+
+        @Override public void doLayout() {
+            Insets insets = getInsets();
+            int availableWidth = Math.max(0, getWidth() - insets.left - insets.right);
+            int availableHeight = Math.max(0, getHeight() - insets.top - insets.bottom);
+            int width = availableWidth;
+            int height = ratio == 0 ? 0 : (int) Math.round(width / ratio);
+            if (height > availableHeight) {
+                height = availableHeight;
+                width = (int) Math.round(height * ratio);
+            }
+            content.setBounds(insets.left + (availableWidth - width) / 2,
+                insets.top + (availableHeight - height) / 2, width, height);
+        }
+    }
+
+    /** Mirrors the normal game's board-left and information-right composition. */
+    private static final class BattleContentPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private static final int GAP = 4;
+        private final JComponent board;
+        private final JComponent information;
+
+        private BattleContentPanel(JComponent board, JComponent information) {
+            this.board = board;
+            this.information = information;
+            setOpaque(false);
+            setLayout(null);
+            add(board);
+            add(information);
+        }
+
+        @Override public Dimension getPreferredSize() {
+            Dimension boardSize = board.getPreferredSize();
+            return new Dimension(boardSize.width + GAP + 90, boardSize.height);
+        }
+
+        @Override public void doLayout() {
+            int width = getWidth();
+            int height = getHeight();
+            double informationShare = width < 360 ? 0.45 : 0.30;
+            int informationWidth = Math.min(140, (int) Math.round(width * informationShare));
+            int gap = width > informationWidth ? GAP : 0;
+            int boardWidth = Math.max(0, width - informationWidth - gap);
+            board.setBounds(0, 0, boardWidth, height);
+            information.setBounds(boardWidth + gap, 0, informationWidth, height);
+        }
     }
 }
