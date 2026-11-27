@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.net.ServerSocket;
 import java.nio.file.Path;
@@ -13,11 +14,14 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import javax.swing.Action;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -53,11 +57,19 @@ class P2PPanelTest {
             Runnable saveAddress = addressTasks.poll(2, TimeUnit.SECONDS);
             assertNotNull(saveAddress);
             edt(() -> {
-                mode(host).setSelectedItem("Item");
-                assertFalse(mode(client).isEnabled());
+                assertTrue(mode(host, "Classic").isSelected());
+                assertNotNull(mode(host, "Time Limit"));
+                assertNotNull(mode(host, "Item").getInputMap(JComponent.WHEN_FOCUSED)
+                    .get(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)));
+                focusedKey(mode(host, "Item"), KeyEvent.VK_ENTER);
+                assertFalse(mode(client, "Item").isEnabled());
                 return null;
             });
-            await(() -> "Item".equals(mode(client).getSelectedItem()));
+            await(() -> mode(client, "Item").isSelected());
+            edt(() -> { focusedKey(mode(host, "Item"), KeyEvent.VK_LEFT); return null; });
+            await(() -> mode(host, "Classic").isSelected() && mode(client, "Classic").isSelected());
+            edt(() -> { focusedKey(mode(host, "Classic"), KeyEvent.VK_RIGHT); return null; });
+            await(() -> mode(host, "Item").isSelected() && mode(client, "Item").isSelected());
             edt(() -> { click(client, "START"); return null; });
             await(() -> button(client, "START") != null && !button(client, "START").isEnabled());
             assertNull(edt(() -> board(client, "ownBoard")));
@@ -66,7 +78,7 @@ class P2PPanelTest {
 
             int clientX = edt(() -> board(client, "ownBoard").snapshot().x());
             int hostX = edt(() -> board(host, "ownBoard").snapshot().x());
-            edt(() -> { key(client, Maincontainer.LEFT); return null; });
+            edt(() -> { boundKey(client, Maincontainer.LEFT); return null; });
             await(() -> board(client, "ownBoard").snapshot().x() == clientX - 1
                 && board(host, "opponentBoard").snapshot().x() == clientX - 1);
             assertEquals(hostX, edt(() -> board(host, "ownBoard").snapshot().x()));
@@ -75,7 +87,7 @@ class P2PPanelTest {
             saveAddress.run();
             assertEquals("127.0.0.1", LastPeerAddress.load());
             edt(() -> {
-                for (int i = 0; i < 32; i++) key(client, Maincontainer.HARD_DROP);
+                for (int i = 0; i < 32; i++) boundKey(client, Maincontainer.HARD_DROP);
                 return null;
             });
             await(() -> "YOU WIN".equals(text(host, "matchOutcome"))
@@ -137,9 +149,22 @@ class P2PPanelTest {
         return new P2PPanel(Difficulty.NORMAL, 180, port, () -> {});
     }
 
-    private static void key(P2PPanel target, int code) {
-        var event = new KeyEvent(target, KeyEvent.KEY_PRESSED, 0, 0, code, KeyEvent.CHAR_UNDEFINED);
-        for (var listener : target.getKeyListeners()) listener.keyPressed(event);
+    private static void boundKey(P2PPanel target, int code) {
+        KeyStroke stroke = KeyStroke.getKeyStroke(code, 0);
+        Object actionKey = target.getInputMap(P2PPanel.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).get(stroke);
+        assertNotNull(actionKey, "P2P keyboard binding must be available while a child owns focus");
+        Action action = target.getActionMap().get(actionKey);
+        assertNotNull(action);
+        action.actionPerformed(new ActionEvent(target, ActionEvent.ACTION_PERFORMED, actionKey.toString()));
+    }
+
+    private static void focusedKey(JComponent target, int code) {
+        KeyStroke stroke = KeyStroke.getKeyStroke(code, 0);
+        Object actionKey = target.getInputMap(JComponent.WHEN_FOCUSED).get(stroke);
+        assertNotNull(actionKey);
+        Action action = target.getActionMap().get(actionKey);
+        assertNotNull(action);
+        action.actionPerformed(new ActionEvent(target, ActionEvent.ACTION_PERFORMED, actionKey.toString()));
     }
 
     private static void click(P2PPanel panel, String name) { button(panel, name).doClick(0); }
@@ -152,8 +177,8 @@ class P2PPanelTest {
     private static JTextArea hostAddresses(P2PPanel panel) {
         return find(panel, JTextArea.class, c -> "hostAddresses".equals(c.getName()));
     }
-    private static JComboBox<?> mode(P2PPanel panel) {
-        return find(panel, JComboBox.class, c -> "battleMode".equals(c.getName()));
+    private static JToggleButton mode(P2PPanel panel, String caption) {
+        return find(panel, JToggleButton.class, c -> caption.equals(c.getText()));
     }
     private static Board board(P2PPanel panel, String name) {
         return find(panel, Board.class, c -> name.equals(c.getName()));
