@@ -39,6 +39,13 @@ final class IncomingAttackPanel extends JPanel {
         showRows(List.of());
     }
 
+    void refreshTheme() {
+        setBorder(BorderFactory.createLineBorder(changeColor(Color.GRAY)));
+        title.setForeground(changeColor(Color.RED));
+        rows.setForeground(changeColor(Color.GRAY));
+        repaint();
+    }
+
     void showRows(List<AttackRow> attacks) {
         List<AttackRow> safeRows = List.copyOf(attacks);
         title.setText("INCOMING " + safeRows.size() + "/" + AttackQueue.MAX_ROWS);

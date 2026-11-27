@@ -4,8 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Font;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +29,16 @@ class BattlePlayerViewLayoutTest {
         assertTrue(board.getHeight() <= 520);
         Nextblockpanel preview = find(view, Nextblockpanel.class);
         assertEquals(preview.getWidth(), preview.getHeight());
+        JLabel score = named(view, "ownScore", JLabel.class);
+        assertEquals("0", score.getText());
+        assertEquals(18, score.getFont().getSize());
+        assertEquals(Font.MONOSPACED, score.getFont().getFamily());
+        assertEquals(SwingConstants.RIGHT, score.getHorizontalAlignment());
+        IncomingAttackPanel incoming = find(view, IncomingAttackPanel.class);
+        assertEquals(incoming.getPreferredSize().height, incoming.getHeight(),
+            "incoming outline must stop after its ten-row preview");
+        assertTrue(incoming.getY() + incoming.getHeight() < incoming.getParent().getHeight(),
+            "unused sidebar space must remain outside the incoming outline");
     }
 
     @Test
@@ -40,6 +54,28 @@ class BattlePlayerViewLayoutTest {
         assertTrue(board.getWidth() <= 160);
         assertTrue(board.getHeight() <= 360);
         assertEquals(33.0 / 58.0, (double) board.getWidth() / board.getHeight(), 0.01);
+        IncomingAttackPanel incoming = find(view, IncomingAttackPanel.class);
+        assertEquals(incoming.getPreferredSize().height, incoming.getHeight(),
+            "the attack indicator has priority when the sidebar is short");
+    }
+
+    @Test
+    void refreshThemeReappliesPaletteWithoutRebuildingTheView() throws Exception {
+        String previous = Maincontainer.colorPalette;
+        try {
+            Maincontainer.colorPalette = "Normal";
+            BattlePlayerView view = new BattlePlayerView("YOU", "own");
+            JLabel score = named(view, "ownScore", JLabel.class);
+            Color normal = score.getForeground();
+
+            Maincontainer.colorPalette = "Tritanopia";
+            SwingUtilities.invokeAndWait(view::refreshTheme);
+
+            assertEquals(Maincontainer.changeColor(Color.RED), score.getForeground());
+            assertTrue(!normal.equals(score.getForeground()));
+        } finally {
+            Maincontainer.colorPalette = previous;
+        }
     }
 
     @Test
@@ -75,6 +111,24 @@ class BattlePlayerViewLayoutTest {
         T found = findOrNull(root, type);
         if (found != null) return found;
         throw new AssertionError(type.getSimpleName() + " not found");
+    }
+
+    private static <T extends Component> T named(Container root, String name, Class<T> type) {
+        T found = findNamedOrNull(root, name, type);
+        if (found != null) return found;
+        throw new AssertionError(name + " not found");
+    }
+
+    private static <T extends Component> T findNamedOrNull(
+            Container root, String name, Class<T> type) {
+        for (Component child : root.getComponents()) {
+            if (type.isInstance(child) && name.equals(child.getName())) return type.cast(child);
+            if (child instanceof Container nested) {
+                T found = findNamedOrNull(nested, name, type);
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     private static <T> T findOrNull(Container root, Class<T> type) {

@@ -26,11 +26,16 @@ public final class Board extends JComponent {
     private transient GameSnapshot snapshot;
 
     public Board() {
+        refreshTheme();
+    }
+
+    void refreshTheme() {
         setBackground(changeColor(Color.BLACK));
         CompoundBorder border = BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(changeColor(Color.GRAY), 10),
             BorderFactory.createLineBorder(changeColor(Color.DARK_GRAY), 5));
         setBorder(border);
+        repaint();
     }
 
     void showSnapshot(GameSnapshot snapshot) {
