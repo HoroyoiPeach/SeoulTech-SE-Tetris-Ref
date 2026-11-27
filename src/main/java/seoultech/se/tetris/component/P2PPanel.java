@@ -8,7 +8,6 @@ import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.List;
@@ -35,7 +34,6 @@ import seoultech.se.tetris.Difficulty;
 import seoultech.se.tetris.GameMode;
 import seoultech.se.tetris.game.BattleMatchSnapshot;
 import seoultech.se.tetris.game.GameCommand;
-import seoultech.se.tetris.game.MatchOutcome;
 import seoultech.se.tetris.network.P2PBattleSession;
 import seoultech.se.tetris.network.P2PBattleSession.Phase;
 import seoultech.se.tetris.network.P2PBattleSession.View;
@@ -64,6 +62,7 @@ final class P2PPanel extends JPanel {
     private boolean saveFailed;
     private final CardLayout layout = new CardLayout();
     private final JPanel cards = new JPanel(layout);
+    private final JPanel match = new JPanel(new BorderLayout(4, 4));
     private final JLabel title = label("P2P BATTLE");
     private final JLabel status = label(" ");
     private final JTextField address = new JTextField(18);
@@ -74,7 +73,7 @@ final class P2PPanel extends JPanel {
     private final BattlePlayerView own = new BattlePlayerView("YOU", "own");
     private final BattlePlayerView opponent = new BattlePlayerView("OPPONENT", "opponent");
     private final JLabel clock = label(" ");
-    private final JLabel outcome = label(" ");
+    private final P2PResultView result;
     private final JButton hostButton;
     private final JButton joinButton;
     private final JButton cancelButton;
@@ -107,7 +106,10 @@ final class P2PPanel extends JPanel {
         session = new P2PBattleSession(difficulty, timeLimitSeconds, this::receiveView);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
         status.setName("p2pStatus");
-        JPanel header = rows(title, status);
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.CENTER);
+        header.add(status, BorderLayout.SOUTH);
         add(header, BorderLayout.NORTH);
         cards.setOpaque(false);
         add(cards, BorderLayout.CENTER);
@@ -166,11 +168,15 @@ final class P2PPanel extends JPanel {
         }
         bind(readyButton, WHEN_FOCUSED, KeyEvent.VK_UP, this::focusSelectedMode);
         bind(readyButton, WHEN_FOCUSED, KeyEvent.VK_DOWN, this::focusSelectedMode);
-        outcome.setName("matchOutcome");
-        cards.add(centered(rows(outcome, label("Battle mode"), modeChoices, readiness, readyButton,
+        cards.add(centered(rows(label("Battle mode"), modeChoices, readiness, readyButton,
             button("DISCONNECT", session::leave))), "lobby");
 
-        JPanel match = new JPanel(new BorderLayout(4, 4));
+        result = new P2PResultView(session::acknowledgeResult, session::leave);
+        cards.add(centered(result), "result");
+
+        match.setName("p2pMatch");
+        match.setFocusable(true);
+        match.setFocusTraversalKeysEnabled(false);
         match.setOpaque(false);
         JPanel players = new JPanel(new GridLayout(1, 2, 6, 0));
         players.setOpaque(false);
@@ -183,15 +189,10 @@ final class P2PPanel extends JPanel {
         actions.setOpaque(false);
         JButton leaveMatch = button("DISCONNECT", session::leave);
         leaveMatch.setFocusable(false);
+        actions.add(label(keys.firstSummary() + "   PAUSE " + KeyEvent.getKeyText(keys.pauseKey())));
         actions.add(leaveMatch);
-        match.add(rows(label(keys.firstSummary() + "   PAUSE " + KeyEvent.getKeyText(keys.pauseKey())), actions),
-            BorderLayout.SOUTH);
+        match.add(actions, BorderLayout.SOUTH);
         cards.add(match, "match");
-        addKeyListener(new KeyAdapter() {
-            @Override public void keyPressed(KeyEvent event) {
-                handleKey(event.getKeyCode());
-            }
-        });
         bindGameplayKeys();
         CompletableFuture.supplyAsync(() -> {
             try { return LastPeerAddress.load(); }
@@ -246,13 +247,15 @@ final class P2PPanel extends JPanel {
 
     private void bindGameplayKeys() {
         for (int key : keys.first().keySet()) {
-            bind(this, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, key, () -> handleKey(key));
+            bind(match, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, key, () -> handleKey(key));
         }
-        bind(this, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, keys.pauseKey(), () -> handleKey(keys.pauseKey()));
-        bind(this, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyEvent.VK_ESCAPE,
-            () -> handleKey(KeyEvent.VK_ESCAPE));
-        bind(this, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyEvent.VK_ENTER,
-            () -> handleKey(KeyEvent.VK_ENTER));
+        bind(match, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, keys.pauseKey(), () -> handleKey(keys.pauseKey()));
+        bind(match, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyEvent.VK_ENTER, () -> handleKey(KeyEvent.VK_ENTER));
+        bind(this, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyEvent.VK_ESCAPE, () -> {
+            if (current != null && current.phase() == Phase.SETUP) exit();
+            else if (current != null && current.phase() == Phase.PLAYING) handleKey(KeyEvent.VK_ESCAPE);
+            else session.leave();
+        });
     }
 
     private void selectMode(GameMode choice) {
@@ -329,6 +332,7 @@ final class P2PPanel extends JPanel {
         if (previous == Phase.LISTENING && view.phase() != Phase.LISTENING) addressLookupGeneration++;
         if (view.phase() == Phase.SETUP) saveFailed = false;
         showStatus(view);
+        status.setVisible(view.phase() != Phase.PLAYING || !status.getText().isBlank());
         switch (view.phase()) {
             case SETUP -> {
                 title.setText("P2P BATTLE");
@@ -363,7 +367,6 @@ final class P2PPanel extends JPanel {
                     joiningAddress = null;
                 }
                 title.setText(view.host() ? "LOBBY · HOST" : "LOBBY · CLIENT");
-                outcome.setText(winner(view));
                 boolean canSelectMode = view.host() && !view.hostReady() && !view.delayed();
                 for (JToggleButton button : modeButtons) button.setEnabled(canSelectMode);
                 modeButtons[view.mode().ordinal()].setSelected(true);
@@ -375,12 +378,20 @@ final class P2PPanel extends JPanel {
                     else readyButton.requestFocusInWindow();
                 }
             }
-            case PLAYING, RESULT -> {
+            case RESULT -> {
+                title.setText("MATCH RESULT");
+                result.render(view);
+                if (previous != Phase.RESULT) {
+                    layout.show(cards, "result");
+                    result.requestContinueFocus();
+                }
+            }
+            case PLAYING -> {
                 if (view.match() == null) return;
                 showMatch(view);
                 if (previous != view.phase()) {
                     layout.show(cards, "match");
-                    requestFocusInWindow();
+                    match.requestFocusInWindow();
                 }
             }
         }
@@ -410,24 +421,11 @@ final class P2PPanel extends JPanel {
             ? String.format("TIME %02d:%02d", match.remainingSeconds() / 60, match.remainingSeconds() % 60) : "";
         if (!match.stopped() && match.first().paused()) time += "  PAUSED · ENTER TO DISCONNECT";
         clock.setText(time);
-    }
-
-    private static String winner(View view) {
-        if (view.match() == null) return " ";
-        return view.match().decision().map(decision -> {
-            if (decision.outcome() == MatchOutcome.DRAW) return "DRAW";
-            return (decision.outcome() == MatchOutcome.LOCAL_WIN) == view.host() ? "YOU WIN" : "YOU LOSE";
-        }).orElse(" ");
+        clock.setVisible(!time.isBlank());
     }
 
     private void handleKey(int key) {
-        if (current == null) return;
-        if (key == KeyEvent.VK_ESCAPE) {
-            if (current.phase() == Phase.SETUP) exit();
-            else session.leave();
-            return;
-        }
-        if (current.phase() != Phase.PLAYING) return;
+        if (current == null || current.phase() != Phase.PLAYING) return;
         if (key == KeyEvent.VK_ENTER && current.match() != null && current.match().first().paused()) {
             session.leave();
         } else if (keys.isPause(key)) {

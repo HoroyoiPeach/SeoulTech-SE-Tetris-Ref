@@ -18,6 +18,7 @@ import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
@@ -92,9 +93,18 @@ class P2PPanelTest {
             });
             await(() -> "YOU WIN".equals(text(host, "matchOutcome"))
                 && "YOU LOSE".equals(text(client, "matchOutcome")));
-            await(() -> button(host, "START") != null && button(client, "START") != null);
+            edt(() -> {
+                assertNull(button(host, "START"));
+                assertNull(button(client, "START"));
+                assertNotNull(button(host, "DISCONNECT"));
+                focusedKey(button(host, "CONTINUE"), KeyEvent.VK_ENTER);
+                return null;
+            });
+            await(() -> text(client, "matchResultReadiness").equals("Opponent is ready"));
             assertEquals("YOU WIN", edt(() -> text(host, "matchOutcome")));
             assertEquals("YOU LOSE", edt(() -> text(client, "matchOutcome")));
+            edt(() -> { focusedKey(button(client, "CONTINUE"), KeyEvent.VK_ENTER); return null; });
+            await(() -> button(host, "START") != null && button(client, "START") != null);
             edt(() -> { click(host, "START"); click(client, "START"); return null; });
             await(() -> "SCORE 0".equals(text(client, "ownScore")) && "SCORE 0".equals(text(host, "ownScore")));
             edt(() -> { click(host, "DISCONNECT"); return null; });
@@ -151,9 +161,11 @@ class P2PPanelTest {
 
     private static void boundKey(P2PPanel target, int code) {
         KeyStroke stroke = KeyStroke.getKeyStroke(code, 0);
-        Object actionKey = target.getInputMap(P2PPanel.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).get(stroke);
+        JPanel match = find(target, JPanel.class, p -> "p2pMatch".equals(p.getName()));
+        assertNotNull(match);
+        Object actionKey = match.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).get(stroke);
         assertNotNull(actionKey, "P2P keyboard binding must be available while a child owns focus");
-        Action action = target.getActionMap().get(actionKey);
+        Action action = match.getActionMap().get(actionKey);
         assertNotNull(action);
         action.actionPerformed(new ActionEvent(target, ActionEvent.ACTION_PERFORMED, actionKey.toString()));
     }
