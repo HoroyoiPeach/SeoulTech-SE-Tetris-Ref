@@ -6,7 +6,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -46,7 +45,7 @@ final class BattlePlayerView extends JPanel {
 
         JPanel information = new JPanel(new BorderLayout(0, 4));
         information.setOpaque(false);
-        information.add(score, BorderLayout.NORTH);
+        next.setPreferredSize(new Dimension(140, 140));
         next.setName(componentPrefix + "Next");
         JPanel nextArea = new JPanel(new BorderLayout());
         nextArea.setOpaque(false);
@@ -54,13 +53,11 @@ final class BattlePlayerView extends JPanel {
         nextTitle.setFont(new Font(Font.MONOSPACED, Font.BOLD, 11));
         nextTitle.setForeground(changeColor(Color.DARK_GRAY));
         nextArea.add(nextTitle, BorderLayout.NORTH);
-        nextArea.add(next, BorderLayout.CENTER);
+        nextArea.add(new AspectPanel(next, 1.0), BorderLayout.CENTER);
+        nextArea.add(score, BorderLayout.SOUTH);
+        information.add(nextArea, BorderLayout.NORTH);
         incoming = new IncomingAttackPanel(componentPrefix);
-        JPanel previews = new JPanel(new GridLayout(2, 1, 0, 4));
-        previews.setOpaque(false);
-        previews.add(nextArea);
-        previews.add(incoming);
-        information.add(previews, BorderLayout.CENTER);
+        information.add(incoming, BorderLayout.CENTER);
         add(new BattleContentPanel(new AspectPanel(board, NORMAL_BOARD_RATIO), information),
             BorderLayout.CENTER);
     }
@@ -99,7 +96,7 @@ final class BattlePlayerView extends JPanel {
             int availableWidth = Math.max(0, getWidth() - insets.left - insets.right);
             int availableHeight = Math.max(0, getHeight() - insets.top - insets.bottom);
             int width = availableWidth;
-            int height = ratio == 0 ? 0 : (int) Math.round(width / ratio);
+            int height = (int) Math.round(width / ratio);
             if (height > availableHeight) {
                 height = availableHeight;
                 width = (int) Math.round(height * ratio);

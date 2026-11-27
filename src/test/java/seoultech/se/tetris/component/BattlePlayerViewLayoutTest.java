@@ -22,6 +22,8 @@ class BattlePlayerViewLayoutTest {
         assertEquals(33.0 / 58.0, (double) board.getWidth() / board.getHeight(), 0.01);
         assertTrue(board.getWidth() < 300, "wide P2P columns must not stretch the board horizontally");
         assertTrue(board.getHeight() <= 520);
+        Nextblockpanel preview = find(view, Nextblockpanel.class);
+        assertEquals(preview.getWidth(), preview.getHeight());
     }
 
     @Test
