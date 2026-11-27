@@ -38,8 +38,6 @@ final class P2PResultView extends JPanel {
         readiness.setName("matchResultReadiness");
         continueButton.setName("resultContinueButton");
         disconnectButton.setName("resultDisconnectButton");
-        MenuButtons.styleActionButton(continueButton);
-        MenuButtons.styleActionButton(disconnectButton);
         continueButton.setFocusable(true);
         disconnectButton.setFocusable(true);
         continueButton.setFocusPainted(true);

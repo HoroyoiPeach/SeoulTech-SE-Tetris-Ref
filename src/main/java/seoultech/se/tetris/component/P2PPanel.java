@@ -27,7 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.JToggleButton;
+import javax.swing.JRadioButton;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import seoultech.se.tetris.Difficulty;
@@ -69,7 +69,7 @@ final class P2PPanel extends JPanel {
     private final JLabel connection = label(" ");
     private final JTextArea localAddress = new JTextArea(5, 36);
     private final JLabel readiness = label(" ");
-    private final JToggleButton[] modeButtons = new JToggleButton[GameMode.values().length];
+    private final JRadioButton[] modeButtons = new JRadioButton[GameMode.values().length];
     private final BattlePlayerView own = new BattlePlayerView("YOU", "own");
     private final BattlePlayerView opponent = new BattlePlayerView("OPPONENT", "opponent");
     private final JLabel clock = label(" ");
@@ -144,14 +144,9 @@ final class P2PPanel extends JPanel {
         modeChoices.setOpaque(false);
         ButtonGroup modeGroup = new ButtonGroup();
         for (GameMode choice : GameMode.values()) {
-            JToggleButton choiceButton = new JToggleButton(choice.displayName());
+            JRadioButton choiceButton = new JRadioButton(choice.displayName());
             choiceButton.setName("battleMode." + choice.name());
-            MenuButtons.styleActionButton(choiceButton);
-            choiceButton.setFocusable(true);
-            choiceButton.addItemListener(event -> {
-                choiceButton.setOpaque(choiceButton.isSelected());
-                choiceButton.repaint();
-            });
+            choiceButton.setOpaque(false);
             choiceButton.addActionListener(event -> selectMode(choice));
             int index = choice.ordinal();
             bind(choiceButton, WHEN_FOCUSED, KeyEvent.VK_ENTER, () -> choiceButton.doClick(0));
@@ -162,14 +157,17 @@ final class P2PPanel extends JPanel {
             modeChoices.add(choiceButton);
         }
         readyButton = button("START", () -> session.ready(current.round()));
-        for (JToggleButton choiceButton : modeButtons) {
-            bind(choiceButton, WHEN_FOCUSED, KeyEvent.VK_UP, readyButton::requestFocusInWindow);
-            bind(choiceButton, WHEN_FOCUSED, KeyEvent.VK_DOWN, readyButton::requestFocusInWindow);
+        JButton leaveLobby = button("DISCONNECT", session::leave);
+        for (JRadioButton choiceButton : modeButtons) {
+            bindVertical(choiceButton, leaveLobby, readyButton);
         }
-        bind(readyButton, WHEN_FOCUSED, KeyEvent.VK_UP, this::focusSelectedMode);
-        bind(readyButton, WHEN_FOCUSED, KeyEvent.VK_DOWN, this::focusSelectedMode);
-        cards.add(centered(rows(label("Battle mode"), modeChoices, readiness, readyButton,
-            button("DISCONNECT", session::leave))), "lobby");
+        bind(readyButton, WHEN_FOCUSED, KeyEvent.VK_UP, () -> focusSelectedModeOr(leaveLobby));
+        bind(readyButton, WHEN_FOCUSED, KeyEvent.VK_DOWN, leaveLobby::requestFocusInWindow);
+        bind(leaveLobby, WHEN_FOCUSED, KeyEvent.VK_UP, () -> {
+            if (readyButton.isEnabled()) readyButton.requestFocusInWindow();
+        });
+        bind(leaveLobby, WHEN_FOCUSED, KeyEvent.VK_DOWN, () -> focusSelectedModeOr(readyButton));
+        cards.add(centered(rows(label("Battle mode"), modeChoices, readiness, readyButton, leaveLobby)), "lobby");
 
         result = new P2PResultView(session::acknowledgeResult, session::leave);
         cards.add(centered(result), "result");
@@ -268,14 +266,14 @@ final class P2PPanel extends JPanel {
     private void focusMode(int index) {
         if (!modeButtons[0].isEnabled()) return;
         int target = Math.floorMod(index, modeButtons.length);
-        JToggleButton button = modeButtons[target];
+        JRadioButton button = modeButtons[target];
         button.requestFocusInWindow();
         if (!button.isSelected()) button.doClick(0);
     }
 
-    private void focusSelectedMode() {
-        if (current == null || !current.host() || current.hostReady() || current.delayed()) return;
-        modeButtons[current.mode().ordinal()].requestFocusInWindow();
+    private void focusSelectedModeOr(JComponent fallback) {
+        if (modeButtons[0].isEnabled()) modeButtons[current.mode().ordinal()].requestFocusInWindow();
+        else if (fallback.isEnabled()) fallback.requestFocusInWindow();
     }
 
     private void join() {
@@ -368,14 +366,13 @@ final class P2PPanel extends JPanel {
                 }
                 title.setText(view.host() ? "LOBBY · HOST" : "LOBBY · CLIENT");
                 boolean canSelectMode = view.host() && !view.hostReady() && !view.delayed();
-                for (JToggleButton button : modeButtons) button.setEnabled(canSelectMode);
+                for (JRadioButton button : modeButtons) button.setEnabled(canSelectMode);
                 modeButtons[view.mode().ordinal()].setSelected(true);
                 readiness.setText("Host " + readyState(view.hostReady()) + "   ·   Client " + readyState(view.guestReady()));
                 readyButton.setEnabled(!view.delayed() && !(view.host() ? view.hostReady() : view.guestReady()));
                 if (previous != Phase.LOBBY) {
                     layout.show(cards, "lobby");
-                    if (canSelectMode) focusSelectedMode();
-                    else readyButton.requestFocusInWindow();
+                    focusSelectedModeOr(readyButton);
                 }
             }
             case RESULT -> {
