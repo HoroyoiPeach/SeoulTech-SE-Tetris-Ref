@@ -59,7 +59,7 @@ public final class LocalBattleDesktopSmoke {
         return find(root, JButton.class, candidate -> text.equals(candidate.getText()));
     }
 
-    private static <T> T onEdt(Callable<T> task) throws Exception {
+    static <T> T onEdt(Callable<T> task) throws Exception {
         if (SwingUtilities.isEventDispatchThread()) return task.call();
         AtomicReference<T> value = new AtomicReference<>();
         AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -76,7 +76,7 @@ public final class LocalBattleDesktopSmoke {
         return value.get();
     }
 
-    private static void capture(Maincontainer frame, Path file) throws Exception {
+    static void capture(Maincontainer frame, Path file) throws Exception {
         frame.validate();
         BufferedImage image = new BufferedImage(frame.getWidth(), frame.getHeight(),
             BufferedImage.TYPE_INT_ARGB);

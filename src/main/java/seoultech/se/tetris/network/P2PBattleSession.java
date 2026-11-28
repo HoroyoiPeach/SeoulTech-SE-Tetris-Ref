@@ -24,8 +24,8 @@ public final class P2PBattleSession implements AutoCloseable {
     public record View(Phase phase, long round, boolean host, GameMode mode, boolean hostReady,
             boolean guestReady, BattleMatchSnapshot match, boolean delayed, boolean highLatency, String notice) { }
 
-    private final Difficulty difficulty;
-    private final Duration limit;
+    private Difficulty difficulty;
+    private Duration limit;
     private final Consumer<View> render;
     private final ScheduledThreadPoolExecutor loop;
     private final ExecutorService dialWorkers;
@@ -151,10 +151,20 @@ public final class P2PBattleSession implements AutoCloseable {
     public void selectMode(GameMode selected, long visibleRound) {
         Objects.requireNonNull(selected);
         submit(() -> {
-            if (host && phase == Phase.LOBBY && !hostReady && !delayed && visibleRound == round && mode != selected) {
+            if (host && phase == Phase.LOBBY && !hostReady && !delayed && visibleRound == round) {
                 mode = selected;
                 openLobby();
             }
+        });
+    }
+
+    public void updateMatchSettings(Difficulty selectedDifficulty, int limitSeconds) {
+        Objects.requireNonNull(selectedDifficulty);
+        if (limitSeconds <= 0) throw new IllegalArgumentException("Time limit must be positive");
+        Duration selectedLimit = Duration.ofSeconds(limitSeconds);
+        submit(() -> {
+            difficulty = selectedDifficulty;
+            limit = selectedLimit;
         });
     }
 
@@ -188,11 +198,23 @@ public final class P2PBattleSession implements AutoCloseable {
     }
 
     public void rematch() {
+        acknowledgeResult();
+    }
+
+    public void acknowledgeResult() {
         long requestedRound = round;
         submit(() -> {
-            if (phase != Phase.RESULT || delayed || requestedRound != round) return;
-            if (host) openLobby();
-            else send(new BattleMessage.Rematch(round));
+            if (phase != Phase.RESULT || requestedRound != round) return;
+            if (host) {
+                if (hostReady) return;
+                hostReady = true;
+                updateResultReadiness();
+            } else {
+                if (guestReady) return;
+                guestReady = true;
+                publish();
+                sendResultAcknowledgement();
+            }
         });
     }
 
@@ -258,9 +280,12 @@ public final class P2PBattleSession implements AutoCloseable {
         if (update.snapshot().equals(state)) return;
         state = update.snapshot();
         phase = state.decision().isPresent() ? Phase.RESULT : Phase.PLAYING;
+        if (phase == Phase.RESULT) {
+            hostReady = false;
+            guestReady = false;
+        }
         if (send(new BattleMessage.State(round, state))) {
-            if (phase == Phase.RESULT) openLobby();
-            else publish();
+            publish();
         }
     }
 
@@ -270,6 +295,7 @@ public final class P2PBattleSession implements AutoCloseable {
         hostReady = false;
         guestReady = false;
         engine = null;
+        state = null;
         phase = Phase.LOBBY;
         notice = "";
         sendLobby();
@@ -314,14 +340,16 @@ public final class P2PBattleSession implements AutoCloseable {
             } else if (message instanceof BattleMessage.Input input && phase == Phase.PLAYING
                     && !delayed && pendingDelayAcks == 0) {
                 play(PlayerSide.SECOND, input.command());
-            } else if (message instanceof BattleMessage.Rematch && phase == Phase.RESULT && !delayed) {
-                openLobby();
+            } else if (message instanceof BattleMessage.Rematch && phase == Phase.RESULT) {
+                guestReady = true;
+                updateResultReadiness();
             }
         } else if (message instanceof BattleMessage.Lobby lobby) {
             if (lobby.round() < round || (lobby.round() == round && phase != Phase.LOBBY)) return;
             round = lobby.round();
             mode = lobby.mode();
             phase = Phase.LOBBY;
+            state = null;
             hostReady = lobby.hostReady();
             guestReady = lobby.guestReady();
             notice = "";
@@ -336,11 +364,35 @@ public final class P2PBattleSession implements AutoCloseable {
             guestReady = true;
             state = next;
             phase = state.decision().isPresent() ? Phase.RESULT : Phase.PLAYING;
-            if (phase == Phase.RESULT) send(new BattleMessage.Rematch(round));
-            else publish();
+            if (phase == Phase.RESULT) {
+                hostReady = false;
+                guestReady = false;
+            }
+            publish();
+        } else if (message instanceof BattleMessage.ResultReady ready) {
+            if (ready.round() != round || phase != Phase.RESULT) return;
+            hostReady = hostReady || ready.hostReady();
+            guestReady = guestReady || ready.guestReady();
+            publish();
         } else {
             throw new IllegalArgumentException("Client expects authoritative lobby or state");
         }
+    }
+
+    private void updateResultReadiness() {
+        if (delayed) {
+            publish();
+            return;
+        }
+        if (hostReady && guestReady) {
+            openLobby();
+            return;
+        }
+        if (send(new BattleMessage.ResultReady(round, hostReady, guestReady))) publish();
+    }
+
+    private void sendResultAcknowledgement() {
+        if (!delayed) send(new BattleMessage.Rematch(round));
     }
 
     private void updateDelay() {
@@ -349,7 +401,12 @@ public final class P2PBattleSession implements AutoCloseable {
         if (host && phase == Phase.PLAYING) sampleClock();
         delayed = next;
         publish();
-        if (!delayed && host && phase == Phase.LOBBY && hostReady && guestReady) updateReadiness();
+        if (!delayed && host && phase == Phase.LOBBY && hostReady && guestReady) {
+            updateReadiness();
+        } else if (!delayed && phase == Phase.RESULT) {
+            if (host) updateResultReadiness();
+            else if (guestReady) sendResultAcknowledgement();
+        }
     }
 
     private void localLinkChanged(boolean value) {

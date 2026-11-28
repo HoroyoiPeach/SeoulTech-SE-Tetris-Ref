@@ -48,6 +48,11 @@ public sealed interface BattleMessage {
         public Rematch { requireRound(round); }
     }
 
+    /** Host-authoritative acknowledgement state while both players review the final result. */
+    record ResultReady(long round, boolean hostReady, boolean guestReady) implements BattleMessage {
+        public ResultReady { requireRound(round); }
+    }
+
     private static void requireRound(long round) {
         if (round < 1) throw new IllegalArgumentException("Round must be positive");
     }

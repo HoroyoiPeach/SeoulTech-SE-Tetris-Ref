@@ -25,6 +25,7 @@ public class Settingpanel extends JPanel{
     같은 방식으로 키 추가 리스트도 추가할 수 있습니다.
      */
     private Maincontainer maincontainer;
+    private final Runnable onSaveAndExit;
     private JPanel settingPanel;
     private OptionButton exitButton;
     private OptionButton windowSizeOption;
@@ -40,7 +41,12 @@ public class Settingpanel extends JPanel{
     private final MenuButtons<OptionButton> menu = new MenuButtons<>();
 
     public Settingpanel(Maincontainer maincontainer) {
+        this(maincontainer, maincontainer::exitSettingEnterStart);
+    }
+
+    Settingpanel(Maincontainer maincontainer, Runnable onSaveAndExit) {
         this.maincontainer = maincontainer;
+        this.onSaveAndExit = onSaveAndExit;
         setLayout(null);
         setBackground(changeColor(Color.LIGHT_GRAY));
 
@@ -129,7 +135,7 @@ public class Settingpanel extends JPanel{
             @Override 
             protected void isPressed() {
                 maincontainer.setting.exportSetting();
-                maincontainer.exitSettingEnterStart();
+                onSaveAndExit.run();
             }
         };
         int panelWidth = (int) exitButton.getPreferredSize().getWidth();

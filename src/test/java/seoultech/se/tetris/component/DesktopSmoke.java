@@ -248,13 +248,16 @@ public final class DesktopSmoke {
                 check(frame.isShowing(), "real game window must be visible");
                 check(frame.getContentPane().getWidth() > 0, "window must have a content area");
                 JPanel start = (JPanel) field(frame, "startPanel");
+                var menuSize = frame.getSize();
                 for (int turn = 0; turn < 3; turn++) key(start, KeyEvent.VK_DOWN);
                 key(start, KeyEvent.VK_ENTER);
                 JPanel canvas = (JPanel) field(frame, "mainPanel");
                 check(canvas.getComponent(0) instanceof P2PPanel p2p && p2p.isShowing(),
                     "P2P battle must open from the keyboard-accessible start menu");
                 P2PPanel p2p = (P2PPanel) canvas.getComponent(0);
+                check(frame.getSize().equals(menuSize), "P2P setup must use the regular menu window");
                 LocalBattleDesktopSmoke.button(p2p, "MAIN MENU").doClick(0);
+                check(frame.getSize().equals(menuSize), "returning to the menu must restore its window size");
                 start = (JPanel) field(frame, "startPanel");
                 check(start.isShowing() && p2p.getParent() == null, "P2P exit must restore the start menu");
                 for (int turn = 0; turn < 40; turn++) key(start, KeyEvent.VK_DOWN);
@@ -432,5 +435,6 @@ public final class DesktopSmoke {
         });
         if (failure.get() != null) throw new AssertionError("Desktop smoke failed", failure.get());
         LocalBattleDesktopSmoke.main(args);
+        P2PDesktopSmoke.run(evidence);
     }
 }

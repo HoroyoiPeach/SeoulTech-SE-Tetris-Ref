@@ -16,26 +16,34 @@ import seoultech.se.tetris.GameMode;
 import seoultech.se.tetris.score.ScoreStore;
 
 public class Scoreboardpanel extends JPanel{
+    private static final List<GameMode> RANKED_MODES = List.of(GameMode.CLASSIC, GameMode.ITEM);
+
     private Maincontainer maincontainer;
+    private final Runnable onExit;
     private JTextPane scorepanel;
     private PlayerKeyListener playerKeyListener;
     private int HEIGHT;
     private int WIDTH;
     private GameMode selectedMode;
-    private final JToggleButton[] modeButtons = new JToggleButton[GameMode.values().length + 1];
+    private final JToggleButton[] modeButtons = new JToggleButton[RANKED_MODES.size() + 1];
     private List<ScoreStore.Score> visibleScores = List.of();
     private ScoreStore.Score highlightedScore;
 
     public Scoreboardpanel(Maincontainer maincontainer) {
-        this(maincontainer, null);
+        this(maincontainer, null, maincontainer::exitScoreboardEnterStart);
     }
 
     public Scoreboardpanel(Maincontainer maincontainer, GameMode mode) {
+        this(maincontainer, mode, maincontainer::exitScoreboardEnterStart);
+    }
+
+    Scoreboardpanel(Maincontainer maincontainer, GameMode mode, Runnable onExit) {
         setLayout(null);
         setBackground(changeColor(Color.LIGHT_GRAY));
         setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
         this.maincontainer = maincontainer;
-        selectedMode = mode;
+        this.onExit = onExit;
+        selectedMode = mode != null && RANKED_MODES.contains(mode) ? mode : null;
 
         HEIGHT = maincontainer.getConfiguredHeight();
         WIDTH = maincontainer.getConfiguredWidth();
@@ -51,7 +59,7 @@ public class Scoreboardpanel extends JPanel{
         filters.setBounds(10, 10, WIDTH - 20, 32);
         ButtonGroup filterGroup = new ButtonGroup();
         for (int index = 0; index < modeButtons.length; index++) {
-            GameMode filterMode = index == 0 ? null : GameMode.values()[index - 1];
+            GameMode filterMode = index == 0 ? null : RANKED_MODES.get(index - 1);
             JToggleButton button = new JToggleButton(index == 0 ? "All" : filterMode.displayName());
             MenuButtons.styleActionButton(button);
             button.setOpaque(false);
@@ -99,7 +107,9 @@ public class Scoreboardpanel extends JPanel{
     }
 
     public void drawScore() {
-        List<ScoreStore.Score> loadedScores = ScoreStore.readRanked(selectedMode);
+        List<ScoreStore.Score> loadedScores = ScoreStore.readRanked(selectedMode).stream()
+            .filter(score -> !score.hasMode() || RANKED_MODES.contains(score.mode()))
+            .toList();
         int totalusernum = loadedScores.size();
         visibleScores = loadedScores.subList(0, Math.min(totalusernum, 10));
         StringBuffer sb = new StringBuffer();
@@ -123,7 +133,7 @@ public class Scoreboardpanel extends JPanel{
 		StyleConstants.setLineSpacing(styleSet, -0.1f);
         doc.setCharacterAttributes(0, doc.getLength(), styleSet, false);
         scorepanel.setStyledDocument(doc);
-        int selectedIndex = selectedMode == null ? 0 : selectedMode.ordinal() + 1;
+        int selectedIndex = selectedMode == null ? 0 : RANKED_MODES.indexOf(selectedMode) + 1;
         modeButtons[selectedIndex].setSelected(true);
         applyHighlight();
     }
@@ -142,9 +152,9 @@ public class Scoreboardpanel extends JPanel{
     }
 
     private void cycleMode(int delta) {
-        int index = selectedMode == null ? 0 : selectedMode.ordinal() + 1;
+        int index = selectedMode == null ? 0 : RANKED_MODES.indexOf(selectedMode) + 1;
         int next = Math.floorMod(index + delta, modeButtons.length);
-        showMode(next == 0 ? null : GameMode.values()[next - 1]);
+        showMode(next == 0 ? null : RANKED_MODES.get(next - 1));
     }
 
     void highlightScore(String name, int score, Difficulty difficulty) {
@@ -198,6 +208,6 @@ public class Scoreboardpanel extends JPanel{
 		}
 	}
     protected void selectEnter() {
-        this.maincontainer.exitScoreboardEnterStart();
+        onExit.run();
     }
 }

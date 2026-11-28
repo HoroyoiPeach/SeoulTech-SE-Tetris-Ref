@@ -24,11 +24,16 @@ public final class Nextblockpanel extends JComponent {
     private transient GameSnapshot.Piece piece;
 
     public Nextblockpanel() {
+        refreshTheme();
+    }
+
+    void refreshTheme() {
         setBackground(changeColor(Color.BLACK));
         CompoundBorder border = BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(changeColor(Color.GRAY), 10),
             BorderFactory.createLineBorder(changeColor(Color.DARK_GRAY), 5));
         setBorder(border);
+        repaint();
     }
 
     void drawNextBoard(GameSnapshot.Piece piece) {

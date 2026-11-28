@@ -8,20 +8,21 @@ import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -34,7 +35,6 @@ import seoultech.se.tetris.Difficulty;
 import seoultech.se.tetris.GameMode;
 import seoultech.se.tetris.game.BattleMatchSnapshot;
 import seoultech.se.tetris.game.GameCommand;
-import seoultech.se.tetris.game.MatchOutcome;
 import seoultech.se.tetris.network.P2PBattleSession;
 import seoultech.se.tetris.network.P2PBattleSession.Phase;
 import seoultech.se.tetris.network.P2PBattleSession.View;
@@ -54,7 +54,7 @@ final class P2PPanel extends JPanel {
     private final P2PBattleSession session;
     private final Runnable back;
     private final int port;
-    private final LocalBattleKeyBindings keys = LocalBattleKeyBindings.configured();
+    private LocalBattleKeyBindings keys = LocalBattleKeyBindings.configured();
     private final Executor addressIo;
     private final Executor networkAddressIo;
     private final IntFunction<String> hostAddressProvider;
@@ -63,23 +63,38 @@ final class P2PPanel extends JPanel {
     private boolean saveFailed;
     private final CardLayout layout = new CardLayout();
     private final JPanel cards = new JPanel(layout);
+    private final JPanel match = new JPanel(new BorderLayout(4, 4));
     private final JLabel title = label("P2P BATTLE");
     private final JLabel status = label(" ");
     private final JTextField address = new JTextField(18);
     private final JLabel connection = label(" ");
     private final JTextArea localAddress = new JTextArea(5, 36);
+    private final P2PConnectedMenu connectedMenu;
+    private final JLabel selectedMode = label(" ");
     private final JLabel readiness = label(" ");
-    private final JComboBox<String> mode = new JComboBox<>();
     private final BattlePlayerView own = new BattlePlayerView("YOU", "own");
     private final BattlePlayerView opponent = new BattlePlayerView("OPPONENT", "opponent");
     private final JLabel clock = label(" ");
-    private final JLabel outcome = label(" ");
+    private final JLabel controls = label(" ");
+    private final P2PResultView result;
     private final JButton hostButton;
     private final JButton joinButton;
+    private final JButton cancelButton;
     private final JButton readyButton;
+    private final JButton backToConnectedMenu;
     private View current;
+    private LobbyCard lobbyCard = LobbyCard.MENU;
+    private long chosenRound = -1;
+    private boolean awaitingModeRound;
+    private GameMode pendingMode;
+    private long pageGeneration;
+    private boolean externalPageOpen;
+    private BiConsumer<String, Runnable> lobbyPageOpener;
+    private Consumer<Phase> phaseListener = phase -> {};
     private long addressLookupGeneration;
     private volatile boolean closed;
+
+    private enum LobbyCard { MENU, READY }
 
     P2PPanel(Difficulty difficulty, int timeLimitSeconds, int port, Runnable back) {
         this(difficulty, timeLimitSeconds, port, back, PEER_ADDRESS_IO);
@@ -105,7 +120,10 @@ final class P2PPanel extends JPanel {
         session = new P2PBattleSession(difficulty, timeLimitSeconds, this::receiveView);
         title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
         status.setName("p2pStatus");
-        JPanel header = rows(title, status);
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        header.add(title, BorderLayout.CENTER);
+        header.add(status, BorderLayout.SOUTH);
         add(header, BorderLayout.NORTH);
         cards.setOpaque(false);
         add(cards, BorderLayout.CENTER);
@@ -117,8 +135,13 @@ final class P2PPanel extends JPanel {
         joinButton = button("JOIN GAME", this::join);
         address.setName("peerAddress");
         address.addActionListener(event -> joinButton.doClick());
+        JButton mainMenuButton = button("MAIN MENU", this::exit);
         cards.add(centered(rows(hostButton, label("Server IP"), address,
-            joinButton, button("MAIN MENU", this::exit))), "setup");
+            joinButton, mainMenuButton)), "setup");
+        bindVertical(hostButton, mainMenuButton, address);
+        bindVertical(address, hostButton, joinButton);
+        bindVertical(joinButton, address, mainMenuButton);
+        bindVertical(mainMenuButton, joinButton, hostButton);
         localAddress.setName("hostAddresses");
         localAddress.setEditable(false);
         localAddress.setFocusable(false);
@@ -127,22 +150,27 @@ final class P2PPanel extends JPanel {
         JScrollPane addressScroll = new JScrollPane(localAddress);
         addressScroll.setOpaque(false);
         addressScroll.getViewport().setOpaque(false);
-        cards.add(centered(rows(connection, addressScroll, button("CANCEL", session::leave))), "wait");
+        cancelButton = button("CANCEL", session::leave);
+        cards.add(centered(rows(connection, addressScroll, cancelButton)), "wait");
 
-        for (GameMode choice : GameMode.values()) mode.addItem(choice.displayName());
-        mode.setName("battleMode");
-        mode.addActionListener(event -> {
-            GameMode choice = GameMode.values()[mode.getSelectedIndex()];
-            if (current != null && current.phase() == Phase.LOBBY && current.host() && choice != current.mode()) {
-                session.selectMode(choice, current.round());
-            }
-        });
-        readyButton = button("START", () -> session.ready(current.round()));
-        outcome.setName("matchOutcome");
-        cards.add(centered(rows(outcome, label("Battle mode"), mode, readiness, readyButton,
-            button("DISCONNECT", session::leave))), "lobby");
+        connectedMenu = new P2PConnectedMenu(this::selectMode, this::showReadiness,
+            () -> openLobbyPage("MENU"), () -> openLobbyPage("SCORE"), session::leave);
+        cards.add(connectedMenu, "connectedMenu");
 
-        JPanel match = new JPanel(new BorderLayout(4, 4));
+        readyButton = button("START", this::ready);
+        backToConnectedMenu = button("BACK", this::showConnectedMenu);
+        bindVertical(readyButton, backToConnectedMenu, backToConnectedMenu);
+        bindVertical(backToConnectedMenu, readyButton, readyButton);
+        selectedMode.setName("selectedBattleMode");
+        cards.add(centered(rows(label("BATTLE MODE"), selectedMode, readiness,
+            readyButton, backToConnectedMenu)), "readiness");
+
+        result = new P2PResultView(session::acknowledgeResult, session::leave);
+        cards.add(centered(result), "result");
+
+        match.setName("p2pMatch");
+        match.setFocusable(true);
+        match.setFocusTraversalKeysEnabled(false);
         match.setOpaque(false);
         JPanel players = new JPanel(new GridLayout(1, 2, 6, 0));
         players.setOpaque(false);
@@ -155,15 +183,12 @@ final class P2PPanel extends JPanel {
         actions.setOpaque(false);
         JButton leaveMatch = button("DISCONNECT", session::leave);
         leaveMatch.setFocusable(false);
+        updateControlSummary();
+        actions.add(controls);
         actions.add(leaveMatch);
-        match.add(rows(label(keys.firstSummary() + "   PAUSE " + KeyEvent.getKeyText(keys.pauseKey())), actions),
-            BorderLayout.SOUTH);
+        match.add(actions, BorderLayout.SOUTH);
         cards.add(match, "match");
-        addKeyListener(new KeyAdapter() {
-            @Override public void keyPressed(KeyEvent event) {
-                handleKey(event.getKeyCode());
-            }
-        });
+        bindGameplayKeys();
         CompletableFuture.supplyAsync(() -> {
             try { return LastPeerAddress.load(); }
             catch (IOException | IllegalStateException ignored) { return ""; }
@@ -200,6 +225,110 @@ final class P2PPanel extends JPanel {
             @Override public void actionPerformed(ActionEvent event) { button.doClick(0); }
         });
         return button;
+    }
+
+    private static void bind(JComponent component, int scope, int key, Runnable action) {
+        KeyStroke stroke = KeyStroke.getKeyStroke(key, 0);
+        component.getInputMap(scope).put(stroke, stroke);
+        component.getActionMap().put(stroke, new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent event) { action.run(); }
+        });
+    }
+
+    private static void bindVertical(JComponent component, JComponent up, JComponent down) {
+        bind(component, WHEN_FOCUSED, KeyEvent.VK_UP, up::requestFocusInWindow);
+        bind(component, WHEN_FOCUSED, KeyEvent.VK_DOWN, down::requestFocusInWindow);
+    }
+
+    private void bindGameplayKeys() {
+        bindConfiguredGameplayKeys();
+        bind(match, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyEvent.VK_ENTER, () -> handleKey(KeyEvent.VK_ENTER));
+        bind(this, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyEvent.VK_ESCAPE, () -> {
+            if (current != null && current.phase() == Phase.SETUP) exit();
+            else if (current != null && current.phase() == Phase.PLAYING) handleKey(KeyEvent.VK_ESCAPE);
+            else session.leave();
+        });
+    }
+
+    private void bindConfiguredGameplayKeys() {
+        for (int key : keys.first().keySet()) {
+            bind(match, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, key, () -> handleKey(key));
+        }
+        bind(match, WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, keys.pauseKey(), () -> handleKey(keys.pauseKey()));
+    }
+
+    private void unbindConfiguredGameplayKeys(LocalBattleKeyBindings bindings) {
+        for (int key : bindings.first().keySet()) unbindMatchKey(key);
+        unbindMatchKey(bindings.pauseKey());
+    }
+
+    private void unbindMatchKey(int key) {
+        KeyStroke stroke = KeyStroke.getKeyStroke(key, 0);
+        Object actionKey = match.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).get(stroke);
+        match.getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).remove(stroke);
+        if (actionKey != null) match.getActionMap().remove(actionKey);
+    }
+
+    private void selectMode(GameMode choice) {
+        if (current != null && current.phase() == Phase.LOBBY && current.host()
+                && !current.hostReady() && !current.delayed() && !awaitingModeRound) {
+            lobbyCard = LobbyCard.READY;
+            awaitingModeRound = true;
+            pendingMode = choice;
+            selectedMode.setText(choice.displayName().toUpperCase(Locale.ROOT));
+            readiness.setText("Confirming mode with opponent…");
+            readyButton.setEnabled(false);
+            backToConnectedMenu.setEnabled(false);
+            showLobbyCard(true);
+            session.selectMode(choice, current.round());
+        }
+    }
+
+    private void ready() {
+        if (current == null || current.phase() != Phase.LOBBY || awaitingModeRound
+                || chosenRound != current.round() || current.delayed()) return;
+        session.ready(current.round());
+    }
+
+    private void showReadiness() {
+        if (current == null || current.phase() != Phase.LOBBY || awaitingModeRound
+                || chosenRound != current.round()) return;
+        lobbyCard = LobbyCard.READY;
+        showLobbyCard(true);
+    }
+
+    private void openLobbyPage(String page) {
+        if (current == null || current.phase() != Phase.LOBBY || externalPageOpen
+                || lobbyPageOpener == null) return;
+        externalPageOpen = true;
+        long generation = ++pageGeneration;
+        lobbyPageOpener.accept(page, () -> SwingUtilities.invokeLater(() -> returnFromLobbyPage(generation)));
+    }
+
+    private void returnFromLobbyPage(long generation) {
+        if (generation != pageGeneration) return;
+        externalPageOpen = false;
+        if (current != null && current.phase() == Phase.LOBBY) showLobbyCard(true);
+    }
+
+    private void showConnectedMenu() {
+        if (current == null || current.phase() != Phase.LOBBY) return;
+        lobbyCard = LobbyCard.MENU;
+        connectedMenu.selectCurrentMode();
+        showLobbyCard(true);
+    }
+
+    private void showLobbyCard(boolean focus) {
+        if (externalPageOpen || current == null || current.phase() != Phase.LOBBY) return;
+        if (lobbyCard == LobbyCard.READY) {
+            title.setVisible(true);
+            layout.show(cards, "readiness");
+            if (focus) readyButton.requestFocusInWindow();
+        } else {
+            title.setVisible(false);
+            layout.show(cards, "connectedMenu");
+            if (focus) connectedMenu.focusMenu();
+        }
     }
 
     private void join() {
@@ -251,14 +380,30 @@ final class P2PPanel extends JPanel {
     }
 
     private void render(View view) {
-        Phase previous = current == null ? null : current.phase();
+        View previousView = current;
+        Phase previous = previousView == null ? null : previousView.phase();
         current = view;
+        if (previous != view.phase()) {
+            phaseListener.accept(view.phase());
+        }
         if (previous == Phase.LISTENING && view.phase() != Phase.LISTENING) addressLookupGeneration++;
-        if (view.phase() == Phase.SETUP) saveFailed = false;
+        if (view.phase() != Phase.LOBBY && externalPageOpen) {
+            externalPageOpen = false;
+            pageGeneration++;
+        }
+        if (view.phase() == Phase.SETUP) {
+            saveFailed = false;
+            lobbyCard = LobbyCard.MENU;
+            chosenRound = -1;
+            awaitingModeRound = false;
+            pendingMode = null;
+        }
         showStatus(view);
+        status.setVisible(!status.getText().isBlank());
         switch (view.phase()) {
             case SETUP -> {
                 title.setText("P2P BATTLE");
+                title.setVisible(true);
                 setSetupEnabled(true);
                 if (previous != Phase.SETUP) {
                     layout.show(cards, "setup");
@@ -266,6 +411,7 @@ final class P2PPanel extends JPanel {
                 }
             }
             case CONNECTING, LISTENING -> {
+                title.setVisible(true);
                 if (previous == view.phase()) return;
                 boolean listening = view.phase() == Phase.LISTENING;
                 connection.setText(listening ? "Waiting for a player…" : "Connecting to server…");
@@ -282,30 +428,56 @@ final class P2PPanel extends JPanel {
                             }));
                 }
                 layout.show(cards, "wait");
-                cards.transferFocus();
+                cancelButton.requestFocusInWindow();
             }
             case LOBBY -> {
                 if (!view.host() && joiningAddress != null) {
                     saveConnectedAddress(joiningAddress, joinAttempt);
                     joiningAddress = null;
                 }
-                title.setText(view.host() ? "LOBBY · HOST" : "LOBBY · CLIENT");
-                outcome.setText(winner(view));
-                mode.setSelectedItem(view.mode().displayName());
-                mode.setEnabled(view.host() && !view.hostReady() && !view.delayed());
+                boolean enteredLobby = previous != Phase.LOBBY;
+                boolean selectedNewRound = previous == Phase.LOBBY
+                    && previousView != null && previousView.round() != view.round();
+                if (enteredLobby) {
+                    lobbyCard = LobbyCard.MENU;
+                    chosenRound = -1;
+                } else if (selectedNewRound) {
+                    lobbyCard = LobbyCard.READY;
+                    chosenRound = view.round();
+                    awaitingModeRound = false;
+                    pendingMode = null;
+                }
+                if (view.hostReady() || view.guestReady()) {
+                    lobbyCard = LobbyCard.READY;
+                    chosenRound = view.round();
+                }
+                connectedMenu.render(view.host(), view.mode(), chosenRound == view.round());
+                GameMode shownMode = awaitingModeRound && pendingMode != null ? pendingMode : view.mode();
+                selectedMode.setText(shownMode.displayName().toUpperCase(Locale.ROOT));
                 readiness.setText("Host " + readyState(view.hostReady()) + "   ·   Client " + readyState(view.guestReady()));
-                readyButton.setEnabled(!view.delayed() && !(view.host() ? view.hostReady() : view.guestReady()));
-                if (previous != Phase.LOBBY) {
-                    layout.show(cards, "lobby");
-                    readyButton.requestFocusInWindow();
+                boolean localReady = view.host() ? view.hostReady() : view.guestReady();
+                readyButton.setEnabled(!awaitingModeRound && chosenRound == view.round()
+                    && !view.delayed() && !localReady);
+                backToConnectedMenu.setEnabled(!awaitingModeRound && !localReady);
+                title.setText("P2P BATTLE");
+                showLobbyCard(previous != Phase.LOBBY || selectedNewRound);
+            }
+            case RESULT -> {
+                title.setText("MATCH RESULT");
+                title.setVisible(true);
+                result.render(view);
+                if (previous != Phase.RESULT) {
+                    layout.show(cards, "result");
+                    result.requestContinueFocus();
                 }
             }
-            case PLAYING, RESULT -> {
+            case PLAYING -> {
+                title.setVisible(true);
                 if (view.match() == null) return;
                 showMatch(view);
                 if (previous != view.phase()) {
                     layout.show(cards, "match");
-                    requestFocusInWindow();
+                    match.requestFocusInWindow();
                 }
             }
         }
@@ -335,14 +507,7 @@ final class P2PPanel extends JPanel {
             ? String.format("TIME %02d:%02d", match.remainingSeconds() / 60, match.remainingSeconds() % 60) : "";
         if (!match.stopped() && match.first().paused()) time += "  PAUSED · ENTER TO DISCONNECT";
         clock.setText(time);
-    }
-
-    private static String winner(View view) {
-        if (view.match() == null) return " ";
-        return view.match().decision().map(decision -> {
-            if (decision.outcome() == MatchOutcome.DRAW) return "DRAW";
-            return (decision.outcome() == MatchOutcome.LOCAL_WIN) == view.host() ? "YOU WIN" : "YOU LOSE";
-        }).orElse(" ");
+        clock.setVisible(!time.isBlank());
     }
 
     private void handleKey(int key) {
@@ -360,6 +525,50 @@ final class P2PPanel extends JPanel {
 
     private void sendVisibleInput(GameCommand command) {
         if (!current.delayed()) session.input(command, current.round());
+    }
+
+    void setLobbyPageOpener(BiConsumer<String, Runnable> opener) {
+        lobbyPageOpener = Objects.requireNonNull(opener, "opener");
+    }
+
+    void setPhaseListener(Consumer<Phase> listener) {
+        phaseListener = Objects.requireNonNull(listener, "listener");
+        if (current != null) {
+            phaseListener.accept(current.phase());
+        }
+    }
+
+    void applySettings(Difficulty difficulty, int timeLimitSeconds) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> applySettings(difficulty, timeLimitSeconds));
+            return;
+        }
+        LocalBattleKeyBindings previous = keys;
+        unbindConfiguredGameplayKeys(previous);
+        keys = LocalBattleKeyBindings.configured();
+        bindConfiguredGameplayKeys();
+        updateControlSummary();
+        session.updateMatchSettings(difficulty, timeLimitSeconds);
+        setBackground(Maincontainer.changeColor(Color.LIGHT_GRAY));
+        Color text = Maincontainer.changeColor(Color.DARK_GRAY);
+        title.setForeground(text);
+        status.setForeground(text);
+        connection.setForeground(text);
+        localAddress.setForeground(text);
+        selectedMode.setForeground(text);
+        readiness.setForeground(text);
+        clock.setForeground(text);
+        controls.setForeground(text);
+        connectedMenu.refreshTheme();
+        result.refreshTheme();
+        own.refreshTheme();
+        opponent.refreshTheme();
+        revalidate();
+        repaint();
+    }
+
+    private void updateControlSummary() {
+        controls.setText(keys.firstSummary() + "   PAUSE " + KeyEvent.getKeyText(keys.pauseKey()));
     }
 
     void focusSetup() {

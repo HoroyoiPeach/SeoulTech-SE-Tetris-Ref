@@ -58,6 +58,11 @@ public final class BattleMessageCodec {
                     writeMatch(out, state.snapshot());
                 }
                 case BattleMessage.Rematch ignored -> out.writeByte('N');
+                case BattleMessage.ResultReady ready -> {
+                    out.writeByte('F');
+                    out.writeBoolean(ready.hostReady());
+                    out.writeBoolean(ready.guestReady());
+                }
             }
         } catch (IOException e) {
             throw new IllegalArgumentException("Cannot encode match message", e);
@@ -82,6 +87,7 @@ public final class BattleMessageCodec {
                 case 'I' -> new BattleMessage.Input(round, GameCommand.valueOf(in.readUTF()));
                 case 'S' -> new BattleMessage.State(round, readMatch(in));
                 case 'N' -> new BattleMessage.Rematch(round);
+                case 'F' -> new BattleMessage.ResultReady(round, flag(in), flag(in));
                 default -> throw new IllegalArgumentException("Unknown match message");
             };
             if (in.read() != -1) throw new IllegalArgumentException("Trailing match data");
