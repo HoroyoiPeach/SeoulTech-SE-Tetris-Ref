@@ -52,6 +52,7 @@ class ModeScoreUiTest {
 
     @Test
     void scoreboardFiltersMixedRecordsThroughButtonsAndKeyboard() throws Exception {
+        ScoreStore.append("OldTimer", 20_000, Difficulty.HARD, GameMode.TIME_LIMIT);
         ScoreStore.append("Legacy", 10_000);
         ScoreStore.append("OldDiff", 9_999, Difficulty.HARD);
         for (int i = 0; i < 11; i++) {
@@ -63,6 +64,7 @@ class ModeScoreUiTest {
             TestMaincontainer owner = owner();
             Scoreboardpanel panel = new Scoreboardpanel(owner, null);
             String all = scoreText(panel);
+            assertFalse(all.contains("OldTimer"));
             assertTrue(all.contains("Legacy: 10000\n"));
             assertTrue(all.contains("OldDiff: 9999 [Hard]\n"));
             assertFalse(all.contains("Legacy: 10000 [Classic]"));
@@ -74,6 +76,13 @@ class ModeScoreUiTest {
             assertFalse(allButton.isFocusable());
             assertFalse(classicButton.isFocusable());
             assertFalse(itemButton.isFocusable());
+
+            assertEquals(3, allButton.getParent().getComponentCount());
+            press(panel, KeyEvent.VK_LEFT);
+            assertTrue(itemButton.isSelected());
+            press(panel, KeyEvent.VK_RIGHT);
+            assertTrue(allButton.isSelected());
+            assertEquals(1, ScoreStore.readRanked(GameMode.TIME_LIMIT).size());
 
             classicButton.doClick();
             String classics = scoreText(panel);
